@@ -10,6 +10,14 @@ const mockTokenResponse = {
   expiresIn: 30
 };
 
+vi.mock('../lib/logger', () => ({
+  logger: {
+    logInfo: vi.fn(),
+    logWarning: vi.fn(),
+    logError: vi.fn()
+  }
+}));
+
 describe('SocketManager tests', () => {
   let socketManager: SocketManager;
 
