@@ -1,6 +1,5 @@
 import { ClientEvent } from './types/event.types';
 import { SocketEventHandler } from './types/socket.types';
-// import { DsPresenceEvent, DsPresence } from './ds';
 import { logger } from './logger';
 import { validateUserData } from './validation';
 import { EventRegistry } from './event-registry';

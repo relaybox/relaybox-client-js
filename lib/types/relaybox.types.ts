@@ -8,13 +8,3 @@ export interface RelayboxOptions {
   authHeaders?: AuthParamsOrHeaders | null;
   authRequestOptions?: AuthRequestOptions;
 }
-
-// export interface TokenResponse {
-//   token: string;
-//   expiresIn: number;
-// }
-
-export interface KeyData {
-  apiKey: string;
-  clientId?: string | number;
-}
