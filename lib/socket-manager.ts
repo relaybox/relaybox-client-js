@@ -9,7 +9,7 @@ import {
 } from './types/socket.types';
 import { logger } from './logger';
 import { ClientEvent, ServerEvent } from './types/event.types';
-import { DsKeyData, DsTokenResponse } from './types/ds.types';
+import { KeyData, TokenResponse } from './types/request.types';
 
 const UWS_SERVER_HOST = 'http://localhost:9090';
 const MAX_RECONNECT_ATTEMPTS = 10;
@@ -21,7 +21,7 @@ export class SocketManager {
   private socketAuth: SocketAuth | null = null;
   private connection: WebSocket | null = null;
   private connectionString: string | null = null;
-  private tokenResponse: DsTokenResponse;
+  private tokenResponse: TokenResponse | null = null;
   private reconnectAttempts: number = 0;
   private reconnectionTimeout: NodeJS.Timeout | number | null = null;
   private pendingAcknowledgements: Map<string, SocketEventHandler> = new Map();
@@ -33,7 +33,7 @@ export class SocketManager {
     this.eventEmitter = new EventEmitter();
   }
 
-  private initializeSocket(auth: DsTokenResponse | DsKeyData): void {
+  private initializeSocket(auth: TokenResponse | KeyData): void {
     this.disconnectSocket();
     this.socketAuth = auth;
   }
@@ -102,7 +102,7 @@ export class SocketManager {
     return JSON.parse(messageEvent.data);
   }
 
-  authTokenInitSocket(tokenResponse: DsTokenResponse): void {
+  authTokenInitSocket(tokenResponse: TokenResponse): void {
     if (!tokenResponse) {
       const message = `Invalid token response`;
       logger.logError(message);
@@ -116,7 +116,7 @@ export class SocketManager {
     }
   }
 
-  apiKeyInitSocket(keyData: DsKeyData): void {
+  apiKeyInitSocket(keyData: KeyData): void {
     if (!keyData) {
       const message = `API Keydata not provided`;
       logger.logError(message);
@@ -128,7 +128,7 @@ export class SocketManager {
     }
   }
 
-  updateSocketAuth(tokenResponse: DsTokenResponse): void {
+  updateSocketAuth(tokenResponse: TokenResponse): void {
     this.tokenResponse = tokenResponse;
 
     this.socketAuth = {
@@ -276,7 +276,7 @@ export class SocketManager {
     return this.connection;
   }
 
-  getTokenResponse(): DsTokenResponse {
+  getTokenResponse(): TokenResponse | null {
     return this.tokenResponse;
   }
 

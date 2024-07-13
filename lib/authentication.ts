@@ -1,13 +1,14 @@
 import { ValidationError } from './errors';
 import { request } from './request';
-import { DsAuthRequestOptions, DsTokenResponse } from './types/ds.types';
+import { AuthRequestOptions } from './types/auth.types';
+import { TokenResponse } from './types/request.types';
 
 export async function getAuthTokenResponse(
   authEndpoint?: string,
   authHeaders?: Record<string, unknown> | null,
   authParams?: Record<string, unknown> | null,
-  authRequestOptions?: DsAuthRequestOptions | null
-): Promise<DsTokenResponse> {
+  authRequestOptions?: AuthRequestOptions | null
+): Promise<TokenResponse> {
   if (!authEndpoint) {
     throw new ValidationError(`No authentication endpoint provided`);
   }
@@ -40,7 +41,7 @@ export async function getAuthTokenResponse(
     ...(authHeaders && { ...authHeaders })
   };
 
-  const { data: tokenResponse } = await request<DsTokenResponse>(
+  const { data: tokenResponse } = await request<TokenResponse>(
     formattedAuthEndpointUrl,
     requestParams
   );

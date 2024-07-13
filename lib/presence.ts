@@ -1,11 +1,12 @@
 import { ClientEvent } from './types/event.types';
 import { SocketEventHandler } from './types/socket.types';
-import { DsPresenceEvent, DsPresence } from './ds';
+// import { DsPresenceEvent, DsPresence } from './ds';
 import { logger } from './logger';
 import { validateUserData } from './validation';
 import { EventRegistry } from './event-registry';
 import { ValidationError } from './errors';
 import { SocketManager } from './socket-manager';
+import { PresenceEvent, PresenceEventType } from './types/presence.types';
 
 const USER_DATA_MAX_SIZE_KB = 1024;
 const SUBSCRIPTION_NAMESPACE = 'presence';
@@ -30,7 +31,7 @@ export class Presence {
   }
 
   async subscribe(
-    eventOrHandler: DsPresenceEvent | SocketEventHandler,
+    eventOrHandler: PresenceEventType | SocketEventHandler,
     handler?: SocketEventHandler
   ): Promise<void> {
     this.validateEvent(eventOrHandler);
@@ -38,7 +39,7 @@ export class Presence {
     await this.execSubscription(events, eventHandler);
   }
 
-  async unsubscribe(event?: DsPresenceEvent, handler?: SocketEventHandler): Promise<void> {
+  async unsubscribe(event?: PresenceEventType, handler?: SocketEventHandler): Promise<void> {
     if (event) {
       return this.unsubscribeEvent(event, handler);
     }
@@ -47,9 +48,9 @@ export class Presence {
   }
 
   private prepareSubscription(
-    eventOrHandler: DsPresenceEvent | SocketEventHandler,
+    eventOrHandler: PresenceEventType | SocketEventHandler,
     handler?: SocketEventHandler
-  ): { events: DsPresenceEvent[]; eventHandler: SocketEventHandler } {
+  ): { events: PresenceEventType[]; eventHandler: SocketEventHandler } {
     const events =
       typeof eventOrHandler === 'function'
         ? Object.values(DsPresenceEventAllowedValue)
@@ -61,7 +62,7 @@ export class Presence {
   }
 
   private async execSubscription(
-    events: DsPresenceEvent[],
+    events: PresenceEventType[],
     handler: SocketEventHandler
   ): Promise<void> {
     try {
@@ -74,7 +75,10 @@ export class Presence {
     }
   }
 
-  private async subscribeEvent(event: DsPresenceEvent, handler: SocketEventHandler): Promise<void> {
+  private async subscribeEvent(
+    event: PresenceEventType,
+    handler: SocketEventHandler
+  ): Promise<void> {
     logger.logInfo(`Binding handler "${this.nspRoomId}:${event}"`);
 
     const eventState = this.eventRegistry.getHandlersForEvent(event);
@@ -97,7 +101,7 @@ export class Presence {
   }
 
   private async unsubscribeEvent(
-    event: DsPresenceEvent,
+    event: PresenceEventType,
     handler?: SocketEventHandler
   ): Promise<void> {
     logger.logInfo(`Unbinding handler ${this.nspRoomId}:${event}`);
@@ -196,11 +200,11 @@ export class Presence {
     }
   }
 
-  async get<T>(): Promise<DsPresence<T>[]> {
+  async get<T>(): Promise<PresenceEvent<T>[]> {
     const data = { roomId: this.roomId };
 
     try {
-      const res = await this.socketManager.emitWithAck<DsPresence<T>[]>(
+      const res = await this.socketManager.emitWithAck<PresenceEvent<T>[]>(
         ClientEvent.ROOM_PRESENCE_GET,
         data
       );
@@ -282,7 +286,7 @@ export class Presence {
     return `${this.nspRoomId}:${PLATFORM_RESERVED_NAMESPACE}:${SUBSCRIPTION_NAMESPACE}:${event}`;
   }
 
-  private validateEvent(eventOrHandler: DsPresenceEvent | SocketEventHandler) {
+  private validateEvent(eventOrHandler: PresenceEventType | SocketEventHandler) {
     if (typeof eventOrHandler === 'function') {
       return true;
     }

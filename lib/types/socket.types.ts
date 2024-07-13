@@ -71,3 +71,8 @@ export interface SocketErrorResponse {
   message: string;
   status?: number;
 }
+
+export interface SocketManagerListener {
+  event: SocketEvent;
+  handler: SocketEventHandler;
+}

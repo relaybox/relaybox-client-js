@@ -1,4 +1,4 @@
-export interface DsAuthRequestOptions {
+export interface AuthRequestOptions {
   method?: 'GET' | 'POST';
   mode?: 'cors' | 'navigate' | 'no-cors' | 'same-origin' | null;
   credentials?: 'include' | 'omit' | 'same-origin' | null;
@@ -17,23 +17,4 @@ export interface DsAuthRequestOptions {
   body?: string;
 }
 
-type AuthParamsOrHeaders = Record<string, unknown> | (() => Record<string, unknown> | null);
-
-export interface DsConfig {
-  authEndpoint?: string;
-  apiKey?: string;
-  authParams?: AuthParamsOrHeaders | null;
-  clientId?: number | string;
-  authHeaders?: AuthParamsOrHeaders | null;
-  authRequestOptions?: DsAuthRequestOptions;
-}
-
-export interface DsTokenResponse {
-  token: string;
-  expiresIn: number;
-}
-
-export interface DsKeyData {
-  apiKey: string;
-  clientId?: string | number;
-}
+export type AuthParamsOrHeaders = Record<string, unknown> | (() => Record<string, unknown> | null);

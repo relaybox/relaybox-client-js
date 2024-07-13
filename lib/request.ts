@@ -1,10 +1,10 @@
 import { HTTPRequestError, NetworkError } from './errors';
-import { DsApiData, DsResponse } from './types/request.types';
+import { ApiData, FormattedResponse } from './types/request.types';
 
 const NODE_FETCH_ERR_MESSAGES = ['Failed to fetch'];
 
-async function formatDsResponse<T>(response: Response): Promise<DsResponse<T>> {
-  const data = <T & DsApiData>await response.json();
+async function formatResponse<T>(response: Response): Promise<FormattedResponse<T>> {
+  const data = <T & ApiData>await response.json();
 
   return {
     status: response.status,
@@ -13,7 +13,10 @@ async function formatDsResponse<T>(response: Response): Promise<DsResponse<T>> {
   };
 }
 
-export async function request<T>(url: URL | string, params: RequestInit): Promise<DsResponse<T>> {
+export async function request<T>(
+  url: URL | string,
+  params: RequestInit
+): Promise<FormattedResponse<T>> {
   let response: Response;
 
   try {
@@ -30,7 +33,7 @@ export async function request<T>(url: URL | string, params: RequestInit): Promis
     }
   }
 
-  const formattedResponse = await formatDsResponse<T>(response);
+  const formattedResponse = await formatResponse<T>(response);
 
   return formattedResponse;
 }
