@@ -4,7 +4,9 @@
   "description": "A robust and scalable real-time infrastructure service with comprehensive WebSocket support, designed to facilitate live updates, event-driven communication, and seamless data streaming. Ideal for building real-time applications such as chat, multiplayer games, collaboration tools, push notifications, and more. This library offers both server and client-side solutions, providing a high-performance, low-latency, and reliable framework for all your real-time needs. Supports Node.js, JavaScript, and TypeScript.",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build:es5": "tsc --project tsconfig.es5.json",
+    "build:es2020": "tsc --project tsconfig.es2020.json",
+    "build": "npm run build:es5 && npm run build:es2020",
     "prepublishOnly": "npm run build",
     "test": "vitest"
   },
@@ -19,8 +21,16 @@
   },
   "homepage": "https://github.com/relaybox/relaybox-client-js#readme",
   "files": [
-    "dist/**/*"
+    "dist/es5/**/*",
+    "dist/es2020/**/*"
   ],
+  "exports": {
+    ".": {
+      "import": "./dist/es2020/index.js",
+      "require": "./dist/es5/index.js",
+      "types": "./dist/es2020/index.d.ts"
+    }
+  },
   "dependencies": {
     "eventemitter3": "^5.0.1"
   },
