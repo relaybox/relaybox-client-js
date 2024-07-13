@@ -1,0 +1,30 @@
+# Ignore test files
+test
+
+# Ignore node_modules directory
+node_modules
+
+# Ignore examples directory
+examples
+
+# Ignore configuration files
+.babelrc
+.prettierrc
+rollup.config.mjs
+tsconfig*
+
+# Ignore source files
+src
+lib
+
+# Ignore other potentially unnecessary files
+.DS_Store
+*.log
+*.md
+*.yml
+*.yaml
+*.lock
+*.toml
+.idea
+.vscode
+.env
