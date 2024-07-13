@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import MockWebSocket from '../mock/mock-websocket';
-import { SocketManager } from '../socket-manager';
-import { SocketEvent } from '../types/socket.types';
-import { ClientEvent, ServerEvent } from '../types/event.types';
+import MockWebSocket from './mock/mock-websocket';
+import { SocketManager } from '../lib/socket-manager';
+import { SocketEvent } from '../lib/types/socket.types';
+import { ClientEvent, ServerEvent } from '../lib/types/event.types';
 
 const mockAuthToken = 'eyJhb.eyJrZXlOYW1lIjoiRz.5hg9z5Gd4YI9jSw1Y66gz6q';
 const mockTokenResponse = {

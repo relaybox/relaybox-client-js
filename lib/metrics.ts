@@ -3,14 +3,14 @@ import { ClientEvent } from './types/event.types';
 import { SocketEventHandler } from './types/socket.types';
 import { SocketManager } from './socket-manager';
 
-export enum DsMetricsEventAllowedValue {
+export enum MetricsEventAllowedValue {
   ALL = 'all'
 }
 
 export class Metrics {
   private readonly socketManager: SocketManager;
   private readonly roomId: string;
-  private subscription: string;
+  private subscription: string | null = null;
   private handlerRefs: Map<SocketEventHandler, number> = new Map();
 
   constructor(socketManager: SocketManager, roomId: string) {
@@ -27,7 +27,7 @@ export class Metrics {
       return;
     }
 
-    const data = { roomId: this.roomId, event: DsMetricsEventAllowedValue.ALL };
+    const data = { roomId: this.roomId, event: MetricsEventAllowedValue.ALL };
 
     try {
       const subscription = await this.socketManager.emitWithAck<string>(
@@ -48,10 +48,10 @@ export class Metrics {
   }
 
   async unsubscribe(handler?: SocketEventHandler) {
-    const data = { roomId: this.roomId, event: DsMetricsEventAllowedValue.ALL };
+    const data = { roomId: this.roomId, event: MetricsEventAllowedValue.ALL };
 
     try {
-      this.unbindSubscriptionHandlers(this.subscription, handler);
+      this.unbindSubscriptionHandlers(this.subscription!, handler);
 
       if (!this.handlerRefs.size) {
         const subscription = await this.socketManager.emitWithAck<string>(

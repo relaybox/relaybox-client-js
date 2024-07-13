@@ -13,11 +13,11 @@ export class Room {
   private readonly presenceFactory: PresenceFactory;
   private readonly metricsFactory: MetricsFactory;
   private readonly eventRegistry = new EventRegistry();
-  private nspRoomId: string;
+  private nspRoomId: string | null = null;
 
   public readonly roomId: string;
-  public presence: Presence;
-  public metrics: Metrics;
+  public presence: Presence | null = null;
+  public metrics: Metrics | null = null;
 
   constructor(
     roomId: string,
@@ -195,8 +195,8 @@ export class Room {
     try {
       const nspRoomId = await this.socketManager.emitWithAck<string>(ClientEvent.ROOM_LEAVE, data);
 
-      await this.presence.unsubscribe();
-      await this.metrics.unsubscribe();
+      await this.presence?.unsubscribe();
+      await this.metrics?.unsubscribe();
 
       this.clearEventHandlers();
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi, beforeEach } from 'vitest';
-import { EventRegistry } from '../event-registry';
+import { EventRegistry } from '../lib/event-registry';
 
 const mockEvent = 'test:event';
 const mockEventAlt = 'test:event:alt';

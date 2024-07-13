@@ -1,10 +1,10 @@
 import { describe, it, expect, afterEach, vi, beforeEach, MockInstance } from 'vitest';
-import { Ds } from '../ds';
-import { HTTPRequestError, SocketConnectionError, ValidationError } from '../errors';
-import { SocketEvent } from '../types/socket.types';
-import { ServerEvent } from '../types/event.types';
-import { eventEmitter } from '../mock/event-emitter.mock';
-import * as authModule from '../authentication';
+import { Relaybox } from '../lib/relaybox';
+import { HTTPRequestError, SocketConnectionError, ValidationError } from '../lib/errors';
+import { SocketEvent } from '../lib/types/socket.types';
+import { ServerEvent } from '../lib/types/event.types';
+import { eventEmitter } from './mock/event-emitter.mock';
+import * as authModule from '../lib/authentication';
 
 const mockApiKey = 'appId.keyId:secret';
 const mockClientId = 'G2-xcysmPiVz';
@@ -24,14 +24,14 @@ async function getSocketConnect() {
   });
 }
 
-vi.mock('../logger', () => ({
+vi.mock('../lib/logger', () => ({
   logger: {
     logInfo: vi.fn(),
     logError: vi.fn()
   }
 }));
 
-vi.mock('../socket-manager', () => ({
+vi.mock('../lib/socket-manager', () => ({
   SocketManager: vi.fn(() => ({
     eventEmitter,
     getSocket: getSocketMockInstance,
@@ -46,8 +46,8 @@ vi.mock('../socket-manager', () => ({
   }))
 }));
 
-describe('Ds', () => {
-  let ds: Ds;
+describe('Relaybox', () => {
+  let relaybox: Relaybox;
 
   beforeEach(() => {
     socket = { ...eventEmitter, auth: {} as any };
@@ -63,7 +63,7 @@ describe('Ds', () => {
 
   describe('when connecting using either api key or auth token', () => {
     it('should throw ValidationError if neither "apiKey" nor "authEndpoint" is provided', () => {
-      expect(() => new Ds({})).toThrow(ValidationError);
+      expect(() => new Relaybox({})).toThrow(ValidationError);
     });
 
     it('should throw SocketConnectionError if socket connection times out', async () => {
@@ -74,9 +74,9 @@ describe('Ds', () => {
         vi.advanceTimersByTime(35000);
       });
 
-      ds = new Ds({ apiKey: mockApiKey });
+      relaybox = new Relaybox({ apiKey: mockApiKey });
 
-      const connectPromise = ds.connect();
+      const connectPromise = relaybox.connect();
 
       await expect(connectPromise).rejects.toThrow(SocketConnectionError);
       await expect(connectPromise).rejects.toThrowError(/Connection timeout after/);
@@ -85,12 +85,12 @@ describe('Ds', () => {
 
   describe('when connecting using a static api key', () => {
     it('should successfully connect', async () => {
-      ds = new Ds({ apiKey: mockApiKey });
+      relaybox = new Relaybox({ apiKey: mockApiKey });
 
-      await ds.connect();
+      await relaybox.connect();
 
-      expect(ds.clientId).toEqual(mockClientId);
-      expect(ds.connectionId).toEqual(mockConnectionId);
+      expect(relaybox.clientId).toEqual(mockClientId);
+      expect(relaybox.connectionId).toEqual(mockConnectionId);
     });
 
     it('should throw SocketConnectionError if socket emits error event', async () => {
@@ -98,9 +98,9 @@ describe('Ds', () => {
         socket.emit(SocketEvent.ERROR);
       });
 
-      ds = new Ds({ apiKey: mockApiKey });
+      relaybox = new Relaybox({ apiKey: mockApiKey });
 
-      await expect(ds.connect()).rejects.toThrow(SocketConnectionError);
+      await expect(relaybox.connect()).rejects.toThrow(SocketConnectionError);
     });
   });
 
@@ -111,12 +111,12 @@ describe('Ds', () => {
         expiresIn: 30
       });
 
-      ds = new Ds({ authEndpoint: mockAuthEndpoint });
+      relaybox = new Relaybox({ authEndpoint: mockAuthEndpoint });
 
-      await ds.connect();
+      await relaybox.connect();
 
-      expect(ds.clientId).toEqual(mockClientId);
-      expect(ds.connectionId).toEqual(mockConnectionId);
+      expect(relaybox.clientId).toEqual(mockClientId);
+      expect(relaybox.connectionId).toEqual(mockConnectionId);
     });
 
     it('should throw SocketConnectionError if socket emits error event', async () => {
@@ -129,9 +129,9 @@ describe('Ds', () => {
         socket.emit(SocketEvent.ERROR);
       });
 
-      ds = new Ds({ authEndpoint: mockAuthEndpoint });
+      relaybox = new Relaybox({ authEndpoint: mockAuthEndpoint });
 
-      await expect(ds.connect()).rejects.toThrow(SocketConnectionError);
+      await expect(relaybox.connect()).rejects.toThrow(SocketConnectionError);
     });
 
     it('should throw an error if token request fails', async () => {
@@ -139,9 +139,9 @@ describe('Ds', () => {
         new HTTPRequestError(`fetch failed`)
       );
 
-      ds = new Ds({ authEndpoint: mockAuthEndpoint });
+      relaybox = new Relaybox({ authEndpoint: mockAuthEndpoint });
 
-      await expect(ds.connect()).rejects.toThrow(HTTPRequestError);
+      await expect(relaybox.connect()).rejects.toThrow(HTTPRequestError);
     });
   });
 });

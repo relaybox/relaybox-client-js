@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { SocketManager } from '../socket-manager';
-import { DsMetricsEventAllowedValue, Metrics } from '../metrics';
-import { ClientEvent } from '../types/event.types';
+import { SocketManager } from '../lib/socket-manager';
+import { MetricsEventAllowedValue, Metrics } from '../lib/metrics';
+import { ClientEvent } from '../lib/types/event.types';
 
 const mockRoomid = 'room123';
 
@@ -9,7 +9,7 @@ const socketManagerOn = vi.fn();
 const socketManagerOff = vi.fn();
 const socketManagerEmitWithAck = vi.fn();
 
-vi.mock('../socket-manager', () => ({
+vi.mock('../lib/socket-manager', () => ({
   SocketManager: vi.fn(() => ({
     emitWithAck: socketManagerEmitWithAck,
     on: socketManagerOn,
@@ -18,7 +18,7 @@ vi.mock('../socket-manager', () => ({
   }))
 }));
 
-vi.mock('../logger', () => ({
+vi.mock('../lib/logger', () => ({
   logger: {
     logInfo: vi.fn(),
     logError: vi.fn()
@@ -44,7 +44,7 @@ describe('Metrics', () => {
       await metrics.subscribe(handler);
       expect(socketManagerEmitWithAck).toHaveBeenCalledWith(ClientEvent.ROOM_METRICS_SUBSCRIBE, {
         roomId: mockRoomid,
-        event: DsMetricsEventAllowedValue.ALL
+        event: MetricsEventAllowedValue.ALL
       });
       expect(metrics['handlerRefs'].get(handler)).toEqual(1);
     });
@@ -59,7 +59,7 @@ describe('Metrics', () => {
 
       expect(socketManagerEmitWithAck).toHaveBeenCalledWith(ClientEvent.ROOM_METRICS_SUBSCRIBE, {
         roomId: mockRoomid,
-        event: DsMetricsEventAllowedValue.ALL
+        event: MetricsEventAllowedValue.ALL
       });
       expect(metrics['handlerRefs'].get(handler1)).toEqual(2);
       expect(metrics['handlerRefs'].get(handler2)).toEqual(1);
@@ -72,7 +72,7 @@ describe('Metrics', () => {
       await metrics.unsubscribe(handler);
       expect(socketManagerEmitWithAck).toHaveBeenCalledWith(ClientEvent.ROOM_METRICS_UNSUBSCRIBE, {
         roomId: mockRoomid,
-        event: DsMetricsEventAllowedValue.ALL
+        event: MetricsEventAllowedValue.ALL
       });
       expect(metrics['handlerRefs'].get(handler)).toBeUndefined();
     });

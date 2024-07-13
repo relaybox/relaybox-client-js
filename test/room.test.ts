@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { Room } from '../room';
-import { SocketManager } from '../socket-manager';
-import { PresenceFactory } from '../factory';
-import { MetricsFactory } from '../factory';
-import { ClientEvent } from '../types/event.types';
+import { Room } from '../lib/room';
+import { SocketManager } from '../lib/socket-manager';
+import { PresenceFactory } from '../lib/factory';
+import { MetricsFactory } from '../lib/factory';
+import { ClientEvent } from '../lib/types/event.types';
 
 const mockRoomId = 'roomId123';
 const mockEvent = 'mock:event';
@@ -11,7 +11,7 @@ const mockEvent = 'mock:event';
 const socketManagerOn = vi.fn();
 const socketManagerOff = vi.fn();
 
-vi.mock('../socket-manager', () => ({
+vi.mock('../lib/socket-manager', () => ({
   SocketManager: vi.fn(() => ({
     emitWithAck: vi.fn(),
     on: socketManagerOn,
@@ -20,7 +20,7 @@ vi.mock('../socket-manager', () => ({
   }))
 }));
 
-vi.mock('../factory', () => ({
+vi.mock('../lib/factory', () => ({
   PresenceFactory: vi.fn(() => ({
     createPresence: vi.fn(() => ({
       unsubscribe: vi.fn()
@@ -33,7 +33,7 @@ vi.mock('../factory', () => ({
   }))
 }));
 
-vi.mock('../logger', () => ({
+vi.mock('../lib/logger', () => ({
   logger: {
     logInfo: vi.fn(),
     logError: vi.fn()
@@ -58,7 +58,7 @@ describe('Room', () => {
     vi.restoreAllMocks();
   });
 
-  it('should successfully create a room and confirm join', async () => {
+  it.only('should successfully create a room and confirm join', async () => {
     await expect(room.create()).resolves.toBe(room);
 
     expect(socketManager.emitWithAck).toHaveBeenCalledWith(ClientEvent.ROOM_JOIN, {

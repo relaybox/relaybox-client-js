@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach, beforeAll, afterAll } from 'vitest';
-import { request } from '../request';
-import { HTTPRequestError, NetworkError } from '../errors';
+import { request } from '../lib/request';
+import { HTTPRequestError, NetworkError } from '../lib/errors';
 import { setupServer } from 'msw/node';
 import { HttpResponse, http } from 'msw';
 

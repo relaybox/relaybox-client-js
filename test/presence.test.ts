@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { SocketManager } from '../socket-manager';
-import { Presence } from '../presence';
-import { ClientEvent } from '../types/event.types';
-import { ValidationError } from '../errors';
+import { SocketManager } from '../lib/socket-manager';
+import { Presence } from '../lib/presence';
+import { ClientEvent } from '../lib/types/event.types';
+import { ValidationError } from '../lib/errors';
 
 const mockRoomid = 'room123';
 const mockNspRoomId = 'abc:room123';
@@ -11,7 +11,7 @@ const socketManagerOn = vi.fn();
 const socketManagerOff = vi.fn();
 const socketManagerEmitWithAck = vi.fn();
 
-vi.mock('../socket-manager', () => ({
+vi.mock('../lib/socket-manager', () => ({
   SocketManager: vi.fn(() => ({
     emitWithAck: socketManagerEmitWithAck,
     on: socketManagerOn,
@@ -20,7 +20,7 @@ vi.mock('../socket-manager', () => ({
   }))
 }));
 
-vi.mock('../logger', () => ({
+vi.mock('../lib/logger', () => ({
   logger: {
     logInfo: vi.fn(),
     logError: vi.fn()

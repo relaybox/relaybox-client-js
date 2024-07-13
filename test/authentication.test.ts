@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach, beforeAll, afterAll } from 'vitest';
-import { getAuthTokenResponse } from '../authentication';
-import { HTTPRequestError, ValidationError, NetworkError } from '../errors';
+import { getAuthTokenResponse } from '../lib/authentication';
+import { HTTPRequestError, ValidationError, NetworkError } from '../lib/errors';
 import { setupServer } from 'msw/node';
 import { HttpResponse, http } from 'msw';
 
