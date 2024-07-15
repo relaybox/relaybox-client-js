@@ -8,12 +8,12 @@ export default {
     {
       file: 'dist/bundle.cjs.js',
       format: 'cjs',
-      sourcemap: false
+      sourcemap: true
     },
     {
       file: 'dist/bundle.esm.js',
       format: 'esm',
-      sourcemap: false
+      sourcemap: true
     }
   ],
   plugins: [nodeResolve(), commonjs(), babel({ babelHelpers: 'bundled' })]

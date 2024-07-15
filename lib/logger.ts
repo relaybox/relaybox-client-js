@@ -10,8 +10,8 @@ class Logger {
     console.error(`[ERROR]:${this.getNow()} ${message}`, error);
   }
 
-  logInfo(message: string) {
-    console.log(`[INFO]:${this.getNow()} ${message}`);
+  logInfo(message: string, data?: any) {
+    console.log(`[INFO]:${this.getNow()} ${message}`, data);
   }
 
   logWarning(message: string, event?: any) {

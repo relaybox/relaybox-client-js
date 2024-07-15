@@ -49,6 +49,8 @@ export class SocketManager {
     this.connectionString = this.getConnectionString();
     this.connection = new WebSocket(this.connectionString!);
     this.registerSocketStateEventListeners();
+
+    logger.logInfo('Connecting socket');
   }
 
   registerSocketStateEventListeners() {
@@ -157,6 +159,8 @@ export class SocketManager {
       return;
     }
 
+    logger.logInfo(`Reconecting socket`, { connectionId: this.socketAuth?.connectionId });
+
     this.setSocketState(SocketState.RECONNECTING);
 
     this.eventEmitter.emit(SocketEvent.RECONNECTING, ++this.reconnectAttempts);
@@ -255,9 +259,9 @@ export class SocketManager {
 
   disconnectSocket(): void {
     if (this.socket) {
-      this.eventEmitter.removeAllListeners();
+      // this.eventEmitter.removeAllListeners();
       this.connection?.close();
-      this.socket = null;
+      // this.socket = null;
 
       logger.logInfo('Socket disconnected');
     }
