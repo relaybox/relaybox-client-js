@@ -3,6 +3,7 @@ export interface PresenceEvent<T = any> {
   timestamp: string;
   data: T;
 }
+
 export enum PresenceEventAllowedValue {
   JOIN = 'join',
   LEAVE = 'leave',

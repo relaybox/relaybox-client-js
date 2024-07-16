@@ -18,7 +18,7 @@ vi.mock('../lib/logger', () => ({
   }
 }));
 
-describe('SocketManager tests', () => {
+describe('SocketManager', () => {
   let socketManager: SocketManager;
 
   beforeEach(() => {

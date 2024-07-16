@@ -127,7 +127,9 @@ export class Presence {
         if (handler) {
           this.pushEventHandler(event, handler);
         }
+
         const message = `Error unsubscribing to event "${event}"`;
+
         logger.logError(message, err);
         throw new Error(message);
       }
