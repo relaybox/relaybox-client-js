@@ -125,6 +125,8 @@ export class Relaybox {
   }
 
   private async handleAuthTokenConnect(refresh?: boolean): Promise<void> {
+    logger.logInfo(`Fetching auth token response for new connection`);
+
     const tokenResponse = await getAuthTokenResponse(
       this.authEndpoint,
       this.authHeaders,

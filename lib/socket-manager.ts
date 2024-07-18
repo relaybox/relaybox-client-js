@@ -70,6 +70,8 @@ export class SocketManager {
     this.socket.connected = true;
     this.setSocketState(SocketState.CONNECTED);
 
+    logger.logInfo('Socket connected');
+
     if (this.reconnectAttempts > 0) {
       this.eventEmitter.emit(SocketEvent.RECONNECTED, this.reconnectAttempts);
     } else {
@@ -104,7 +106,7 @@ export class SocketManager {
     this.eventEmitter.emit(SocketEvent.ERROR);
 
     if (this.tokenExpired()) {
-      logger.logError('Auth token expired', {
+      logger.logError('Socket auth token expired', {
         tokenExpiryUtc: this.tokenExpiryUtc,
         now: new Date().getTime()
       });
