@@ -122,4 +122,27 @@ describe('SocketManager', () => {
     await disconnectPromise;
     await reconnectingPromise;
   });
+
+  it.skip('should handle websocket auth token expiry error event', async () => {
+    const mockTokenResponseExpired = {
+      ...mockTokenResponse,
+      expiresIn: -1
+    };
+
+    const authExpiryEvent = new Promise<void>((resolve) => {
+      socketManager.eventEmitter.on(SocketEvent.AUTH_TOKEN_EXPIRED, () => {
+        expect(socketManager.getSocket().connected).toBe(false);
+        resolve();
+      });
+    });
+
+    socketManager.authTokenInitSocket(mockTokenResponseExpired);
+    socketManager.connectSocket();
+
+    const event = 'error' as unknown as Event;
+
+    setTimeout(() => {
+      socketManager.getConnection()?.dispatchEvent(event);
+    }, 20);
+  });
 });

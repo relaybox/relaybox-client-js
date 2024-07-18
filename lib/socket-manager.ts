@@ -59,13 +59,13 @@ export class SocketManager {
       return;
     }
 
-    this.connection.onopen = this.handleSocketOpen.bind(this);
-    this.connection.onmessage = this.handleSocketMessage.bind(this);
-    this.connection.onclose = this.handleSocketClose.bind(this);
-    this.connection.onerror = this.handleSocketError.bind(this);
+    this.connection.onopen = this.handleSocketOpenEvent.bind(this);
+    this.connection.onmessage = this.handleSocketMessageEvent.bind(this);
+    this.connection.onclose = this.handleSocketCloseEvent.bind(this);
+    this.connection.onerror = this.handleSocketErrorEvent.bind(this);
   }
 
-  private handleSocketOpen() {
+  private handleSocketOpenEvent() {
     this.socket = {};
     this.socket.connected = true;
     this.setSocketState(SocketState.CONNECTED);
@@ -79,7 +79,7 @@ export class SocketManager {
     this.reconnectAttempts = 0;
   }
 
-  private handleSocketClose(event: CloseEvent) {
+  private handleSocketCloseEvent(event: CloseEvent) {
     this.socket.connected = false;
     this.setSocketState(SocketState.DISCONNECTED);
     this.eventEmitter.emit(SocketEvent.DISCONNECT);
@@ -88,7 +88,7 @@ export class SocketManager {
     logger.logWarning(`Socket disconnected`, event);
   }
 
-  private handleSocketMessage(messageEvent: MessageEvent) {
+  private handleSocketMessageEvent(messageEvent: MessageEvent) {
     const { type, body } = this.parseServerEventData(messageEvent);
 
     this.eventEmitter.emit(type, body);
@@ -99,7 +99,7 @@ export class SocketManager {
     }
   }
 
-  private handleSocketError(err: Event) {
+  private handleSocketErrorEvent(err: Event) {
     this.socket.connected = false;
     this.eventEmitter.emit(SocketEvent.ERROR);
 
