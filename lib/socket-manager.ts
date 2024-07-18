@@ -13,7 +13,7 @@ import { KeyData, TokenResponse } from './types/request.types';
 
 const UWS_SERVER_HOST = 'http://localhost:9090';
 const MAX_RECONNECT_ATTEMPTS = 10;
-const INITIAL_RECONNECT_DELAY_MS = 200;
+const INITIAL_RECONNECT_DELAY_MS = 500;
 const MAX_RECONNECT_DELAY_MS = 10000;
 
 export class SocketManager {
@@ -25,6 +25,7 @@ export class SocketManager {
   private reconnectAttempts: number = 0;
   private reconnectionTimeout: NodeJS.Timeout | number | null = null;
   private pendingAcknowledgements: Map<string, SocketEventHandler> = new Map();
+  private tokenExpiryUtc: number | null = null;
 
   public id?: string;
   public eventEmitter: EventEmitter;
@@ -96,6 +97,16 @@ export class SocketManager {
       this.socket.connected = false;
       this.eventEmitter.emit(SocketEvent.ERROR);
 
+      if (this.tokenExpired()) {
+        logger.logError('Auth token expired', {
+          tokenExpiryUtc: this.tokenExpiryUtc,
+          now: new Date().getTime()
+        });
+
+        this.eventEmitter.emit(SocketEvent.AUTH_TOKEN_EXPIRED, this.tokenExpiryUtc);
+        this.handleReconnection();
+      }
+
       logger.logError(`Socket error`, err);
     };
   }
@@ -112,6 +123,7 @@ export class SocketManager {
     }
 
     this.tokenResponse = tokenResponse;
+    this.tokenExpiryUtc = this.getTokenExpiryUtc(tokenResponse);
 
     if (!this.socket) {
       this.initializeSocket(tokenResponse);
@@ -132,6 +144,7 @@ export class SocketManager {
 
   updateSocketAuth(tokenResponse: TokenResponse): void {
     this.tokenResponse = tokenResponse;
+    this.tokenExpiryUtc = this.getTokenExpiryUtc(tokenResponse);
 
     this.socketAuth = {
       ...this.socketAuth,
@@ -290,5 +303,18 @@ export class SocketManager {
 
   getSocketState() {
     return this.socket.state;
+  }
+
+  private getTokenExpiryUtc(tokenResponse: TokenResponse): number {
+    const unixTime = new Date().getTime();
+    return unixTime + tokenResponse.expiresIn * 1000;
+  }
+
+  private tokenExpired(): boolean {
+    if (this.tokenExpiryUtc) {
+      return this.tokenExpiryUtc <= new Date().getTime();
+    }
+
+    return false;
   }
 }

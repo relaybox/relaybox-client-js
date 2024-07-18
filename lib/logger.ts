@@ -11,7 +11,11 @@ class Logger {
   }
 
   logInfo(message: string, data?: any) {
-    console.log(`[INFO]:${this.getNow()} ${message}`, data);
+    if (data) {
+      console.log(`[INFO]:${this.getNow()} ${message}`, data);
+    } else {
+      console.log(`[INFO]:${this.getNow()} ${message}`);
+    }
   }
 
   logWarning(message: string, event?: any) {

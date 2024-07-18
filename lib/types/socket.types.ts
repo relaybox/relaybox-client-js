@@ -36,7 +36,8 @@ export enum SocketEvent {
   CONNECT_FAILED = 'connect_failed',
   RECONNECTING = 'reconnecting',
   RECONNECTED = 'reconnected',
-  RECONNECT_FAILED = 'reconnect_failed'
+  RECONNECT_FAILED = 'reconnect_failed',
+  AUTH_TOKEN_EXPIRED = 'auth_token_expired'
 }
 
 export enum SocketState {

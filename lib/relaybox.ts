@@ -93,6 +93,11 @@ export class Relaybox {
     this.manageSocketEventListener(SocketEvent.RECONNECT_FAILED, (err: any) => {
       this.connection.emit(SocketEvent.RECONNECT_FAILED, err);
     });
+
+    this.manageSocketEventListener(SocketEvent.AUTH_TOKEN_EXPIRED, (tokenExpiryUtc: number) => {
+      this.refreshTimeout = null;
+      this.handleAuthTokenConnect(true);
+    });
   }
 
   async quickConnect(): Promise<void> {
@@ -133,8 +138,7 @@ export class Relaybox {
       this.socketManager.authTokenInitSocket(tokenResponse);
     }
 
-    this.setAuthTokenRefreshTimeout(tokenResponse.expiresIn);
-    // this.setAuthTokenRefreshTimeout(30);
+    // this.setAuthTokenRefreshTimeout(tokenResponse.expiresIn);
   }
 
   private async handleApiKeyConnect(): Promise<void> {

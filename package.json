@@ -8,7 +8,8 @@
   "scripts": {
     "build": "tsc && rollup -c rollup.config.mjs",
     "prepublishOnly": "npm run build",
-    "test": "vitest"
+    "test": "vitest",
+    "dev": "tsc --watch && rollup -c rollup.config.mjs --watch"
   },
   "repository": {
     "type": "git",
