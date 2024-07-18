@@ -138,7 +138,7 @@ export class Relaybox {
       this.socketManager.authTokenInitSocket(tokenResponse);
     }
 
-    // this.setAuthTokenRefreshTimeout(tokenResponse.expiresIn);
+    this.setAuthTokenRefreshTimeout(tokenResponse.expiresIn);
   }
 
   private async handleApiKeyConnect(): Promise<void> {

@@ -59,56 +59,62 @@ export class SocketManager {
       return;
     }
 
-    this.connection.onopen = () => {
-      this.socket = {};
-      this.socket.connected = true;
-      this.setSocketState(SocketState.CONNECTED);
+    this.connection.onopen = this.handleSocketOpen.bind(this);
+    this.connection.onmessage = this.handleSocketMessage.bind(this);
+    this.connection.onclose = this.handleSocketClose.bind(this);
+    this.connection.onerror = this.handleSocketError.bind(this);
+  }
 
-      if (this.reconnectAttempts > 0) {
-        this.eventEmitter.emit(SocketEvent.RECONNECTED, this.reconnectAttempts);
-      } else {
-        this.eventEmitter.emit(SocketEvent.CONNECT);
-      }
+  private handleSocketOpen() {
+    this.socket = {};
+    this.socket.connected = true;
+    this.setSocketState(SocketState.CONNECTED);
 
-      this.reconnectAttempts = 0;
-    };
+    if (this.reconnectAttempts > 0) {
+      this.eventEmitter.emit(SocketEvent.RECONNECTED, this.reconnectAttempts);
+    } else {
+      this.eventEmitter.emit(SocketEvent.CONNECT);
+    }
 
-    this.connection.onmessage = (messageEvent: MessageEvent) => {
-      const { type, body } = this.parseServerEventData(messageEvent);
+    this.reconnectAttempts = 0;
+  }
 
-      this.eventEmitter.emit(type, body);
+  private handleSocketClose(event: CloseEvent) {
+    this.socket.connected = false;
+    this.setSocketState(SocketState.DISCONNECTED);
+    this.eventEmitter.emit(SocketEvent.DISCONNECT);
+    this.handleReconnection();
 
-      if (type === ServerEvent.MESSAGE_ACKNOWLEDGED) {
-        const { ackId, data, err } = body;
-        this.handlePendingAcknowledgement(ackId, data, err);
-      }
-    };
+    logger.logWarning(`Socket disconnected`, event);
+  }
 
-    this.connection.onclose = (event: CloseEvent) => {
-      this.socket.connected = false;
-      this.setSocketState(SocketState.DISCONNECTED);
-      this.eventEmitter.emit(SocketEvent.DISCONNECT);
+  private handleSocketMessage(messageEvent: MessageEvent) {
+    const { type, body } = this.parseServerEventData(messageEvent);
+
+    this.eventEmitter.emit(type, body);
+
+    if (type === ServerEvent.MESSAGE_ACKNOWLEDGED) {
+      const { ackId, data, err } = body;
+      this.handlePendingAcknowledgement(ackId, data, err);
+    }
+  }
+
+  private handleSocketError(err: Event) {
+    this.socket.connected = false;
+    this.eventEmitter.emit(SocketEvent.ERROR);
+
+    if (this.tokenExpired()) {
+      logger.logError('Auth token expired', {
+        tokenExpiryUtc: this.tokenExpiryUtc,
+        now: new Date().getTime()
+      });
+
+      this.eventEmitter.emit(SocketEvent.AUTH_TOKEN_EXPIRED, this.tokenExpiryUtc);
+
       this.handleReconnection();
+    }
 
-      logger.logWarning(`Socket disconnected`, event);
-    };
-
-    this.connection.onerror = (err: Event) => {
-      this.socket.connected = false;
-      this.eventEmitter.emit(SocketEvent.ERROR);
-
-      if (this.tokenExpired()) {
-        logger.logError('Auth token expired', {
-          tokenExpiryUtc: this.tokenExpiryUtc,
-          now: new Date().getTime()
-        });
-
-        this.eventEmitter.emit(SocketEvent.AUTH_TOKEN_EXPIRED, this.tokenExpiryUtc);
-        this.handleReconnection();
-      }
-
-      logger.logError(`Socket error`, err);
-    };
+    logger.logError(`Socket error`, err);
   }
 
   parseServerEventData(messageEvent: MessageEvent): ServerEventData {
