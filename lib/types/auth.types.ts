@@ -18,3 +18,4 @@ export interface AuthRequestOptions {
 }
 
 export type AuthParamsOrHeaders = Record<string, unknown> | (() => Record<string, unknown> | null);
+export type AuthTokenLifeCycle = 'session' | 'expiry';

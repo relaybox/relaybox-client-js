@@ -13,12 +13,15 @@ import { logger } from './logger';
 import { PresenceFactory, MetricsFactory } from './factory';
 import { SocketConnectionError, ValidationError } from './errors';
 import { SocketManager } from './socket-manager';
-import { AuthRequestOptions } from './types/auth.types';
+import { AuthRequestOptions, AuthTokenLifeCycle } from './types/auth.types';
 
 const AUTH_TOKEN_REFRESH_BUFFER_SECONDS = 20;
 const AUTH_TOKEN_REFRESH_RETRY_MS = 10000;
 const AUTH_TOKEN_REFRESH_JITTER_RANGE_MS = 2000;
 const SOCKET_CONNECTION_ACK_TIMEOUT_MS = 2000;
+
+const AUTH_TOKEN_LIFECYCLE_SESSION = 'session';
+const AUTH_TOKEN_LIFECYCLE_EXPIRY = 'expiry';
 
 export class Relaybox {
   private readonly socketManager: SocketManager;
@@ -29,6 +32,7 @@ export class Relaybox {
   private readonly authParams?: Record<string, unknown> | null;
   private readonly authRequestOptions?: AuthRequestOptions;
   private readonly apiKey?: string;
+  private readonly authTokenLifeCycle?: AuthTokenLifeCycle = AUTH_TOKEN_LIFECYCLE_SESSION;
   private socketManagerListeners: SocketManagerListener[] = [];
   private refreshTimeout: NodeJS.Timeout | number | null = null;
 
@@ -52,6 +56,7 @@ export class Relaybox {
       typeof opts.authHeaders === 'function' ? opts.authHeaders() : opts.authHeaders;
     this.authParams = typeof opts.authParams === 'function' ? opts.authParams() : opts.authParams;
     this.authRequestOptions = opts.authRequestOptions;
+    this.authTokenLifeCycle = opts.authTokenLifeCycle;
 
     this.registerSocketManagerListeners();
   }
@@ -95,8 +100,8 @@ export class Relaybox {
     });
 
     this.manageSocketEventListener(SocketEvent.AUTH_TOKEN_EXPIRED, (tokenExpiryUtc: number) => {
-      this.refreshTimeout = null;
-      this.handleAuthTokenConnect(true);
+      this.connect(true);
+      this.connection.emit(SocketEvent.REAUTHENTICATING, tokenExpiryUtc);
     });
   }
 
@@ -104,8 +109,8 @@ export class Relaybox {
     this.socketManager.connectSocket();
   }
 
-  async connect(): Promise<void> {
-    if (this.socketManager.getSocket()) {
+  async connect(forceNewConnection?: boolean): Promise<void> {
+    if (this.socketManager.getSocket() && !forceNewConnection) {
       logger.logInfo('Socket connection exists');
       return;
     }
@@ -140,7 +145,9 @@ export class Relaybox {
       this.socketManager.authTokenInitSocket(tokenResponse);
     }
 
-    this.setAuthTokenRefreshTimeout(tokenResponse.expiresIn);
+    if (this.authTokenLifeCycle === AUTH_TOKEN_LIFECYCLE_EXPIRY) {
+      this.setAuthTokenRefreshTimeout(tokenResponse.expiresIn);
+    }
   }
 
   private async handleApiKeyConnect(): Promise<void> {

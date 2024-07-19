@@ -1,4 +1,4 @@
-import { AuthParamsOrHeaders, AuthRequestOptions } from './auth.types';
+import { AuthParamsOrHeaders, AuthRequestOptions, AuthTokenLifeCycle } from './auth.types';
 
 export interface RelayboxOptions {
   authEndpoint?: string;
@@ -7,4 +7,5 @@ export interface RelayboxOptions {
   clientId?: number | string;
   authHeaders?: AuthParamsOrHeaders | null;
   authRequestOptions?: AuthRequestOptions;
+  authTokenLifeCycle?: AuthTokenLifeCycle;
 }
