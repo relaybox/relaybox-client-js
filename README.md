@@ -4,7 +4,7 @@ Find the full technical [documention here](https://relaybox.net/docs)
 
 Welcome to RelayBox.
 
-A free account is required in order to use this library. Please find more details [here](https://relaybox.net/docs/getting-started#creating-your-first-application).
+A free account and [API key](https://relaybox.net/docs/authentication/api-keys#how-to-generate-an-api-key) is required in to use this library. Find more details [here](https://relaybox.net/docs/getting-started#creating-your-first-application).
 
 ## Install the Client SDK Library
 
