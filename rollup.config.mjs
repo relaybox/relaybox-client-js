@@ -16,5 +16,15 @@ export default {
       sourcemap: true
     }
   ],
-  plugins: [nodeResolve(), commonjs(), babel({ babelHelpers: 'bundled' })]
+  plugins: [
+    nodeResolve(),
+    commonjs(),
+    babel({ babelHelpers: 'bundled' }),
+    replace({
+      'process.env.UWS_SERVER_HOST': JSON.stringify(
+        process.env.UWS_SERVER_HOST || 'wss://default.server.com'
+      ),
+      preventAssignment: true
+    })
+  ]
 };
