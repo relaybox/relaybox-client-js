@@ -59,7 +59,7 @@ In the lines above, we subscribed to the "message" event and provided a callback
 To publish an event, provide an event name and some data to transmit. Since we're already subscribed, let's publish a "message" event...
 
 ```typescript
-const response = await myFirstRoom.publish('message', { name: 'Bob' });
+const response = await myFirstRoom.publish('message', { hello: 'universe' });
 ```
 
 ## Putting It All Together
@@ -81,5 +81,5 @@ await myFirstRoom.subscribe('message', (data) => {
   console.log(data);
 });
 
-const response = await myFirstRoom.publish('message', { name: 'Bob' });
+const response = await myFirstRoom.publish('message', { hello: 'universe' });
 ```
