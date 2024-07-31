@@ -4,7 +4,7 @@ Find the full technical [documention here](https://relaybox.net/docs)
 
 Welcome to RelayBox.
 
-In order to use this library, you need to create a free account and [API key](https://relaybox.net/docs/authentication/api-keys#how-to-generate-an-api-key). Find more details [here](https://relaybox.net/docs/getting-started#creating-your-first-application).
+In order to use this library, you need to create a free account and [API key](https://relaybox.net/docs/authentication/api-keys). Find more details [here](https://relaybox.net/docs/getting-started).
 
 ## Install the Client SDK Library
 
@@ -30,7 +30,7 @@ await relayBox.connect();
 
 ## Create and Join a Room
 
-So far, we've set up an account, created an [API key](https://relaybox.net/docs/authentication/api-keys#how-to-generate-an-api-key), and established a connection between your client and the Relaybox service. Now let's create and join our first room.
+So far, we've set up an account, created an [API key](https://relaybox.net/docs/authentication/api-keys), and established a connection between your client and the Relaybox service. Now let's create and join our first room.
 
 Rooms are logical groups of connections that enable communication via events...
 
