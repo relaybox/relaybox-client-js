@@ -1,7 +1,7 @@
 import EventEmitter from 'eventemitter3';
 import { getAuthTokenResponse } from './authentication';
 import { ServerEvent } from './types/event.types';
-import { RelayboxOptions } from './types/relaybox.types';
+import { RelayBoxOptions } from './types/relaybox.types';
 import { Room } from './room';
 import {
   SocketEvent,
@@ -23,7 +23,7 @@ const SOCKET_CONNECTION_ACK_TIMEOUT_MS = 2000;
 const AUTH_TOKEN_LIFECYCLE_SESSION = 'session';
 const AUTH_TOKEN_LIFECYCLE_EXPIRY = 'expiry';
 
-export class Relaybox {
+export class RelayBox {
   private readonly socketManager: SocketManager;
   private readonly presenceFactory: PresenceFactory;
   private readonly metricsFactory: MetricsFactory;
@@ -40,7 +40,7 @@ export class Relaybox {
   public clientId?: string | number;
   public connectionId: string | null = null;
 
-  constructor(opts: RelayboxOptions) {
+  constructor(opts: RelayBoxOptions) {
     if (!opts.apiKey && !opts.authEndpoint) {
       throw new ValidationError(`Please provide either "authEndpoint" or "apiKey"`);
     }

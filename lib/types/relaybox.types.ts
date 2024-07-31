@@ -1,6 +1,6 @@
 import { AuthParamsOrHeaders, AuthRequestOptions, AuthTokenLifeCycle } from './auth.types';
 
-export interface RelayboxOptions {
+export interface RelayBoxOptions {
   authEndpoint?: string;
   apiKey?: string;
   authParams?: AuthParamsOrHeaders | null;

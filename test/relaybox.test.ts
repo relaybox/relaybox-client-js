@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi, beforeEach, MockInstance } from 'vitest';
-import { Relaybox } from '../lib/relaybox';
+import { RelayBox } from '../lib/relaybox';
 import { HTTPRequestError, SocketConnectionError, ValidationError } from '../lib/errors';
 import { SocketEvent } from '../lib/types/socket.types';
 import { ServerEvent } from '../lib/types/event.types';
@@ -46,8 +46,8 @@ vi.mock('../lib/socket-manager', () => ({
   }))
 }));
 
-describe('Relaybox', () => {
-  let relaybox: Relaybox;
+describe('RelayBox', () => {
+  let relayBox: RelayBox;
 
   beforeEach(() => {
     socket = { ...eventEmitter, auth: {} as any };
@@ -63,7 +63,7 @@ describe('Relaybox', () => {
 
   describe('when connecting using either api key or auth token', () => {
     it('should throw ValidationError if neither "apiKey" nor "authEndpoint" is provided', () => {
-      expect(() => new Relaybox({})).toThrow(ValidationError);
+      expect(() => new RelayBox({})).toThrow(ValidationError);
     });
 
     it('should throw SocketConnectionError if socket connection times out', async () => {
@@ -74,9 +74,9 @@ describe('Relaybox', () => {
         vi.advanceTimersByTime(35000);
       });
 
-      relaybox = new Relaybox({ apiKey: mockApiKey });
+      relayBox = new RelayBox({ apiKey: mockApiKey });
 
-      const connectPromise = relaybox.connect();
+      const connectPromise = relayBox.connect();
 
       await expect(connectPromise).rejects.toThrow(SocketConnectionError);
       await expect(connectPromise).rejects.toThrowError(/Connection timeout after/);
@@ -85,12 +85,12 @@ describe('Relaybox', () => {
 
   describe('when connecting using a static api key', () => {
     it('should successfully connect', async () => {
-      relaybox = new Relaybox({ apiKey: mockApiKey });
+      relayBox = new RelayBox({ apiKey: mockApiKey });
 
-      await relaybox.connect();
+      await relayBox.connect();
 
-      expect(relaybox.clientId).toEqual(mockClientId);
-      expect(relaybox.connectionId).toEqual(mockConnectionId);
+      expect(relayBox.clientId).toEqual(mockClientId);
+      expect(relayBox.connectionId).toEqual(mockConnectionId);
     });
 
     it('should throw SocketConnectionError if socket emits error event', async () => {
@@ -98,9 +98,9 @@ describe('Relaybox', () => {
         socket.emit(SocketEvent.ERROR);
       });
 
-      relaybox = new Relaybox({ apiKey: mockApiKey });
+      relayBox = new RelayBox({ apiKey: mockApiKey });
 
-      await expect(relaybox.connect()).rejects.toThrow(SocketConnectionError);
+      await expect(relayBox.connect()).rejects.toThrow(SocketConnectionError);
     });
   });
 
@@ -111,12 +111,12 @@ describe('Relaybox', () => {
         expiresIn: 30
       });
 
-      relaybox = new Relaybox({ authEndpoint: mockAuthEndpoint });
+      relayBox = new RelayBox({ authEndpoint: mockAuthEndpoint });
 
-      await relaybox.connect();
+      await relayBox.connect();
 
-      expect(relaybox.clientId).toEqual(mockClientId);
-      expect(relaybox.connectionId).toEqual(mockConnectionId);
+      expect(relayBox.clientId).toEqual(mockClientId);
+      expect(relayBox.connectionId).toEqual(mockConnectionId);
     });
 
     it('should throw SocketConnectionError if socket emits error event', async () => {
@@ -129,9 +129,9 @@ describe('Relaybox', () => {
         socket.emit(SocketEvent.ERROR);
       });
 
-      relaybox = new Relaybox({ authEndpoint: mockAuthEndpoint });
+      relayBox = new RelayBox({ authEndpoint: mockAuthEndpoint });
 
-      await expect(relaybox.connect()).rejects.toThrow(SocketConnectionError);
+      await expect(relayBox.connect()).rejects.toThrow(SocketConnectionError);
     });
 
     it('should throw an error if token request fails', async () => {
@@ -139,9 +139,9 @@ describe('Relaybox', () => {
         new HTTPRequestError(`fetch failed`)
       );
 
-      relaybox = new Relaybox({ authEndpoint: mockAuthEndpoint });
+      relayBox = new RelayBox({ authEndpoint: mockAuthEndpoint });
 
-      await expect(relaybox.connect()).rejects.toThrow(HTTPRequestError);
+      await expect(relayBox.connect()).rejects.toThrow(HTTPRequestError);
     });
   });
 });
