@@ -1,8 +1,8 @@
 # RelayBox Client Library SDK
 
-Welcome to RelayBox.
+Find the full technical [documention here](https://relaybox.net/docs)
 
-Find the full technical [documention here](https://relaybox.net/docs#our-goals)
+Welcome to RelayBox.
 
 A free account is required in order to use this library. Please find more details [here](https://relaybox.net/docs/getting-started#creating-your-first-application).
 
