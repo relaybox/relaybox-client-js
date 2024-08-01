@@ -8,6 +8,10 @@ import { Metrics } from './metrics';
 import { EventRegistry } from './event-registry';
 import { SocketManager } from './socket-manager';
 
+/**
+ * The Room class represents a room in a chat or messaging application.
+ * It handles event subscriptions, presence management, and communication with the server.
+ */
 export class Room {
   private readonly socketManager: SocketManager;
   private readonly presenceFactory: PresenceFactory;
@@ -19,6 +23,13 @@ export class Room {
   public presence: Presence | null = null;
   public metrics: Metrics | null = null;
 
+  /**
+   * Creates an instance of Room.
+   * @param {string} roomId - The ID of the room.
+   * @param {SocketManager} socketManager - The socket manager for handling socket connections.
+   * @param {PresenceFactory} presencefactory - The factory for creating presence instances.
+   * @param {MetricsFactory} metricsFactory - The factory for creating metrics instances.
+   */
   constructor(
     roomId: string,
     socketManager: SocketManager,
@@ -31,6 +42,11 @@ export class Room {
     this.metricsFactory = metricsFactory;
   }
 
+  /**
+   * Creates and joins the room, initializing presence and metrics.
+   * @returns {Promise<Room>} The created room instance.
+   * @throws Will throw an error if the room creation or joining fails.
+   */
   async create(): Promise<Room> {
     logger.logInfo(`Creating room "${this.roomId}"`);
 
@@ -58,6 +74,12 @@ export class Room {
     }
   }
 
+  /**
+   * Retrieves the event name and handler based on the provided parameters.
+   * @param {string | SocketEventHandler} [eventOrHandler] - The event name or handler function.
+   * @param {SocketEventHandler} [eventHandler] - The event handler function.
+   * @returns {{ event: string | undefined; handler: SocketEventHandler }} The event name and handler.
+   */
   getEventAndHandler(
     eventOrHandler?: string | SocketEventHandler,
     eventHandler?: SocketEventHandler
@@ -75,6 +97,13 @@ export class Room {
     };
   }
 
+  /**
+   * Subscribes to an event with the given handler.
+   * @param {string | SocketEventHandler} eventOrHandler - The event name or handler function.
+   * @param {SocketEventHandler} [eventHandler] - The event handler function.
+   * @returns {Promise<this>} The Room instance.
+   * @throws Will throw an error if no event or handler is provided.
+   */
   async subscribe(
     eventOrHandler: string | SocketEventHandler,
     eventHandler?: SocketEventHandler
@@ -109,6 +138,12 @@ export class Room {
     return this;
   }
 
+  /**
+   * Unsubscribes from an event, removing the handler if provided.
+   * @param {string | SocketEventHandler} [eventOrHandler] - The event name or handler function.
+   * @param {SocketEventHandler} [eventHandler] - The event handler function.
+   * @returns {Promise<this>} The Room instance.
+   */
   async unsubscribe(
     eventOrHandler?: string | SocketEventHandler,
     eventHandler?: SocketEventHandler
@@ -139,6 +174,11 @@ export class Room {
     return this;
   }
 
+  /**
+   * Clears all event handlers and syncs the unbinding with the server.
+   * @returns {Promise<void>}
+   * @throws Will throw an error if the unbinding fails.
+   */
   private async clearAllSync(): Promise<void> {
     logger.logInfo(`Unbinding all handlers, syncing ${this.nspRoomId}`);
 
@@ -153,6 +193,13 @@ export class Room {
     }
   }
 
+  /**
+   * Unbinds all handlers for a specific event and syncs the unbinding with the server.
+   * @param {string} event - The event name to unbind.
+   * @param {SocketEventHandler} [handler] - The handler to remove.
+   * @returns {Promise<void>}
+   * @throws Will throw an error if the unbinding fails.
+   */
   private async unbindAllSync(event: string, handler?: SocketEventHandler): Promise<void> {
     logger.logInfo(`All handlers unbound, syncing ${this.nspRoomId}:${event}`);
 
@@ -171,6 +218,14 @@ export class Room {
     }
   }
 
+  /**
+   * Publishes an event with user data to the room.
+   * @template T
+   * @param {string} event - The event name.
+   * @param {T} userData - The data to send with the event.
+   * @returns {Promise<any>} The server's response to the published event.
+   * @throws Will throw an error if the publication fails.
+   */
   async publish<T>(event: string, userData: T): Promise<any> {
     validateUserData(userData);
 
@@ -189,6 +244,11 @@ export class Room {
     }
   }
 
+  /**
+   * Leaves the room, unsubscribing from presence and metrics, and clearing event handlers.
+   * @returns {Promise<void>}
+   * @throws Will throw an error if the leave operation fails.
+   */
   async leave(): Promise<void> {
     const data = { roomId: this.roomId };
 
@@ -207,14 +267,25 @@ export class Room {
     }
   }
 
+  /**
+   * Disconnects the socket manager from the server.
+   */
   disconnect() {
     this.socketManager.disconnectSocket();
   }
 
+  /**
+   * Connects the socket manager to the server.
+   */
   connect() {
     this.socketManager.connectSocket();
   }
 
+  /**
+   * Adds an event handler for a specific event and binds it to the socket manager.
+   * @param {string} event - The event name.
+   * @param {SocketEventHandler} handler - The handler function.
+   */
   private pushEventHandler(event: string, handler: SocketEventHandler): void {
     const subscription = this.getSubscriptionName(event);
 
@@ -224,6 +295,11 @@ export class Room {
     this.socketManager?.on(subscription, handler);
   }
 
+  /**
+   * Removes an event handler for a specific event and unbinds it from the socket manager.
+   * @param {string} event - The event name.
+   * @param {SocketEventHandler} handler - The handler function.
+   */
   private removeEventHandler(event: string, handler: SocketEventHandler): void {
     const subscription = this.getSubscriptionName(event);
 
@@ -238,6 +314,9 @@ export class Room {
     }
   }
 
+  /**
+   * Clears all event handlers for the room.
+   */
   private clearEventHandlers(): void {
     logger.logInfo(`Removing all handler refs map - ${this.nspRoomId}`);
 
@@ -248,6 +327,10 @@ export class Room {
     this.eventRegistry.clearHandlers();
   }
 
+  /**
+   * Unbinds all event handlers for a specific event from the socket manager.
+   * @param {string} event - The event name.
+   */
   private unbindAll(event: string): void {
     const subscription = this.getSubscriptionName(event);
 
