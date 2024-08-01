@@ -20,11 +20,11 @@ export default {
   plugins: [
     nodeResolve(),
     commonjs(),
-    babel({ babelHelpers: 'bundled' })
-    // terser({
-    //   compress: {
-    //     drop_console: true
-    //   }
-    // })
+    babel({ babelHelpers: 'bundled' }),
+    terser({
+      compress: {
+        drop_console: true
+      }
+    })
   ]
 };

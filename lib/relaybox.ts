@@ -1,3 +1,26 @@
+/*
+MIT License
+
+Copyright (c) 2024 Relaybox Ltd
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 import EventEmitter from 'eventemitter3';
 import { getAuthTokenResponse } from './authentication';
 import { ServerEvent } from './types/event.types';
@@ -23,6 +46,10 @@ const SOCKET_CONNECTION_ACK_TIMEOUT_MS = 2000;
 const AUTH_TOKEN_LIFECYCLE_SESSION = 'session';
 const AUTH_TOKEN_LIFECYCLE_EXPIRY = 'expiry';
 
+/**
+ * RelayBox manages the connection and communication with a remote server
+ * via WebSocket, handling authentication and socket events.
+ */
 export class RelayBox {
   private readonly socketManager: SocketManager;
   private readonly presenceFactory: PresenceFactory;
@@ -40,6 +67,11 @@ export class RelayBox {
   public clientId?: string | number;
   public connectionId: string | null = null;
 
+  /**
+   * Creates an instance of RelayBox.
+   * @param {RelayBoxOptions} opts - The options for configuring the RelayBox instance.
+   * @throws {ValidationError} If neither `authEndpoint` nor `apiKey` is provided.
+   */
   constructor(opts: RelayBoxOptions) {
     if (!opts.apiKey && !opts.authEndpoint) {
       throw new ValidationError(`Please provide either "authEndpoint" or "apiKey"`);
@@ -61,11 +93,19 @@ export class RelayBox {
     this.registerSocketManagerListeners();
   }
 
+  /**
+   * Manages socket event listeners by registering them with the event emitter.
+   * @param {SocketEvent} event - The socket event to listen for.
+   * @param {SocketEventHandler} handler - The handler to call when the event occurs.
+   */
   private manageSocketEventListener(event: SocketEvent, handler: SocketEventHandler): void {
     this.socketManager.eventEmitter.on(event, handler);
     this.socketManagerListeners.push({ event, handler });
   }
 
+  /**
+   * Registers the default socket event listeners to propagate events to the connection.
+   */
   private registerSocketManagerListeners() {
     this.manageSocketEventListener(SocketEvent.CONNECT, () => {
       this.connection.emit(SocketEvent.CONNECT);
@@ -105,10 +145,20 @@ export class RelayBox {
     });
   }
 
+  /**
+   * Establishes a quick connection to the server using the existing socket.
+   * @returns {Promise<void>}
+   */
   async quickConnect(): Promise<void> {
     this.socketManager.connectSocket();
   }
 
+  /**
+   * Connects to the server, optionally forcing a new connection.
+   * @param {boolean} [forceNewConnection=false] - Whether to force a new connection.
+   * @returns {Promise<void>}
+   * @throws Will throw an error if the connection fails.
+   */
   async connect(forceNewConnection?: boolean): Promise<void> {
     if (this.socketManager.getSocket() && !forceNewConnection) {
       logger.logInfo('Socket connection exists');
@@ -129,6 +179,12 @@ export class RelayBox {
     }
   }
 
+  /**
+   * Handles connecting to the server using an authentication token.
+   * @param {boolean} [refresh=false] - Whether this is a token refresh attempt.
+   * @returns {Promise<void>}
+   * @throws Will throw an error if the authentication fails.
+   */
   private async handleAuthTokenConnect(refresh?: boolean): Promise<void> {
     logger.logInfo(`Fetching auth token response for new connection`);
 
@@ -151,6 +207,10 @@ export class RelayBox {
     }
   }
 
+  /**
+   * Handles connecting to the server using an API key.
+   * @returns {Promise<void>}
+   */
   private async handleApiKeyConnect(): Promise<void> {
     const keyData: AuthKeyData = {
       apiKey: this.apiKey!
@@ -163,6 +223,12 @@ export class RelayBox {
     this.socketManager.apiKeyInitSocket(keyData);
   }
 
+  /**
+   * Waits for a stable connection to be established by ensuring both the socket connection
+   * and the acknowledgment of the connection are successful.
+   * @returns {Promise<void>}
+   * @throws {SocketConnectionError} If the connection times out.
+   */
   private waitForStableConnection() {
     const connectionPromises = [this.waitForSocketConnect(), this.waitForConnectionAck()];
 
@@ -188,6 +254,11 @@ export class RelayBox {
     return connectionRacePromises;
   }
 
+  /**
+   * Waits for the socket to emit a connection event.
+   * @returns {Promise<unknown>}
+   * @throws {SocketConnectionError} If the socket encounters an error during connection.
+   */
   private async waitForSocketConnect(): Promise<unknown> {
     let connectHandler: (value: unknown) => void;
     let errorHandler: (value: unknown) => void;
@@ -207,6 +278,11 @@ export class RelayBox {
     });
   }
 
+  /**
+   * Waits for the server to acknowledge the connection, updating client and connection IDs.
+   * @returns {Promise<void>}
+   * @throws Will throw an error if the socket disconnects before acknowledgment.
+   */
   private async waitForConnectionAck(): Promise<unknown> {
     let ackHandler: (handshake: SocketHandshake) => void;
     let disconnectHandler: () => void;
@@ -233,6 +309,11 @@ export class RelayBox {
     });
   }
 
+  /**
+   * Sets a timeout to refresh the authentication token before it expires.
+   * @param {number} expiresIn - The token expiration time in seconds.
+   * @param {number} [retryMs] - Optional retry time in milliseconds.
+   */
   private setAuthTokenRefreshTimeout(expiresIn: number, retryMs?: number): void {
     const refreshBufferSeconds = AUTH_TOKEN_REFRESH_BUFFER_SECONDS;
     const timeout = retryMs || (expiresIn - refreshBufferSeconds) * 1000;
@@ -252,6 +333,12 @@ export class RelayBox {
     }, timeout);
   }
 
+  /**
+   * Joins a room, creating it if it doesn't exist.
+   * @param {string} roomId - The ID of the room to join.
+   * @returns {Promise<Room>} The created or joined room instance.
+   * @throws Will throw an error if room creation fails.
+   */
   async join(roomId: string): Promise<Room> {
     const room = new Room(roomId, this.socketManager, this.presenceFactory, this.metricsFactory);
 
@@ -262,6 +349,9 @@ export class RelayBox {
     }
   }
 
+  /**
+   * Disconnects from the server, cleaning up resources and removing listeners.
+   */
   disconnect(): void {
     if (this.refreshTimeout !== null) {
       clearTimeout(this.refreshTimeout as number);
