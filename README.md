@@ -8,7 +8,7 @@ In order to use this library, you need to create a free account and [API key](ht
 
 ## Install the Client SDK Library
 
-The client library SDK is made available as an npm package. Install as follows...
+To get started, install the client library SDK from NPM
 
 ```
 npm install @relaybox/client
@@ -16,7 +16,7 @@ npm install @relaybox/client
 
 ## Connecting an Application
 
-Once the installation is complete, you'll be able to access the service by initializing a new RelayBox instance.
+Once the installation is complete, you'll be able to access realtime services by initializing a new RelayBox instance.
 
 ```typescript
 import { RelayBox } from '@relaybox/client';
@@ -30,7 +30,7 @@ await relayBox.connect();
 
 ## Create and Join a Room
 
-So far, we've set up an account, created an [API key](https://relaybox.net/docs/authentication/api-keys), and established a connection between your client and the Relaybox service. Now let's create and join our first room.
+So far, we've set up an account, created an [API key](https://relaybox.net/docs/authentication/api-keys), and established a connection from your client-side application. Now let's create and join our first room.
 
 Rooms are logical groups of connections that enable communication via events...
 
@@ -42,9 +42,7 @@ If the room has not already been created, joining will create it.
 
 ## Subscribing to Events
 
-Now that we've established a connection and joined a room, let's subscribe to an event. Events are data packets that are transmitted to other connections listening for them (subscribers). To subscribe to an event, provide the event name and a handler to process data as it arrives.
-
-Let's subscribe to the "message" event...
+Events are data packets transmitted to other connections listening for them (subscribers). To subscribe to an event, provide the event name and a handler to process data as it arrives.
 
 ```typescript
 await myFirstRoom.subscribe('message', (data) => {
@@ -56,7 +54,7 @@ In the lines above, we subscribed to the "message" event and provided a callback
 
 ## Publishing an Event
 
-To publish an event, provide an event name and some data to transmit. Since we're already subscribed, let's publish a "message" event...
+To publish an event, provide an event name and data to transmit. Since we're already subscribed, let's publish a "message" event...
 
 ```typescript
 const response = await myFirstRoom.publish('message', { hello: 'universe' });
