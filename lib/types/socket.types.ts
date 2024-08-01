@@ -41,6 +41,20 @@ export enum SocketEvent {
   REAUTHENTICATING = 'reauthenticating'
 }
 
+export type SocketEventTypes =
+  | 'connect'
+  | 'disconnect'
+  | 'error'
+  | 'reconnect'
+  | 'connect_error'
+  | 'connect_failed'
+  | 'reconnecting'
+  | 'disconnect'
+  | 'reconnected'
+  | 'reconnect_failed'
+  | 'auth_token_expired'
+  | 'reauthenticating';
+
 export enum SocketState {
   CCONNECTING = 'connecting',
   CONNECTED = 'connected',

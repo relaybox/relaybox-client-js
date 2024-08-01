@@ -26,7 +26,7 @@
   "module": "./dist/bundle.esm.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc && rollup -c rollup.config.mjs",
+    "build": "rm -rf dist && tsc && rollup -c rollup.config.mjs",
     "prepublishOnly": "npm run build",
     "test": "vitest",
     "dev": "tsc --watch && rollup -c rollup.config.mjs --watch"
@@ -50,14 +50,15 @@
   "devDependencies": {
     "@babel/core": "^7.15.8",
     "@babel/preset-env": "^7.15.8",
-    "@rollup/plugin-commonjs": "^17.0.0",
-    "@rollup/plugin-node-resolve": "^13.0.6",
     "@rollup/plugin-babel": "^6.0.3",
+    "@rollup/plugin-commonjs": "^26.0.1",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
     "@types/node": "^20.14.10",
     "@types/node-fetch": "^2.6.11",
-    "@types/vitest": "^0.24.2",
-    "rollup": "^4.18.1",
+    "msw": "^2.3.4",
+    "rollup": "^4.19.2",
     "typescript": "^5.5.3",
-    "vitest": "^0.24.2"
+    "vitest": "^2.0.5"
   }
 }
