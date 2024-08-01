@@ -9,12 +9,12 @@ export default {
     {
       file: 'dist/bundle.cjs.js',
       format: 'cjs',
-      sourcemap: true
+      sourcemap: false
     },
     {
       file: 'dist/bundle.esm.js',
       format: 'esm',
-      sourcemap: true
+      sourcemap: false
     }
   ],
   plugins: [
