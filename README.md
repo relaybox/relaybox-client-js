@@ -1,6 +1,6 @@
 # RelayBox Client Library SDK
 
-Find the full technical [documention here](https://relaybox.net/docs)
+Find the full technical [documention here](https://relaybox.net/docs/api-reference/relaybox-client)
 
 Welcome to RelayBox.
 
