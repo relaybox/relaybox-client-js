@@ -5,8 +5,8 @@
     "target": "ESNext",
     "module": "ESNext",
     "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
+    "declarationMap": false,
+    "sourceMap": false,
     "strict": true,
     "types": ["node"],
     "moduleResolution": "node"
