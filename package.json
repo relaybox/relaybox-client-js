@@ -1,6 +1,6 @@
 {
   "name": "@relaybox/client",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A robust and scalable realtime infrastructure service with comprehensive WebSocket support, designed to facilitate live updates, event-driven communication, and seamless data streaming. Ideal for building realtime applications such as chat, multiplayer games, collaboration tools, push notifications, and more. This library provides the client-side programming API, providing a high-performance, low-latency, and reliable framework for all your realtime needs. Supports Node.js, JavaScript, and TypeScript.",
   "keywords": [
     "realtime infrastructure",
@@ -35,8 +35,8 @@
     "type": "git",
     "url": "git+https://github.com/relaybox/relaybox-client-js.git"
   },
-  "author": "admin@relaybox.net",
-  "license": "ISC",
+  "author": "support@relaybox.net",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/relaybox/relaybox-client-js/issues"
   },
