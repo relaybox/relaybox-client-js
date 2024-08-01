@@ -81,3 +81,7 @@ await myFirstRoom.subscribe('message', (data) => {
 
 const response = await myFirstRoom.publish('message', { hello: 'universe' });
 ```
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
