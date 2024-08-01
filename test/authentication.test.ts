@@ -1,11 +1,13 @@
-import { describe, it, expect, afterEach, beforeAll, afterAll } from 'vitest';
-import { getAuthTokenResponse } from '../lib/authentication';
+import { describe, it, expect, afterEach, beforeAll, afterAll, vi, beforeEach } from 'vitest';
+import { getAuthTokenResponse, getFormattedEndpointUrl } from '../lib/authentication';
 import { HTTPRequestError, ValidationError, NetworkError } from '../lib/errors';
 import { setupServer } from 'msw/node';
 import { HttpResponse, http } from 'msw';
 
 const server = setupServer();
-const mockAuthEndpoint = 'https://example.com/auth';
+const mockWindowOrigin = 'https://example.com';
+const mockAuthPath = '/auth/user';
+const mockAuthEndpoint = 'https://example.com/auth/user';
 
 interface AuthHeaders {
   clientId: string;
@@ -144,5 +146,45 @@ describe('getAuthTokenResponse', () => {
         ValidationError
       );
     });
+  });
+});
+
+describe('getFormattedEndpointUrl', () => {
+  const originalWindow = { ...global.window };
+
+  beforeAll(() => {
+    global.window = {
+      ...originalWindow,
+      origin: mockWindowOrigin
+    } as unknown as Window & typeof globalThis;
+  });
+
+  afterAll(() => {
+    global.window = originalWindow;
+  });
+
+  it('should return a basic formatted url', () => {
+    const formattedEndpointUrl = getFormattedEndpointUrl(mockAuthEndpoint);
+
+    expect(formattedEndpointUrl).toBeInstanceOf(URL);
+    expect(formattedEndpointUrl.href).toEqual(mockAuthEndpoint);
+  });
+
+  it('should return a formatted url including query params', () => {
+    const authParams = {
+      id: 1,
+      user: 2
+    };
+    const formattedEndpointUrl = getFormattedEndpointUrl(mockAuthEndpoint, authParams);
+
+    expect(formattedEndpointUrl).toBeInstanceOf(URL);
+    expect(formattedEndpointUrl.search).toEqual(`?id=1&user=2`);
+  });
+
+  it('should return a formatted url using window origin as basepath', () => {
+    const formattedEndpointUrl = getFormattedEndpointUrl(mockAuthPath);
+
+    expect(formattedEndpointUrl).toBeInstanceOf(URL);
+    expect(formattedEndpointUrl.href).toEqual(mockAuthEndpoint);
   });
 });

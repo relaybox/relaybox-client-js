@@ -13,7 +13,7 @@ import { logger } from './logger';
 import { PresenceFactory, MetricsFactory } from './factory';
 import { SocketConnectionError, ValidationError } from './errors';
 import { SocketManager } from './socket-manager';
-import { AuthRequestOptions, AuthTokenLifeCycle } from './types/auth.types';
+import { AuthKeyData, AuthRequestOptions, AuthTokenLifeCycle } from './types/auth.types';
 
 const AUTH_TOKEN_REFRESH_BUFFER_SECONDS = 20;
 const AUTH_TOKEN_REFRESH_RETRY_MS = 10000;
@@ -136,7 +136,8 @@ export class RelayBox {
       this.authEndpoint,
       this.authHeaders,
       this.authParams,
-      this.authRequestOptions
+      this.authRequestOptions,
+      this.clientId
     );
 
     if (refresh) {
@@ -151,10 +152,13 @@ export class RelayBox {
   }
 
   private async handleApiKeyConnect(): Promise<void> {
-    const keyData = {
-      apiKey: this.apiKey!,
-      clientId: this.clientId
+    const keyData: AuthKeyData = {
+      apiKey: this.apiKey!
     };
+
+    if (this.clientId) {
+      keyData.clientId = this.clientId;
+    }
 
     this.socketManager.apiKeyInitSocket(keyData);
   }
