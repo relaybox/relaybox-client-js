@@ -14,10 +14,13 @@
     "event-driven architecture",
     "websocket library",
     "realtime API",
-    "Node.js WebSocket",
+    "nodejs WebSocket",
     "realtime notifications",
     "realtime multiplayer",
-    "realtime collaboration"
+    "realtime collaboration",
+    "server sent events",
+    "nodejs push notifications",
+    "uwebsockets"
   ],
   "main": "./dist/bundle.cjs.js",
   "module": "./dist/bundle.esm.js",
