@@ -11,7 +11,7 @@ import { logger } from './logger';
 import { ClientEvent, ServerEvent } from './types/event.types';
 import { KeyData, TokenResponse } from './types/request.types';
 
-const UWS_SERVER_HOST = 'wss://uws.prod.relaybox-services.net';
+const UWS_SERVER_HOST = process.env.UWS_SERVER_HOST;
 const MAX_RECONNECT_ATTEMPTS = 10;
 const INITIAL_RECONNECT_DELAY_MS = 500;
 const MAX_RECONNECT_DELAY_MS = 10000;
