@@ -4,8 +4,6 @@ import commonjs from '@rollup/plugin-commonjs';
 import terser from '@rollup/plugin-terser';
 import replace from '@rollup/plugin-replace';
 
-console.log(process.env.UWS_SERVER_HOST);
-
 export default {
   input: 'dist/index.js',
   output: [
