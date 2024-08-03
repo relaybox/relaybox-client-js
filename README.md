@@ -8,6 +8,8 @@ Welcome to RelayBox.
 
 In order to use this library, you need to create a free account and [API key](https://relaybox.net/docs/authentication/api-keys). Find more details [here](https://relaybox.net/docs/getting-started).
 
+If you find any issues with this library, please report them [here](https://github.com/relaybox/relaybox-client-js/issues) or contact support@relaybox.net.
+
 ## Install the Client SDK Library
 
 In order to connect to RelayBox you first need to install the client library SDK. The library is made available via the NPM registry.
