@@ -1,6 +1,6 @@
 {
   "name": "@relaybox/client",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "RelayBox client library SDK. Used to connect and interact with RelayBox realtime services from client-side applications. Features include realtime presence, metrics, event pubsub and websocket connection lifecycle management.",
   "keywords": [
     "realtime infrastructure",
@@ -28,7 +28,7 @@
   "scripts": {
     "build": "rm -rf dist && tsc && UWS_SERVER_HOST=ws://localhost:9090 rollup -c rollup.config.mjs",
     "build:prod": "rm -rf dist && tsc && NODE_ENV=production UWS_SERVER_HOST=wss://uws.prod.relaybox-services.net rollup -c rollup.config.mjs",
-    "prepublishOnly": "npm run build",
+    "publish": "npm run build:prod && npm publish --access public",
     "test": "vitest",
     "dev": "tsc --watch && rollup -c rollup.config.mjs --watch"
   },
