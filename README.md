@@ -6,8 +6,6 @@ Welcome to RelayBox.
 
 In order to use this library, you need to create a free account and [API key](https://relaybox.net/docs/authentication/api-keys). Find more details [here](https://relaybox.net/docs/getting-started).
 
-import Link from 'next/link';
-
 ## Install the Client SDK Library
 
 In order to connect to RelayBox you first need to install the client library SDK. The library is made available via the NPM registry.
@@ -20,7 +18,7 @@ npm install @relaybox/client
 
 Once the installation is complete, you'll be able to access the service by initializing a new RelayBox instance.
 
-```
+```typescript
 import { RelayBox } from '@relaybox/client';
 
 const relayBox = new RelayBox({
@@ -34,7 +32,7 @@ await relayBox.connect();
 
 Rooms are logical groups of connections that enable communication via events. To create a room, call the join() method passing the name of the room as an argument.
 
-```
+```typescript
 const myFirstRoom = await relayBox.join('myFirstRoom');
 ```
 
@@ -44,7 +42,7 @@ If the room does not already exist, joining will create it.
 
 Events are data packets transmitted to other connections listening for them (subscribers). To subscribe to an event, provide an event name and a handler function to process data as it arrives.
 
-```
+```typescript
 await myFirstRoom.subscribe('message', (data) => {
   console.log(data);
 });
@@ -56,7 +54,7 @@ Above, a subscription to the "message" event has been registered with a correspo
 
 To publish an event, call the publish() method, providing an event name and the data to transmit. Since we're already subscribed, let's publish a "message" event...
 
-```
+```typescript
 const response = await myFirstRoom.publish('message', { hello: 'universe' });
 ```
 
@@ -64,7 +62,7 @@ const response = await myFirstRoom.publish('message', { hello: 'universe' });
 
 Putting that all together, we can see the overall structure of the code.
 
-```
+```typescript
 import { RelayBox } from '@relaybox/client';
 
 const relayBox = new RelayBox({
