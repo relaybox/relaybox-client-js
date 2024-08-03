@@ -1,3 +1,5 @@
+![npm version](https://img.shields.io/npm/v/@relaybox/client)
+
 # RelayBox Client Library SDK
 
 Find the full technical [documention here](https://relaybox.net/docs/api-reference/relaybox-client)
