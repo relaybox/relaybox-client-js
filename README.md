@@ -84,7 +84,7 @@ Here, we've established a connection and joined a room. We've subscribed to an e
 
 > Note: Always be cautious, never expose production [API keys](https://relaybox.net/docs/authentication/api-keys)!
 
-This guide uses an API key directly in the client-side code. While this approach is possible and the quickest way to connect, it should be used with caution. The recommended, secure approach is to generate [Auth Tokens](https://relaybox.net/docs/authentication/auth-tokens) using a designated endpoint.
+This guide uses an API key directly in the client-side code. While this approach is possible and the quickest way to connect, it should be used with caution. The recommended, secure approach is to generate [auth tokens](https://relaybox.net/docs/authentication/auth-tokens) using a designated endpoint.
 
 ## License
 
