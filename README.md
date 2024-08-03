@@ -6,9 +6,11 @@ Welcome to RelayBox.
 
 In order to use this library, you need to create a free account and [API key](https://relaybox.net/docs/authentication/api-keys). Find more details [here](https://relaybox.net/docs/getting-started).
 
+import Link from 'next/link';
+
 ## Install the Client SDK Library
 
-To get started, install the client library SDK from NPM
+In order to connect to RelayBox you first need to install the client library SDK. The library is made available via the NPM registry.
 
 ```
 npm install @relaybox/client
@@ -16,9 +18,9 @@ npm install @relaybox/client
 
 ## Connecting an Application
 
-Once the installation is complete, you'll be able to access realtime services by initializing a new RelayBox instance.
+Once the installation is complete, you'll be able to access the service by initializing a new RelayBox instance.
 
-```typescript
+```
 import { RelayBox } from '@relaybox/client';
 
 const relayBox = new RelayBox({
@@ -30,41 +32,39 @@ await relayBox.connect();
 
 ## Create and Join a Room
 
-So far, we've set up an account, created an [API key](https://relaybox.net/docs/authentication/api-keys), and established a connection from your client-side application. Now let's create and join our first room.
+Rooms are logical groups of connections that enable communication via events. To create a room, call the join() method passing the name of the room as an argument.
 
-Rooms are logical groups of connections that enable communication via events...
-
-```typescript
+```
 const myFirstRoom = await relayBox.join('myFirstRoom');
 ```
 
-If the room has not already been created, joining will create it.
+If the room does not already exist, joining will create it.
 
 ## Subscribing to Events
 
-Events are data packets transmitted to other connections listening for them (subscribers). To subscribe to an event, provide the event name and a handler to process data as it arrives.
+Events are data packets transmitted to other connections listening for them (subscribers). To subscribe to an event, provide an event name and a handler function to process data as it arrives.
 
-```typescript
+```
 await myFirstRoom.subscribe('message', (data) => {
   console.log(data);
 });
 ```
 
-In the lines above, we subscribed to the "message" event and provided a callback function to handle the data. In our case, we will simply log the data in the console.
+Above, a subscription to the "message" event has been registered with a corresponsing callback function to handle the data. In our case, we will simply log the data in the console.
 
 ## Publishing an Event
 
-To publish an event, provide an event name and data to transmit. Since we're already subscribed, let's publish a "message" event...
+To publish an event, call the publish() method, providing an event name and the data to transmit. Since we're already subscribed, let's publish a "message" event...
 
-```typescript
+```
 const response = await myFirstRoom.publish('message', { hello: 'universe' });
 ```
 
 ## Putting It All Together
 
-Let's put all that together so that we can see the overall structure of the code.
+Putting that all together, we can see the overall structure of the code.
 
-```typescript
+```
 import { RelayBox } from '@relaybox/client';
 
 const relayBox = new RelayBox({
@@ -81,6 +81,12 @@ await myFirstRoom.subscribe('message', (data) => {
 
 const response = await myFirstRoom.publish('message', { hello: 'universe' });
 ```
+
+Here, we've established a connection and joined a room. We've subscribed to an event and published an event. All connections in the room subscribed to either this specific event or to all room events will receive this data in real-time.
+
+> Note: Always be cautious, never expose production [API keys](https://relaybox.net/docs/authentication/api-keys)!
+
+This guide uses an API key directly in the client-side code. While this approach is possible and the quickest way to connect, it should be used with caution. The recommended, secure approach is to generate [Auth Tokens](https://relaybox.net/docs/authentication/auth-tokens) using a designated endpoint.
 
 ## License
 
