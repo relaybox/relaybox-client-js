@@ -26,9 +26,8 @@
   "module": "./dist/bundle.esm.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "rm -rf dist && tsc && UWS_SERVER_HOST=ws://localhost:9090 rollup -c rollup.config.mjs",
-    "build:prod": "rm -rf dist && tsc && NODE_ENV=production UWS_SERVER_HOST=wss://uws.prod.relaybox-services.net rollup -c rollup.config.mjs",
-    "publish": "npm run build:prod && npm publish --access public",
+    "build": "rm -rf dist && tsc && rollup -c rollup.config.mjs",
+    "publish": "npm run build && npm publish --access public",
     "test": "vitest",
     "dev": "tsc --watch && rollup -c rollup.config.mjs --watch"
   },
@@ -58,6 +57,7 @@
     "@rollup/plugin-terser": "^0.4.4",
     "@types/node": "^20.14.10",
     "@types/node-fetch": "^2.6.11",
+    "dotenv": "^16.4.5",
     "msw": "^2.3.4",
     "rollup": "^4.19.2",
     "typescript": "^5.5.3",
