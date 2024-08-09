@@ -1,7 +1,7 @@
 {
   "name": "@relaybox/client",
   "version": "1.0.9",
-  "description": "RelayBox client library SDK. Used to connect and interact with RelayBox realtime services from client-side applications. Features include realtime presence, metrics, event pubsub and websocket connection lifecycle management.",
+  "description": "RelayBox Client Library SDK. Designed to enable seamless connection and interaction with RelayBox's realtime services from client-side applications. It offers features such as real-time presence tracking, metrics collection, event-based publish/subscribe (pub/sub) capabilities, and comprehensive management of WebSocket connection lifecycles.",
   "keywords": [
     "realtime infrastructure",
     "realtime web applications",
@@ -14,12 +14,13 @@
     "event-driven architecture",
     "websocket library",
     "realtime API",
-    "nodejs WebSocket",
     "realtime notifications",
     "realtime multiplayer",
     "realtime collaboration",
-    "server sent events",
     "nodejs push notifications",
+    "nodejs websocket",
+    "nodejs realtime api",
+    "server sent events",
     "uwebsockets"
   ],
   "main": "./dist/bundle.cjs.js",
