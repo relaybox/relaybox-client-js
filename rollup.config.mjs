@@ -7,18 +7,20 @@ import replace from '@rollup/plugin-replace';
 
 console.log(`Building with server host: ${process.env.UWS_SERVER_HOST}:${process.env.NODE_ENV}`);
 
+const isProd = process.env.NODE_ENV === 'production';
+
 export default {
   input: 'dist/index.js',
   output: [
     {
       file: 'dist/bundle.cjs.js',
       format: 'cjs',
-      sourcemap: false
+      sourcemap: !isProd
     },
     {
       file: 'dist/bundle.esm.js',
       format: 'esm',
-      sourcemap: false
+      sourcemap: !isProd
     }
   ],
   plugins: [
@@ -31,7 +33,7 @@ export default {
     }),
     terser({
       compress: {
-        drop_console: true
+        drop_console: isProd
       }
     })
   ]
