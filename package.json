@@ -1,6 +1,6 @@
 {
   "name": "@relaybox/client",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "RelayBox Client Library SDK. Enables client-side applications to connect to RelayBox realtime services. Interact with features such as real-time presence tracking, metrics collection, event-based publish/subscribe (pub/sub) capabilities, and comprehensive management of WebSocket connection lifecycles.",
   "keywords": [
     "realtime infrastructure",
@@ -28,7 +28,7 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "rm -rf dist && tsc && rollup -c rollup.config.mjs",
-    "publish": "npm run build && npm publish --access public",
+    "publish": "npm publish --access public",
     "test": "vitest",
     "dev": "tsc --watch && rollup -c rollup.config.mjs --watch"
   },
