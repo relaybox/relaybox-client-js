@@ -41,7 +41,7 @@
   "bugs": {
     "url": "https://github.com/relaybox/relaybox-client-js/issues"
   },
-  "homepage": "https://github.com/relaybox/relaybox-client-js#readme",
+  "homepage": "https://relaybox.net",
   "files": [
     "dist/**/*"
   ],
