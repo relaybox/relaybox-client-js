@@ -8,7 +8,7 @@ import { SocketManager } from './socket-manager';
 import { ClientEvent } from './types/event.types';
 
 /**
- * The History class handles fetching historical messages for a specific room.
+ * The History class handles fetching message history for a specific room.
  */
 export class History {
   private readonly nspRoomId: string;
@@ -51,6 +51,14 @@ export class History {
     }
   }
 
+  /**
+   * Fetches message history using WebSocket communication.
+   * @param {number} [seconds] - The number of seconds of history to retrieve.
+   * @param {number} [limit] - The maximum number of messages to retrieve.
+   * @param {string} [nextPageToken] - The token for fetching the next page of results, if available.
+   * @returns {Promise<ClientMessage[]>} - A promise that resolves to an array of client messages.
+   * @throws {Error} - Throws an error if the request fails.
+   */
   private async getHistoryWs(
     seconds?: number,
     limit?: number,
@@ -79,6 +87,14 @@ export class History {
     }
   }
 
+  /**
+   * Fetches message history using HTTPS communication.
+   * @param {number} [seconds] - The number of seconds of history to retrieve.
+   * @param {number} [limit] - The maximum number of messages to retrieve.
+   * @param {string} [nextPageToken] - The token for fetching the next page of results, if available.
+   * @returns {Promise<ClientMessage[]>} - A promise that resolves to an array of client messages.
+   * @throws {Error} - Throws an error if the request fails.
+   */
   private async getHistoryHttps(
     seconds?: number,
     limit?: number,
@@ -104,7 +120,7 @@ export class History {
   }
 
   /**
-   * Fetches the next page of historical messages for the specified room.
+   * Fetches the next page of message history for the specified room.
    * @returns {Promise<ClientMessage[]>} - A promise that resolves to an array of client messages.
    * @throws {ValidationError} - Throws a ValidationError if called before `get()`
    * @throws {Error} - Throws an error if the request fails.
@@ -130,7 +146,7 @@ export class History {
   }
 
   /**
-   * Constructs the URL for fetching historical messages.
+   * Constructs the URL for fetching message history.
    * @param {number} [seconds] - The number of seconds of history to retrieve.
    * @param {number} [limit] - The maximum number of messages to retrieve.
    * @param {string} [nextPageToken] - The token for fetching the next page of results, if available.
@@ -170,6 +186,11 @@ export class History {
     };
   }
 
+  /**
+   * Handles the response from a history request.
+   * @param {HistoryResponse} [historyResponseData] - The data returned from the history request.
+   * @returns {ClientMessage[]} - An array of client messages extracted from the history response.
+   */
   private handleHistoryResponse(historyResponseData?: HistoryResponse): ClientMessage[] {
     if (historyResponseData) {
       const { messages, nextPageToken } = historyResponseData;

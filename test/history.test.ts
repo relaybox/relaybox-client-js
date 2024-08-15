@@ -49,12 +49,16 @@ describe('History', () => {
       describe('success', () => {
         it('should return historical messages for a given room', async () => {
           socketManagerEmitWithAck.mockResolvedValueOnce(mockHistoryResponse);
+
           const messages = await history.get(defaultHistoryOptions);
 
           expect(socketManagerEmitWithAck).toHaveBeenCalledWith(ClientEvent.ROOM_HISTORY_GET, {
-            ...defaultHistoryOptions
+            ...defaultHistoryOptions,
+            nspRoomId: mockNspRoomid
           });
+
           expect(messages).toHaveLength(defaultHistoryOptions.limit);
+          expect(messages[0]).toHaveProperty('timestamp');
         });
       });
     });
@@ -63,21 +67,26 @@ describe('History', () => {
       describe('success', () => {
         it('should return historical messages for a given room', async () => {
           socketManagerEmitWithAck.mockResolvedValueOnce(mockHistoryResponse);
-          const page1 = await history.get(defaultHistoryOptions);
-
-          expect(socketManagerEmitWithAck).toHaveBeenCalledWith(ClientEvent.ROOM_HISTORY_GET, {
-            ...defaultHistoryOptions
-          });
-          expect(page1).toHaveLength(defaultHistoryOptions.limit);
-
           socketManagerEmitWithAck.mockResolvedValueOnce(mockHistoryNextResponse);
+
+          const page1 = await history.get(defaultHistoryOptions);
           const page2 = await history.next();
 
           expect(socketManagerEmitWithAck).toHaveBeenCalledWith(ClientEvent.ROOM_HISTORY_GET, {
             ...defaultHistoryOptions,
+            nspRoomId: mockNspRoomid
+          });
+
+          expect(socketManagerEmitWithAck).toHaveBeenCalledWith(ClientEvent.ROOM_HISTORY_GET, {
+            ...defaultHistoryOptions,
+            nspRoomId: mockNspRoomid,
             nextPageToken: mockHistoryResponse.nextPageToken
           });
+
+          expect(page1).toHaveLength(defaultHistoryOptions.limit);
           expect(page2).toHaveLength(defaultHistoryOptions.limit);
+
+          expect(socketManagerEmitWithAck).toHaveBeenCalledTimes(2);
         });
       });
     });
