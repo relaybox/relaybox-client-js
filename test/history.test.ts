@@ -61,6 +61,16 @@ describe('History', () => {
           expect(messages[0]).toHaveProperty('timestamp');
         });
       });
+
+      describe('error', () => {
+        it('should throw an error if the request fails', async () => {
+          socketManagerEmitWithAck.mockRejectedValueOnce(new Error());
+
+          await expect(history.get()).rejects.toThrow(
+            `Error getting message history for "${mockNspRoomid}"`
+          );
+        });
+      });
     });
 
     describe('next()', () => {
@@ -87,6 +97,24 @@ describe('History', () => {
           expect(page2).toHaveLength(defaultHistoryOptions.limit);
 
           expect(socketManagerEmitWithAck).toHaveBeenCalledTimes(2);
+        });
+      });
+
+      describe('error', () => {
+        it('should throw an error if the request fails', async () => {
+          socketManagerEmitWithAck.mockResolvedValueOnce(mockHistoryResponse);
+          socketManagerEmitWithAck.mockRejectedValueOnce(new Error());
+
+          await history.get(defaultHistoryOptions);
+          await expect(history.next()).rejects.toThrow(
+            `Error getting message history for "${mockNspRoomid}"`
+          );
+        });
+
+        it('should throw an error if history.next() is called before history.get()', async () => {
+          await expect(history.next()).rejects.toThrow(
+            `history.next() called before history.get()`
+          );
         });
       });
     });

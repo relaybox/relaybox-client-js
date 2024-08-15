@@ -7,6 +7,8 @@ import { ValidationError } from './errors';
 import { SocketManager } from './socket-manager';
 import { ClientEvent } from './types/event.types';
 
+const HISTORY_MAX_REQUEST_LIMIT = 100;
+
 /**
  * The History class handles fetching message history for a specific room.
  */
@@ -21,6 +23,7 @@ export class History {
 
   /**
    * Creates an instance of History.
+   * @param {SocketManager} socketManager - The socket manager to handle socket connections.
    * @param {string} uwsHttpHost - The base URL of the WebSocket HTTP server.
    * @param {string} nspRoomid - The ID of the room for which metrics are being managed.
    */
@@ -41,7 +44,7 @@ export class History {
     const { seconds, limit, https } = opts || {};
 
     this.seconds = seconds;
-    this.limit = limit;
+    this.limit = limit || HISTORY_MAX_REQUEST_LIMIT;
     this.https = https;
 
     if (opts?.https) {
