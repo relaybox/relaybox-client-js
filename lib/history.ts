@@ -1,6 +1,6 @@
 import { logger } from './logger';
 import { request } from './request';
-import { FormattedResponse } from './types';
+import { FormattedResponse } from './types/request.types';
 import { HistoryGetOptions, HistoryResponse } from './types/history.types';
 
 /**
@@ -9,7 +9,9 @@ import { HistoryGetOptions, HistoryResponse } from './types/history.types';
 export class History {
   private readonly nspRoomId: string;
   private readonly uwsHttpHost: string;
-  private nextPageToken: string | null = null;
+  private nextPageToken?: string;
+  private seconds?: number;
+  private limit?: number;
 
   /**
    * Creates an instance of History.
@@ -20,10 +22,13 @@ export class History {
     this.uwsHttpHost = uwsHttpHost;
   }
 
-  async get({ seconds, limit }: HistoryGetOptions): Promise<any> {
+  async get({ seconds, limit }: HistoryGetOptions, nextPageToken?: string): Promise<any> {
     logger.logInfo(`Fetching historical messages for room "${this.nspRoomId}"`);
 
-    const historyRequestUrl = this.getHistoryRequestUrl(seconds, limit);
+    this.seconds = seconds;
+    this.limit = limit;
+
+    const historyRequestUrl = this.getHistoryRequestUrl(seconds, limit, nextPageToken);
     const historyRequestParams = this.getHistoryRequestParams();
 
     try {
@@ -34,9 +39,33 @@ export class History {
 
       if (historyResponseData?.data) {
         const { messages, nextPageToken } = historyResponseData.data;
-        this.nextPageToken = nextPageToken;
+
+        if (nextPageToken) {
+          this.nextPageToken = nextPageToken;
+        }
+
         return messages;
       }
+    } catch (err: any) {
+      logger.logError(err.message);
+      throw new Error(err.message);
+    }
+  }
+
+  async next(): Promise<any> {
+    if (!this.nextPageToken) {
+      throw new Error('history.next() called before history.get()');
+    }
+
+    logger.logInfo(`Fetching next page of historical messages for room "${this.nspRoomId}"`);
+
+    try {
+      const historyOptions = {
+        seconds: this.seconds,
+        limit: this.limit
+      };
+
+      return this.get(historyOptions, this.nextPageToken);
     } catch (err: any) {
       logger.logError(err.message);
       throw new Error(err.message);
