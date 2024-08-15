@@ -67,7 +67,7 @@ export class History {
     logger.logInfo(`Fetching message history for room "${this.nspRoomId}" (ws)`);
 
     try {
-      const data = {
+      const historyRequestData = {
         seconds,
         limit,
         nextPageToken,
@@ -76,7 +76,7 @@ export class History {
 
       const historyResponseData = await this.socketManager.emitWithAck<HistoryResponse>(
         ClientEvent.ROOM_HISTORY_GET,
-        data
+        historyRequestData
       );
 
       return this.handleHistoryResponse(historyResponseData);
