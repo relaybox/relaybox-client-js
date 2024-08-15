@@ -5,17 +5,15 @@ import { validateUserData } from './validation';
 import { EventRegistry } from './event-registry';
 import { ValidationError } from './errors';
 import { SocketManager } from './socket-manager';
-import { PresenceEvent, PresenceEventType } from './types/presence.types';
+import {
+  PresenceEvent,
+  PresenceEventAllowedValue,
+  PresenceEventType
+} from './types/presence.types';
 
 const USER_DATA_MAX_SIZE_KB = 1024;
 const SUBSCRIPTION_NAMESPACE = 'presence';
 const PLATFORM_RESERVED_NAMESPACE = '$';
-
-enum DsPresenceEventAllowedValue {
-  JOIN = 'join',
-  LEAVE = 'leave',
-  UPDATE = 'update'
-}
 
 /**
  * The Presence class manages presence-related events such as joining, leaving, and updating
@@ -83,7 +81,7 @@ export class Presence {
   ): { events: PresenceEventType[]; eventHandler: SocketEventHandler } {
     const events =
       typeof eventOrHandler === 'function'
-        ? Object.values(DsPresenceEventAllowedValue)
+        ? Object.values(PresenceEventAllowedValue)
         : [eventOrHandler];
 
     const eventHandler = handler || <SocketEventHandler>eventOrHandler;

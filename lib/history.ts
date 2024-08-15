@@ -27,17 +27,15 @@ export class History {
 
   /**
    * Fetches historical messages for the specified room.
-   *
-   * @param {HistoryGetOptions} options - The options for fetching history, including the number of seconds and the limit.
+   * @param {HistoryGetOptions} opts - The options for fetching history, including the number of seconds and the limit.
    * @param {string} [nextPageToken] - The token for fetching the next page of results, if available.
    * @returns {Promise<ClientMessage[]>} - A promise that resolves to an array of client messages.
    * @throws {Error} - Throws an error if the request fails.
    */
-  async get(
-    { seconds, limit }: HistoryGetOptions,
-    nextPageToken?: string
-  ): Promise<ClientMessage[]> {
+  async get(opts?: HistoryGetOptions, nextPageToken?: string): Promise<ClientMessage[]> {
     logger.logInfo(`Fetching historical messages for room "${this.nspRoomId}"`);
+
+    const { seconds, limit } = opts || {};
 
     this.seconds = seconds;
     this.limit = limit;
@@ -70,7 +68,6 @@ export class History {
 
   /**
    * Fetches the next page of historical messages for the specified room.
-   *
    * @returns {Promise<ClientMessage[]>} - A promise that resolves to an array of client messages.
    * @throws {ValidationError} - Throws a ValidationError if called before `get()`
    * @throws {Error} - Throws an error if the request fails.
@@ -92,7 +89,6 @@ export class History {
 
   /**
    * Constructs the URL for fetching historical messages.
-   *
    * @param {number} [seconds] - The number of seconds of history to retrieve.
    * @param {number} [limit] - The maximum number of messages to retrieve.
    * @param {string} [nextPageToken] - The token for fetching the next page of results, if available.
@@ -120,7 +116,6 @@ export class History {
 
   /**
    * Constructs the parameters for the history request.
-   *
    * @returns {RequestInit} - The parameters for the fetch request, including method, mode, and headers.
    */
   private getHistoryRequestParams(): RequestInit {
