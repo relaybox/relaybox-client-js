@@ -13,5 +13,5 @@ export interface HistoryResponse {
 
 export interface HistoryClientResponse {
   items: ClientMessage[];
-  next?: () => Promise<HistoryClientResponse>;
+  next?: () => Promise<HistoryClientResponse> | HistoryClientResponse;
 }

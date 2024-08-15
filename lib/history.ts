@@ -19,7 +19,7 @@ export class History {
   private seconds?: number;
   private limit?: number;
   private https?: boolean;
-  private active: boolean = false;
+  private iterationInProgress: boolean = false;
 
   /**
    * Creates an instance of History.
@@ -34,7 +34,7 @@ export class History {
   }
 
   /**
-   * Fetches historical messages for the specified room.
+   * Fetches message history for the specified room.
    * @param {HistoryGetOptions} opts - The options for fetching history, including the number of seconds and the limit.
    * @param {string} [nextPageToken] - The token for fetching the next page of results, if available.
    * @returns {Promise<HistoryClientResponse>} - A promise that resolves to a list of items with associated iterator method.
@@ -46,7 +46,7 @@ export class History {
     this.seconds = seconds;
     this.limit = limit || HISTORY_MAX_REQUEST_LIMIT;
     this.https = https;
-    this.active = true;
+    this.iterationInProgress = true;
 
     if (opts?.https) {
       return this.getHistoryHttps(seconds, limit, nextPageToken);
@@ -130,7 +130,7 @@ export class History {
    * @throws {Error} - Throws an error if the request fails.
    */
   async next(): Promise<HistoryClientResponse> {
-    if (!this.active) {
+    if (!this.iterationInProgress) {
       throw new ValidationError('history.next() called before history.get()');
     }
 
@@ -151,6 +151,31 @@ export class History {
     };
 
     return this.get(historyOptions, this.nextPageToken);
+  }
+
+  /**
+   * Handles the response from a history request.
+   * @param {HistoryResponse} [historyResponseData] - The data returned from the history request.
+   * @returns {ClientMessage[]} - An array of client messages extracted from the history response.
+   */
+  private handleHistoryResponse(historyResponseData?: HistoryResponse): HistoryClientResponse {
+    const historyClientResponse: HistoryClientResponse = {
+      items: []
+    };
+
+    if (historyResponseData) {
+      const { messages, nextPageToken } = historyResponseData;
+      historyClientResponse.items = messages;
+
+      if (nextPageToken) {
+        historyClientResponse.next = this.next.bind(this);
+        this.nextPageToken = nextPageToken;
+      }
+
+      return historyClientResponse;
+    }
+
+    return historyClientResponse;
   }
 
   /**
@@ -192,30 +217,5 @@ export class History {
         'Content-Type': 'application/json'
       }
     };
-  }
-
-  /**
-   * Handles the response from a history request.
-   * @param {HistoryResponse} [historyResponseData] - The data returned from the history request.
-   * @returns {ClientMessage[]} - An array of client messages extracted from the history response.
-   */
-  private handleHistoryResponse(historyResponseData?: HistoryResponse): HistoryClientResponse {
-    const historyClientResponse: HistoryClientResponse = {
-      items: []
-    };
-
-    if (historyResponseData) {
-      const { messages, nextPageToken } = historyResponseData;
-      historyClientResponse.items = messages;
-
-      if (nextPageToken) {
-        historyClientResponse.next = this.next.bind(this);
-        this.nextPageToken = nextPageToken;
-      }
-
-      return historyClientResponse;
-    }
-
-    return historyClientResponse;
   }
 }
