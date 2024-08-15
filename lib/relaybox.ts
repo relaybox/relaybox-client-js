@@ -33,11 +33,12 @@ import {
   SocketManagerListener
 } from './types/socket.types';
 import { logger } from './logger';
-import { PresenceFactory, MetricsFactory } from './factory';
+import { PresenceFactory, MetricsFactory, HistoryFactory } from './factory';
 import { SocketConnectionError, ValidationError } from './errors';
 import { SocketManager } from './socket-manager';
 import { AuthKeyData, AuthRequestOptions, AuthTokenLifeCycle } from './types/auth.types';
 
+const UWS_HTTP_HOST = process.env.UWS_HTTP_HOST || '';
 const AUTH_TOKEN_REFRESH_BUFFER_SECONDS = 20;
 const AUTH_TOKEN_REFRESH_RETRY_MS = 10000;
 const AUTH_TOKEN_REFRESH_JITTER_RANGE_MS = 2000;
@@ -54,12 +55,14 @@ export class RelayBox {
   private readonly socketManager: SocketManager;
   private readonly presenceFactory: PresenceFactory;
   private readonly metricsFactory: MetricsFactory;
+  private readonly historyFactory: HistoryFactory;
   private readonly authEndpoint?: string;
   private readonly authHeaders?: Record<string, unknown> | null;
   private readonly authParams?: Record<string, unknown> | null;
   private readonly authRequestOptions?: AuthRequestOptions;
   private readonly apiKey?: string;
   private readonly authTokenLifeCycle?: AuthTokenLifeCycle = AUTH_TOKEN_LIFECYCLE_SESSION;
+  private readonly uwsHttpHost: string = UWS_HTTP_HOST;
   private socketManagerListeners: SocketManagerListener[] = [];
   private refreshTimeout: NodeJS.Timeout | number | null = null;
 
@@ -83,6 +86,7 @@ export class RelayBox {
     this.socketManager = new SocketManager();
     this.presenceFactory = new PresenceFactory();
     this.metricsFactory = new MetricsFactory();
+    this.historyFactory = new HistoryFactory();
     this.connection = new EventEmitter();
     this.authHeaders =
       typeof opts.authHeaders === 'function' ? opts.authHeaders() : opts.authHeaders;
@@ -340,7 +344,13 @@ export class RelayBox {
    * @throws Will throw an error if room creation fails.
    */
   async join(roomId: string): Promise<Room> {
-    const room = new Room(roomId, this.socketManager, this.presenceFactory, this.metricsFactory);
+    const room = new Room(
+      roomId,
+      this.socketManager,
+      this.presenceFactory,
+      this.metricsFactory,
+      this.historyFactory
+    );
 
     try {
       return await room.create();

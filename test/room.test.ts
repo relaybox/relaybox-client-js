@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Room } from '../lib/room';
 import { SocketManager } from '../lib/socket-manager';
-import { PresenceFactory } from '../lib/factory';
+import { HistoryFactory, PresenceFactory } from '../lib/factory';
 import { MetricsFactory } from '../lib/factory';
 import { ClientEvent } from '../lib/types/event.types';
 
@@ -30,6 +30,11 @@ vi.mock('../lib/factory', () => ({
     createMetrics: vi.fn(() => ({
       unsubscribe: vi.fn()
     }))
+  })),
+  HistoryFactory: vi.fn(() => ({
+    createHistory: vi.fn(() => ({
+      get: vi.fn()
+    }))
   }))
 }));
 
@@ -45,20 +50,22 @@ describe('Room', () => {
   let socketManager: SocketManager;
   let presenceFactory: PresenceFactory;
   let metricsFactory: MetricsFactory;
+  let historyFactory: HistoryFactory;
 
   beforeEach(async () => {
     socketManager = new SocketManager();
     presenceFactory = new PresenceFactory();
     metricsFactory = new MetricsFactory();
+    historyFactory = new HistoryFactory();
 
-    room = new Room(mockRoomId, socketManager, presenceFactory, metricsFactory);
+    room = new Room(mockRoomId, socketManager, presenceFactory, metricsFactory, historyFactory);
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it.only('should successfully create a room and confirm join', async () => {
+  it('should successfully create a room and confirm join', async () => {
     await expect(room.create()).resolves.toBe(room);
 
     expect(socketManager.emitWithAck).toHaveBeenCalledWith(ClientEvent.ROOM_JOIN, {
@@ -67,6 +74,7 @@ describe('Room', () => {
 
     expect(presenceFactory.createPresence).toHaveBeenCalled();
     expect(metricsFactory.createMetrics).toHaveBeenCalled();
+    expect(historyFactory.createHistory).toHaveBeenCalled();
   });
 
   it('should handle errors encountered while creating a room', async () => {

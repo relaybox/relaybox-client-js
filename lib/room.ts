@@ -2,9 +2,10 @@ import { ClientEvent } from './types/event.types';
 import { SocketEventHandler } from './types/socket.types';
 import { Presence } from './presence';
 import { logger } from './logger';
-import { MetricsFactory, PresenceFactory } from './factory';
+import { HistoryFactory, MetricsFactory, PresenceFactory } from './factory';
 import { validateUserData } from './validation';
 import { Metrics } from './metrics';
+import { History } from './history';
 import { EventRegistry } from './event-registry';
 import { SocketManager } from './socket-manager';
 
@@ -16,12 +17,14 @@ export class Room {
   private readonly socketManager: SocketManager;
   private readonly presenceFactory: PresenceFactory;
   private readonly metricsFactory: MetricsFactory;
+  private readonly historyFactory: HistoryFactory;
   private readonly eventRegistry = new EventRegistry();
   private nspRoomId: string | null = null;
 
   public readonly roomId: string;
   public presence: Presence | null = null;
   public metrics: Metrics | null = null;
+  public history: History | null = null;
 
   /**
    * Creates an instance of Room.
@@ -29,17 +32,20 @@ export class Room {
    * @param {SocketManager} socketManager - The socket manager for handling socket connections.
    * @param {PresenceFactory} presencefactory - The factory for creating presence instances.
    * @param {MetricsFactory} metricsFactory - The factory for creating metrics instances.
+   * @param {HistoryFactory} historyFactory - The factory for creating history instances.
    */
   constructor(
     roomId: string,
     socketManager: SocketManager,
     presencefactory: PresenceFactory,
-    metricsFactory: MetricsFactory
+    metricsFactory: MetricsFactory,
+    historyFactory: HistoryFactory
   ) {
     this.roomId = roomId;
     this.socketManager = socketManager;
     this.presenceFactory = presencefactory;
     this.metricsFactory = metricsFactory;
+    this.historyFactory = historyFactory;
   }
 
   /**
@@ -66,6 +72,7 @@ export class Room {
       );
 
       this.metrics = this.metricsFactory.createMetrics(this.socketManager, this.roomId);
+      this.history = this.historyFactory.createHistory(this.nspRoomId);
 
       return this;
     } catch (err: any) {

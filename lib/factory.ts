@@ -1,5 +1,6 @@
 import { Metrics } from './metrics';
 import { Presence } from './presence';
+import { History } from './history';
 import { SocketManager } from './socket-manager';
 
 export class PresenceFactory {
@@ -11,5 +12,11 @@ export class PresenceFactory {
 export class MetricsFactory {
   createMetrics(socketManager: SocketManager, roomId: string): Metrics {
     return new Metrics(socketManager, roomId);
+  }
+}
+
+export class HistoryFactory {
+  createHistory(nspRoomId: string): History {
+    return new History(nspRoomId);
   }
 }
