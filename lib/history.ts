@@ -1,8 +1,7 @@
 import { logger } from './logger';
 import { request } from './request';
 import { FormattedResponse, HttpMethod, HttpMode } from './types/request.types';
-import { HistoryGetOptions, HistoryResponse } from './types/history.types';
-import { ClientMessage } from './types/message.types';
+import { HistoryClientResponse, HistoryGetOptions, HistoryResponse } from './types/history.types';
 import { ValidationError } from './errors';
 import { SocketManager } from './socket-manager';
 import { ClientEvent } from './types/event.types';
@@ -20,6 +19,7 @@ export class History {
   private seconds?: number;
   private limit?: number;
   private https?: boolean;
+  private active: boolean = false;
 
   /**
    * Creates an instance of History.
@@ -37,15 +37,16 @@ export class History {
    * Fetches historical messages for the specified room.
    * @param {HistoryGetOptions} opts - The options for fetching history, including the number of seconds and the limit.
    * @param {string} [nextPageToken] - The token for fetching the next page of results, if available.
-   * @returns {Promise<ClientMessage[]>} - A promise that resolves to an array of client messages.
+   * @returns {Promise<HistoryClientResponse>} - A promise that resolves to a list of items with associated iterator method.
    * @throws {Error} - Throws an error if the request fails.
    */
-  async get(opts?: HistoryGetOptions, nextPageToken?: string): Promise<ClientMessage[]> {
+  async get(opts?: HistoryGetOptions, nextPageToken?: string): Promise<HistoryClientResponse> {
     const { seconds, limit, https } = opts || {};
 
     this.seconds = seconds;
     this.limit = limit || HISTORY_MAX_REQUEST_LIMIT;
     this.https = https;
+    this.active = true;
 
     if (opts?.https) {
       return this.getHistoryHttps(seconds, limit, nextPageToken);
@@ -59,14 +60,14 @@ export class History {
    * @param {number} [seconds] - The number of seconds of history to retrieve.
    * @param {number} [limit] - The maximum number of messages to retrieve.
    * @param {string} [nextPageToken] - The token for fetching the next page of results, if available.
-   * @returns {Promise<ClientMessage[]>} - A promise that resolves to an array of client messages.
+   * @returns {Promise<HistoryClientResponse>} - A promise that resolves to a list of items with associated iterator method.
    * @throws {Error} - Throws an error if the request fails.
    */
   private async getHistoryWs(
     seconds?: number,
     limit?: number,
     nextPageToken?: string
-  ): Promise<ClientMessage[]> {
+  ): Promise<HistoryClientResponse> {
     logger.logInfo(`Fetching message history for room "${this.nspRoomId}" (ws)`);
 
     try {
@@ -95,14 +96,14 @@ export class History {
    * @param {number} [seconds] - The number of seconds of history to retrieve.
    * @param {number} [limit] - The maximum number of messages to retrieve.
    * @param {string} [nextPageToken] - The token for fetching the next page of results, if available.
-   * @returns {Promise<ClientMessage[]>} - A promise that resolves to an array of client messages.
+   * @returns {Promise<HistoryClientResponse>} - A promise that resolves to a list of items with associated iterator method.
    * @throws {Error} - Throws an error if the request fails.
    */
   private async getHistoryHttps(
     seconds?: number,
     limit?: number,
     nextPageToken?: string
-  ): Promise<ClientMessage[]> {
+  ): Promise<HistoryClientResponse> {
     logger.logInfo(`Fetching message history for room "${this.nspRoomId}" (https)`);
 
     const historyRequestUrl = this.getHistoryRequestUrl(seconds, limit, nextPageToken);
@@ -124,13 +125,17 @@ export class History {
 
   /**
    * Fetches the next page of message history for the specified room.
-   * @returns {Promise<ClientMessage[]>} - A promise that resolves to an array of client messages.
+   * @returns {Promise<HistoryClientResponse>} - A promise that resolves to a list of items with associated iterator method.
    * @throws {ValidationError} - Throws a ValidationError if called before `get()`
    * @throws {Error} - Throws an error if the request fails.
    */
-  async next(): Promise<ClientMessage[]> {
-    if (!this.nextPageToken) {
+  async next(): Promise<HistoryClientResponse> {
+    if (!this.active) {
       throw new ValidationError('history.next() called before history.get()');
+    }
+
+    if (!this.nextPageToken) {
+      return this.handleHistoryResponse();
     }
 
     logger.logInfo(
@@ -194,17 +199,23 @@ export class History {
    * @param {HistoryResponse} [historyResponseData] - The data returned from the history request.
    * @returns {ClientMessage[]} - An array of client messages extracted from the history response.
    */
-  private handleHistoryResponse(historyResponseData?: HistoryResponse): ClientMessage[] {
+  private handleHistoryResponse(historyResponseData?: HistoryResponse): HistoryClientResponse {
+    const historyClientResponse: HistoryClientResponse = {
+      items: []
+    };
+
     if (historyResponseData) {
       const { messages, nextPageToken } = historyResponseData;
+      historyClientResponse.items = messages;
 
       if (nextPageToken) {
+        historyClientResponse.next = this.next.bind(this);
         this.nextPageToken = nextPageToken;
       }
 
-      return messages;
+      return historyClientResponse;
     }
 
-    return [];
+    return historyClientResponse;
   }
 }

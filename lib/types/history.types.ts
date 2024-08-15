@@ -10,3 +10,8 @@ export interface HistoryResponse {
   messages: ClientMessage[];
   nextPageToken: string | null;
 }
+
+export interface HistoryClientResponse {
+  items: ClientMessage[];
+  next?: () => Promise<HistoryClientResponse>;
+}

@@ -50,15 +50,15 @@ describe('History', () => {
         it('should return historical messages for a given room', async () => {
           socketManagerEmitWithAck.mockResolvedValueOnce(mockHistoryResponse);
 
-          const messages = await history.get(defaultHistoryOptions);
+          const historyResponse = await history.get(defaultHistoryOptions);
 
           expect(socketManagerEmitWithAck).toHaveBeenCalledWith(ClientEvent.ROOM_HISTORY_GET, {
             ...defaultHistoryOptions,
             nspRoomId: mockNspRoomid
           });
 
-          expect(messages).toHaveLength(defaultHistoryOptions.limit);
-          expect(messages[0]).toHaveProperty('timestamp');
+          expect(historyResponse.items).toHaveLength(defaultHistoryOptions.limit);
+          expect(historyResponse.items[0]).toHaveProperty('timestamp');
         });
       });
 
@@ -79,8 +79,8 @@ describe('History', () => {
           socketManagerEmitWithAck.mockResolvedValueOnce(mockHistoryResponse);
           socketManagerEmitWithAck.mockResolvedValueOnce(mockHistoryNextResponse);
 
-          const page1 = await history.get(defaultHistoryOptions);
-          const page2 = await history.next();
+          const historyResponse = await history.get(defaultHistoryOptions);
+          const nextHistoryResponse = await historyResponse.next!();
 
           expect(socketManagerEmitWithAck).toHaveBeenCalledWith(ClientEvent.ROOM_HISTORY_GET, {
             ...defaultHistoryOptions,
@@ -93,8 +93,8 @@ describe('History', () => {
             nextPageToken: mockHistoryResponse.nextPageToken
           });
 
-          expect(page1).toHaveLength(defaultHistoryOptions.limit);
-          expect(page2).toHaveLength(defaultHistoryOptions.limit);
+          expect(historyResponse.items).toHaveLength(defaultHistoryOptions.limit);
+          expect(nextHistoryResponse.items).toHaveLength(defaultHistoryOptions.limit);
 
           expect(socketManagerEmitWithAck).toHaveBeenCalledTimes(2);
         });
@@ -150,9 +150,9 @@ describe('History', () => {
             })
           );
 
-          const messages = await history.get(defaultHistoryOptions);
+          const historyResponse = await history.get(defaultHistoryOptions);
 
-          expect(messages).toHaveLength(defaultHistoryOptions.limit);
+          expect(historyResponse.items).toHaveLength(defaultHistoryOptions.limit);
         });
       });
 
@@ -173,7 +173,7 @@ describe('History', () => {
 
     describe('next()', () => {
       describe('success', () => {
-        it('should return the next page of historical messages for a given room', async () => {
+        beforeEach(() => {
           server.use(
             http.get(mockHistoryEndpoint, ({ request }) => {
               const searchParams = new URL(request.url).searchParams;
@@ -191,13 +191,28 @@ describe('History', () => {
               });
             })
           );
+        });
 
-          const page1 = await history.get(defaultHistoryOptions);
-          const page2 = await history.next();
+        it('should return the next page of historical messages for a given room', async () => {
+          const historyResponse = await history.get(defaultHistoryOptions);
+          const nextHistoryResponse = await historyResponse.next!();
 
-          expect(page1).toHaveLength(defaultHistoryOptions.limit);
-          expect(page2).toHaveLength(defaultHistoryOptions.limit);
-          expect(page1[0].timestamp).not.toEqual(page2[0].timestamp);
+          expect(historyResponse.items).toHaveLength(defaultHistoryOptions.limit);
+          expect(nextHistoryResponse.items).toHaveLength(defaultHistoryOptions.limit);
+          expect(historyResponse.items[0].timestamp).not.toEqual(
+            nextHistoryResponse.items[0].timestamp
+          );
+        });
+
+        it('should iterate through all pages of historical messages for a given room', async () => {
+          let historyResponse = await history.get(defaultHistoryOptions);
+
+          while (historyResponse?.next) {
+            historyResponse = await historyResponse.next();
+            expect(historyResponse.items).toHaveLength(defaultHistoryOptions.limit);
+          }
+
+          expect(historyResponse.next).toBeUndefined();
         });
       });
 
