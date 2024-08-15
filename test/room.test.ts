@@ -7,6 +7,7 @@ import { ClientEvent } from '../lib/types/event.types';
 
 const mockRoomId = 'roomId123';
 const mockEvent = 'mock:event';
+const mockUwsHttpHost = 'https://example.com';
 
 const socketManagerOn = vi.fn();
 const socketManagerOff = vi.fn();
@@ -58,7 +59,14 @@ describe('Room', () => {
     metricsFactory = new MetricsFactory();
     historyFactory = new HistoryFactory();
 
-    room = new Room(mockRoomId, socketManager, presenceFactory, metricsFactory, historyFactory);
+    room = new Room(
+      mockRoomId,
+      socketManager,
+      presenceFactory,
+      metricsFactory,
+      historyFactory,
+      mockUwsHttpHost
+    );
   });
 
   afterEach(() => {

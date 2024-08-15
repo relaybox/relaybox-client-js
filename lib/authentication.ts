@@ -122,7 +122,6 @@ export async function getSignedAuthObject(
       'Content-Type': 'application/json',
       'X-Ds-App-Key': appKey
     }
-    // body: JSON.stringify(body)
   });
 
   return data;

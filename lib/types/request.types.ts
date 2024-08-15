@@ -4,7 +4,7 @@ export interface ApiData {
 
 export interface FormattedResponse<T> {
   status: number;
-  data: T;
+  data?: T;
   message?: string;
 }
 

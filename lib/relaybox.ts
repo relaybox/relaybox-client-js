@@ -349,7 +349,8 @@ export class RelayBox {
       this.socketManager,
       this.presenceFactory,
       this.metricsFactory,
-      this.historyFactory
+      this.historyFactory,
+      this.uwsHttpHost
     );
 
     try {
