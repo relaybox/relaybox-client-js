@@ -245,7 +245,7 @@ export class SocketManager {
     }
   }
 
-  async emitWithAck<T>(event: ClientEvent, data: any, defaultAckId?: string): Promise<T> {
+  emitWithAck<T>(event: ClientEvent, data: any, defaultAckId?: string): Promise<T> {
     data.intiatedAt = new Date().toISOString();
 
     return new Promise((resolve, reject) => {
