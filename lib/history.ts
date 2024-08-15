@@ -62,7 +62,8 @@ export class History {
       const data = {
         seconds,
         limit,
-        nextPageToken
+        nextPageToken,
+        nspRoomId: this.nspRoomId
       };
 
       const historyResponseData = await this.socketManager.emitWithAck<HistoryResponse>(

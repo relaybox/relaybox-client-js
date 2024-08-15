@@ -5,4 +5,5 @@ export interface ClientMessage {
     connectionId: string;
   };
   timestamp: number;
+  event?: string;
 }
