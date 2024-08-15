@@ -3,7 +3,9 @@ import { History } from '../lib/history';
 import { setupServer } from 'msw/node';
 import { HttpResponse, http } from 'msw';
 import { mockHistoryNextResponse, mockHistoryResponse } from './mock/history.mock';
-import { HTTPRequestError, ValidationError } from '../lib/errors';
+import { ValidationError } from '../lib/errors';
+import { SocketManager } from '../lib/socket-manager';
+import { ClientEvent } from '../lib/types/event.types';
 
 const server = setupServer();
 const mockNspRoomid = 'M3wLrtCTJe8Z:chat:one:test';
@@ -17,105 +19,167 @@ vi.mock('../lib/logger', () => ({
   }
 }));
 
-beforeAll(() => {
-  server.listen();
-});
+const socketManagerEmitWithAck = vi.fn();
 
-afterEach(() => {
-  server.resetHandlers();
-});
-
-afterAll(() => {
-  server.close();
-});
+vi.mock('../lib/socket-manager', () => ({
+  SocketManager: vi.fn(() => ({
+    emitWithAck: socketManagerEmitWithAck
+  }))
+}));
 
 describe('History', () => {
   let history: History;
+  let socketManager: SocketManager;
 
   beforeEach(() => {
-    history = new History(mockUwsHttpHost, mockNspRoomid);
+    socketManager = new SocketManager();
+    history = new History(socketManager, mockUwsHttpHost, mockNspRoomid);
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  describe('get()', () => {
-    describe('success', () => {
-      it('should return historical messages for a given room', async () => {
-        server.use(
-          http.get(mockHistoryEndpoint, () => {
-            return HttpResponse.json({
-              status: 200,
-              data: mockHistoryResponse
-            });
-          })
-        );
+  describe('options: default (websocket)', () => {
+    const defaultHistoryOptions = {
+      limit: 2
+    };
 
-        const limit = 2;
-        const messages = await history.get({ limit });
+    describe('get()', () => {
+      describe('success', () => {
+        it('should return historical messages for a given room', async () => {
+          socketManagerEmitWithAck.mockResolvedValueOnce(mockHistoryResponse);
+          const messages = await history.get(defaultHistoryOptions);
 
-        expect(messages).toHaveLength(limit);
+          expect(socketManagerEmitWithAck).toHaveBeenCalledWith(ClientEvent.ROOM_HISTORY_GET, {
+            ...defaultHistoryOptions
+          });
+          expect(messages).toHaveLength(defaultHistoryOptions.limit);
+        });
       });
     });
 
-    describe('error', () => {
-      it('should throw an error if the request fails', async () => {
-        server.use(
-          http.get(mockHistoryEndpoint, () => {
-            return new HttpResponse(null, { status: 400 });
-          })
-        );
+    describe('next()', () => {
+      describe('success', () => {
+        it('should return historical messages for a given room', async () => {
+          socketManagerEmitWithAck.mockResolvedValueOnce(mockHistoryResponse);
+          const page1 = await history.get(defaultHistoryOptions);
 
-        await expect(history.get({ limit: 1000 })).rejects.toThrow(HTTPRequestError);
+          expect(socketManagerEmitWithAck).toHaveBeenCalledWith(ClientEvent.ROOM_HISTORY_GET, {
+            ...defaultHistoryOptions
+          });
+          expect(page1).toHaveLength(defaultHistoryOptions.limit);
+
+          socketManagerEmitWithAck.mockResolvedValueOnce(mockHistoryNextResponse);
+          const page2 = await history.next();
+
+          expect(socketManagerEmitWithAck).toHaveBeenCalledWith(ClientEvent.ROOM_HISTORY_GET, {
+            ...defaultHistoryOptions,
+            nextPageToken: mockHistoryResponse.nextPageToken
+          });
+          expect(page2).toHaveLength(defaultHistoryOptions.limit);
+        });
       });
     });
   });
 
-  describe('next()', () => {
-    describe('success', () => {
-      it('should return the next page of historical messages for a given room', async () => {
-        server.use(
-          http.get(mockHistoryEndpoint, ({ request }) => {
-            const searchParams = new URL(request.url).searchParams;
+  describe('options: https', () => {
+    const defaultHistoryOptions = {
+      limit: 2,
+      https: true
+    };
 
-            if (searchParams.get('nextPageToken')) {
+    beforeAll(() => {
+      server.listen();
+    });
+
+    afterEach(() => {
+      server.resetHandlers();
+    });
+
+    afterAll(() => {
+      server.close();
+    });
+
+    describe('get()', () => {
+      describe('success', () => {
+        it('should return historical messages for a given room', async () => {
+          server.use(
+            http.get(mockHistoryEndpoint, () => {
               return HttpResponse.json({
                 status: 200,
-                data: mockHistoryNextResponse
+                data: mockHistoryResponse
               });
-            }
+            })
+          );
 
-            return HttpResponse.json({
-              status: 200,
-              data: mockHistoryResponse
-            });
-          })
-        );
+          const messages = await history.get(defaultHistoryOptions);
 
-        const limit = 2;
-        const page1 = await history.get({ limit });
-        const page2 = await history.next();
+          expect(messages).toHaveLength(defaultHistoryOptions.limit);
+        });
+      });
 
-        expect(page1).toHaveLength(limit);
-        expect(page2).toHaveLength(limit);
-        expect(page1[0].timestamp).not.toEqual(page2[0].timestamp);
+      describe('error', () => {
+        it('should throw an error if the request fails', async () => {
+          server.use(
+            http.get(mockHistoryEndpoint, () => {
+              return new HttpResponse(null, { status: 400 });
+            })
+          );
+
+          await expect(history.get({ limit: 1000, https: true })).rejects.toThrow(
+            `Error getting message history for "${mockNspRoomid}"`
+          );
+        });
       });
     });
 
-    describe('error', () => {
-      it('should throw an error if history.next() is called before history.get()', async () => {
-        await expect(history.next()).rejects.toThrow(ValidationError);
+    describe('next()', () => {
+      describe('success', () => {
+        it('should return the next page of historical messages for a given room', async () => {
+          server.use(
+            http.get(mockHistoryEndpoint, ({ request }) => {
+              const searchParams = new URL(request.url).searchParams;
+
+              if (searchParams.get('nextPageToken')) {
+                return HttpResponse.json({
+                  status: 200,
+                  data: mockHistoryNextResponse
+                });
+              }
+
+              return HttpResponse.json({
+                status: 200,
+                data: mockHistoryResponse
+              });
+            })
+          );
+
+          const page1 = await history.get(defaultHistoryOptions);
+          const page2 = await history.next();
+
+          expect(page1).toHaveLength(defaultHistoryOptions.limit);
+          expect(page2).toHaveLength(defaultHistoryOptions.limit);
+          expect(page1[0].timestamp).not.toEqual(page2[0].timestamp);
+        });
       });
 
-      it('should throw an error if the request fails', async () => {
-        server.use(
-          http.get(mockHistoryEndpoint, () => {
-            return new HttpResponse(null, { status: 400 });
-          })
-        );
+      describe('error', () => {
+        it('should throw an error if history.next() is called before history.get()', async () => {
+          await expect(history.next()).rejects.toThrow(ValidationError);
+        });
 
-        await expect(history.get({ limit: 1000 })).rejects.toThrow(HTTPRequestError);
+        it('should throw an error if the request fails', async () => {
+          server.use(
+            http.get(mockHistoryEndpoint, () => {
+              return new HttpResponse(null, { status: 400 });
+            })
+          );
+
+          await expect(history.get({ limit: 1000, https: true })).rejects.toThrow(
+            `Error getting message history for "${mockNspRoomid}"`
+          );
+        });
       });
     });
   });

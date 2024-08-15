@@ -75,7 +75,12 @@ export class Room {
       );
 
       this.metrics = this.metricsFactory.createMetrics(this.socketManager, this.roomId);
-      this.history = this.historyFactory.createHistory(this.uwsHttpHost, this.nspRoomId);
+
+      this.history = this.historyFactory.createHistory(
+        this.socketManager,
+        this.uwsHttpHost,
+        this.nspRoomId
+      );
 
       return this;
     } catch (err: any) {

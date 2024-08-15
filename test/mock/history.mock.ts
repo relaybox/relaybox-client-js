@@ -20,7 +20,7 @@ export const mockHistoryResponse: HistoryResponse = {
         clientId: '1234',
         connectionId: 'M3wLrtCTJe8Z:4NFiw_ue-8oy'
       },
-      timestamp: 1723717618502
+      timestamp: 1723717618550
     }
   ],
   nextPageToken:
@@ -37,7 +37,7 @@ export const mockHistoryNextResponse: HistoryResponse = {
         clientId: '1234',
         connectionId: 'M3wLrtCTJe8Z:4NFiw_ue-8oy'
       },
-      timestamp: 1723717720349
+      timestamp: 1723717720351
     },
     {
       body: {
@@ -47,7 +47,7 @@ export const mockHistoryNextResponse: HistoryResponse = {
         clientId: '1234',
         connectionId: 'M3wLrtCTJe8Z:4NFiw_ue-8oy'
       },
-      timestamp: 1723717718502
+      timestamp: 1723717718552
     }
   ],
   nextPageToken: null

@@ -4,6 +4,8 @@ import { FormattedResponse, HttpMethod, HttpMode } from './types/request.types';
 import { HistoryGetOptions, HistoryResponse } from './types/history.types';
 import { ClientMessage } from './types/message.types';
 import { ValidationError } from './errors';
+import { SocketManager } from './socket-manager';
+import { ClientEvent } from './types/event.types';
 
 /**
  * The History class handles fetching historical messages for a specific room.
@@ -11,18 +13,21 @@ import { ValidationError } from './errors';
 export class History {
   private readonly nspRoomId: string;
   private readonly uwsHttpHost: string;
+  private readonly socketManager: SocketManager;
   private nextPageToken?: string;
   private seconds?: number;
   private limit?: number;
+  private https?: boolean;
 
   /**
    * Creates an instance of History.
    * @param {string} uwsHttpHost - The base URL of the WebSocket HTTP server.
    * @param {string} nspRoomid - The ID of the room for which metrics are being managed.
    */
-  constructor(uwsHttpHost: string, nspRoomid: string) {
-    this.nspRoomId = nspRoomid;
+  constructor(socketManager: SocketManager, uwsHttpHost: string, nspRoomid: string) {
+    this.socketManager = socketManager;
     this.uwsHttpHost = uwsHttpHost;
+    this.nspRoomId = nspRoomid;
   }
 
   /**
@@ -33,12 +38,52 @@ export class History {
    * @throws {Error} - Throws an error if the request fails.
    */
   async get(opts?: HistoryGetOptions, nextPageToken?: string): Promise<ClientMessage[]> {
-    logger.logInfo(`Fetching historical messages for room "${this.nspRoomId}"`);
-
-    const { seconds, limit } = opts || {};
+    const { seconds, limit, https } = opts || {};
 
     this.seconds = seconds;
     this.limit = limit;
+    this.https = https;
+
+    if (opts?.https) {
+      return this.getHistoryHttps(seconds, limit, nextPageToken);
+    } else {
+      return this.getHistoryWs(seconds, limit, nextPageToken);
+    }
+  }
+
+  private async getHistoryWs(
+    seconds?: number,
+    limit?: number,
+    nextPageToken?: string
+  ): Promise<ClientMessage[]> {
+    logger.logInfo(`Fetching message history for room "${this.nspRoomId}" (ws)`);
+
+    try {
+      const data = {
+        seconds,
+        limit,
+        nextPageToken
+      };
+
+      const historyResponseData = await this.socketManager.emitWithAck<HistoryResponse>(
+        ClientEvent.ROOM_HISTORY_GET,
+        data
+      );
+
+      return this.handleHistoryResponse(historyResponseData);
+    } catch (err: any) {
+      const message = `Error getting message history for "${this.nspRoomId}"`;
+      logger.logError(message, err);
+      throw new Error(message);
+    }
+  }
+
+  private async getHistoryHttps(
+    seconds?: number,
+    limit?: number,
+    nextPageToken?: string
+  ): Promise<ClientMessage[]> {
+    logger.logInfo(`Fetching message history for room "${this.nspRoomId}" (https)`);
 
     const historyRequestUrl = this.getHistoryRequestUrl(seconds, limit, nextPageToken);
     const historyRequestParams = this.getHistoryRequestParams();
@@ -49,20 +94,11 @@ export class History {
         historyRequestParams
       );
 
-      if (historyResponseData?.data) {
-        const { messages, nextPageToken } = historyResponseData.data;
-
-        if (nextPageToken) {
-          this.nextPageToken = nextPageToken;
-        }
-
-        return messages;
-      }
-
-      return [];
+      return this.handleHistoryResponse(historyResponseData?.data);
     } catch (err: any) {
-      logger.logError(err.message);
-      throw err;
+      const message = `Error getting message history for "${this.nspRoomId}"`;
+      logger.logError(message, err);
+      throw new Error(message);
     }
   }
 
@@ -77,11 +113,16 @@ export class History {
       throw new ValidationError('history.next() called before history.get()');
     }
 
-    logger.logInfo(`Fetching next page of historical messages for room "${this.nspRoomId}"`);
+    logger.logInfo(
+      `Fetching next page of message history for room "${this.nspRoomId}" (${
+        this.https ? 'https' : 'ws'
+      })`
+    );
 
     const historyOptions = {
       seconds: this.seconds,
-      limit: this.limit
+      limit: this.limit,
+      https: this.https
     };
 
     return this.get(historyOptions, this.nextPageToken);
@@ -126,5 +167,19 @@ export class History {
         'Content-Type': 'application/json'
       }
     };
+  }
+
+  private handleHistoryResponse(historyResponseData?: HistoryResponse): ClientMessage[] {
+    if (historyResponseData) {
+      const { messages, nextPageToken } = historyResponseData;
+
+      if (nextPageToken) {
+        this.nextPageToken = nextPageToken;
+      }
+
+      return messages;
+    }
+
+    return [];
   }
 }
