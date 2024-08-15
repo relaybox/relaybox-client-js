@@ -1,7 +1,7 @@
 import { ValidationError } from './errors';
 import { request } from './request';
 import { AuthRequestOptions } from './types/auth.types';
-import { TokenResponse } from './types/request.types';
+import { HttpMethod, HttpMode, TokenResponse } from './types/request.types';
 
 export async function getAuthTokenResponse(
   authEndpoint?: string,
@@ -9,7 +9,7 @@ export async function getAuthTokenResponse(
   authParams?: Record<string, unknown> | null,
   authRequestOptions?: AuthRequestOptions | null,
   clientId?: string | number
-): Promise<TokenResponse> {
+): Promise<TokenResponse | undefined> {
   validateRequestParams(authHeaders, authParams, clientId);
 
   if (!authEndpoint) {
@@ -19,7 +19,7 @@ export async function getAuthTokenResponse(
   const formattedAuthEndpointUrl = getFormattedEndpointUrl(authEndpoint, authParams);
 
   const requestParams = <RequestInit>{
-    method: authRequestOptions?.method || 'GET',
+    method: authRequestOptions?.method || HttpMethod.GET,
     ...(authRequestOptions && { ...authRequestOptions })
   };
 
@@ -116,8 +116,8 @@ export async function getSignedAuthObject(
   };
 
   const { data } = await request<{ authObject: string }>(authEndpoint, {
-    method: 'GET',
-    mode: 'cors',
+    method: HttpMethod.GET,
+    mode: HttpMode.CORS,
     headers: {
       'Content-Type': 'application/json',
       'X-Ds-App-Key': appKey

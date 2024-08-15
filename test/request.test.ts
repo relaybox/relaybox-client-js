@@ -3,6 +3,7 @@ import { request } from '../lib/request';
 import { HTTPRequestError, NetworkError } from '../lib/errors';
 import { setupServer } from 'msw/node';
 import { HttpResponse, http } from 'msw';
+import { HttpMethod } from '../lib/types/request.types';
 
 const server = setupServer();
 const mockUrl = 'https://example.com';
@@ -28,7 +29,7 @@ describe('getAuthTokenResponse', () => {
       server.use(http.get(mockUrl, () => HttpResponse.json(mockResponse)));
 
       const requestParams = {
-        method: 'GET'
+        method: HttpMethod.GET
       };
 
       await expect(request(mockUrl, requestParams)).resolves.toEqual({
@@ -41,7 +42,7 @@ describe('getAuthTokenResponse', () => {
       server.use(http.post(mockUrl, () => HttpResponse.json(mockResponse)));
 
       const requestParams = {
-        method: 'POST',
+        method: HttpMethod.POST,
         body: JSON.stringify({
           test: true
         })
@@ -59,7 +60,7 @@ describe('getAuthTokenResponse', () => {
       server.use(http.get(mockUrl, () => new HttpResponse(null, { status: 400 })));
 
       const requestParams = {
-        method: 'GET'
+        method: HttpMethod.GET
       };
 
       await expect(request(mockUrl, requestParams)).rejects.toThrow(HTTPRequestError);
@@ -69,7 +70,7 @@ describe('getAuthTokenResponse', () => {
       server.use(http.get(mockUrl, () => new HttpResponse(null, { status: 500 })));
 
       const requestParams = {
-        method: 'GET'
+        method: HttpMethod.GET
       };
 
       await expect(request(mockUrl, requestParams)).rejects.toThrow(HTTPRequestError);
@@ -79,7 +80,7 @@ describe('getAuthTokenResponse', () => {
       server.use(http.get(mockUrl, () => HttpResponse.error()));
 
       const requestParams = {
-        method: 'GET'
+        method: HttpMethod.GET
       };
 
       await expect(request(mockUrl, requestParams)).rejects.toThrow(NetworkError);

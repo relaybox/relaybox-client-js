@@ -1,7 +1,8 @@
 import { logger } from './logger';
 import { request } from './request';
-import { FormattedResponse } from './types/request.types';
+import { FormattedResponse, HttpMethod, HttpMode } from './types/request.types';
 import { HistoryGetOptions, HistoryResponse } from './types/history.types';
+import { ClientMessage } from './types/message.types';
 
 /**
  * The History class handles fetching historical messages for a specific room.
@@ -22,7 +23,10 @@ export class History {
     this.uwsHttpHost = uwsHttpHost;
   }
 
-  async get({ seconds, limit }: HistoryGetOptions, nextPageToken?: string): Promise<any> {
+  async get(
+    { seconds, limit }: HistoryGetOptions,
+    nextPageToken?: string
+  ): Promise<ClientMessage[]> {
     logger.logInfo(`Fetching historical messages for room "${this.nspRoomId}"`);
 
     this.seconds = seconds;
@@ -46,13 +50,15 @@ export class History {
 
         return messages;
       }
+
+      return [];
     } catch (err: any) {
       logger.logError(err.message);
       throw new Error(err.message);
     }
   }
 
-  async next(): Promise<any> {
+  async next(): Promise<ClientMessage[]> {
     if (!this.nextPageToken) {
       throw new Error('history.next() called before history.get()');
     }
@@ -94,8 +100,8 @@ export class History {
 
   private getHistoryRequestParams(): RequestInit {
     return {
-      method: 'GET',
-      mode: 'cors' as RequestMode,
+      method: HttpMethod.GET,
+      mode: HttpMode.CORS as RequestMode,
       headers: {
         'Content-Type': 'application/json'
       }

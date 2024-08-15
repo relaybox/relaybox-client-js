@@ -1,4 +1,4 @@
-import { ServerEventData } from './socket.types';
+import { ClientMessage } from './message.types';
 
 export interface HistoryGetOptions {
   seconds?: number;
@@ -6,6 +6,6 @@ export interface HistoryGetOptions {
 }
 
 export interface HistoryResponse {
-  messages: ServerEventData[];
+  messages: ClientMessage[];
   nextPageToken: string | null;
 }
