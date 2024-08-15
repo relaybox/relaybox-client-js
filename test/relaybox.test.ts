@@ -1,6 +1,11 @@
 import { describe, it, expect, afterEach, vi, beforeEach, MockInstance } from 'vitest';
 import { RelayBox } from '../lib/relaybox';
-import { HTTPRequestError, SocketConnectionError, ValidationError } from '../lib/errors';
+import {
+  HTTPRequestError,
+  SocketConnectionError,
+  TokenError,
+  ValidationError
+} from '../lib/errors';
 import { SocketEvent } from '../lib/types/socket.types';
 import { ServerEvent } from '../lib/types/event.types';
 import { eventEmitter } from './mock/event-emitter.mock';
@@ -142,6 +147,14 @@ describe('RelayBox', () => {
       relayBox = new RelayBox({ authEndpoint: mockAuthEndpoint });
 
       await expect(relayBox.connect()).rejects.toThrow(HTTPRequestError);
+    });
+
+    it('should throw an error if token is undefined', async () => {
+      vi.spyOn(authModule, 'getAuthTokenResponse').mockResolvedValueOnce(undefined);
+
+      relayBox = new RelayBox({ authEndpoint: mockAuthEndpoint });
+
+      await expect(relayBox.connect()).rejects.toThrow(TokenError);
     });
   });
 });

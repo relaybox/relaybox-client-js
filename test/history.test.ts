@@ -3,6 +3,7 @@ import { History } from '../lib/history';
 import { setupServer } from 'msw/node';
 import { HttpResponse, http } from 'msw';
 import { mockHistoryNextResponse, mockHistoryResponse } from './mock/history.mock';
+import { HTTPRequestError, ValidationError } from '../lib/errors';
 
 const server = setupServer();
 const mockNspRoomid = 'M3wLrtCTJe8Z:chat:one:test';
@@ -53,6 +54,7 @@ describe('History', () => {
 
         const limit = 2;
         const messages = await history.get({ limit });
+
         expect(messages).toHaveLength(limit);
       });
     });
@@ -65,7 +67,7 @@ describe('History', () => {
           })
         );
 
-        await expect(history.get({ limit: 1000 })).rejects.toThrow('400 Bad Request');
+        await expect(history.get({ limit: 1000 })).rejects.toThrow(HTTPRequestError);
       });
     });
   });
@@ -97,14 +99,13 @@ describe('History', () => {
 
         expect(page1).toHaveLength(limit);
         expect(page2).toHaveLength(limit);
-
         expect(page1[0].timestamp).not.toEqual(page2[0].timestamp);
       });
     });
 
     describe('error', () => {
       it('should throw an error if history.next() is called before history.get()', async () => {
-        await expect(history.next()).rejects.toThrow('history.next() called before history.get()');
+        await expect(history.next()).rejects.toThrow(ValidationError);
       });
 
       it('should throw an error if the request fails', async () => {
@@ -114,7 +115,7 @@ describe('History', () => {
           })
         );
 
-        await expect(history.get({ limit: 1000 })).rejects.toThrow('400 Bad Request');
+        await expect(history.get({ limit: 1000 })).rejects.toThrow(HTTPRequestError);
       });
     });
   });

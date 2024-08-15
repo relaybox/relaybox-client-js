@@ -34,7 +34,7 @@ import {
 } from './types/socket.types';
 import { logger } from './logger';
 import { PresenceFactory, MetricsFactory, HistoryFactory } from './factory';
-import { SocketConnectionError, ValidationError } from './errors';
+import { SocketConnectionError, TokenError, ValidationError } from './errors';
 import { SocketManager } from './socket-manager';
 import { AuthKeyData, AuthRequestOptions, AuthTokenLifeCycle } from './types/auth.types';
 
@@ -199,6 +199,10 @@ export class RelayBox {
       this.authRequestOptions,
       this.clientId
     );
+
+    if (!tokenResponse) {
+      throw new TokenError(`No token response received`);
+    }
 
     if (refresh) {
       this.socketManager.updateSocketAuth(tokenResponse);
