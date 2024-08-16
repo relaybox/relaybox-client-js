@@ -243,17 +243,16 @@ describe('History', () => {
           expect(historyResponse.next).toBeUndefined();
         });
 
-        it('should iterate through message history for a given room', async () => {
+        it('should iterate through message history for a given room retruning (n) items', async () => {
           server.use(
             http.get(mockHistoryEndpoint, ({ request }) => {
               const searchParams = new URL(request.url).searchParams;
 
-              const itemsRemaining =
-                Number(searchParams.get('items')) - mockHistoryResponse.messages.length;
+              const itemsRemaining = Number(searchParams.get('items')) - options.limit;
 
               const responseData = {
-                ...mockHistoryNextResponse,
                 itemsRemaining,
+                ...mockHistoryNextResponse,
                 ...(itemsRemaining > 0 && { nextPageToken: '123' })
               };
 
