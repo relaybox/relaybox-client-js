@@ -8,8 +8,8 @@ import { SocketManager } from '../lib/socket-manager';
 import { ClientEvent } from '../lib/types/event.types';
 
 const server = setupServer();
-const mockNspRoomid = 'M3wLrtCTJe8Z:chat:one:test';
 const mockUwsHttpHost = 'http://localhost:9090';
+const mockNspRoomid = 'M3wLrtCTJe8Z:chat:one:test';
 const mockHistoryEndpoint = `${mockUwsHttpHost}/rooms/${mockNspRoomid}/messages`;
 
 vi.mock('../lib/logger', () => ({
@@ -47,7 +47,7 @@ describe('History', () => {
 
     describe('get()', () => {
       describe('success', () => {
-        it('should return historical messages for a given room', async () => {
+        it('should return message history for a given room', async () => {
           socketManagerEmitWithAck.mockResolvedValueOnce(mockHistoryResponse);
 
           const historyResponse = await history.get(defaultHistoryOptions);
@@ -75,7 +75,7 @@ describe('History', () => {
 
     describe('next()', () => {
       describe('success', () => {
-        it('should return historical messages for a given room', async () => {
+        it('should return message history for a given room', async () => {
           socketManagerEmitWithAck.mockResolvedValueOnce(mockHistoryResponse);
           socketManagerEmitWithAck.mockResolvedValueOnce(mockHistoryNextResponse);
 
@@ -95,8 +95,35 @@ describe('History', () => {
 
           expect(historyResponse.items).toHaveLength(defaultHistoryOptions.limit);
           expect(nextHistoryResponse.items).toHaveLength(defaultHistoryOptions.limit);
+          expect(historyResponse.items[0].timestamp).not.toEqual(
+            nextHistoryResponse.items[0].timestamp
+          );
 
           expect(socketManagerEmitWithAck).toHaveBeenCalledTimes(2);
+        });
+
+        it('should iterate through message history for a given room', async () => {
+          socketManagerEmitWithAck.mockResolvedValueOnce(mockHistoryResponse);
+          socketManagerEmitWithAck.mockResolvedValueOnce(mockHistoryNextResponse);
+
+          let historyResponse = await history.get(defaultHistoryOptions);
+          expect(historyResponse.items).toHaveLength(defaultHistoryOptions.limit);
+
+          while (historyResponse?.next) {
+            historyResponse = await historyResponse.next();
+            expect(historyResponse.items).toHaveLength(defaultHistoryOptions.limit);
+          }
+
+          expect(historyResponse.next).toBeUndefined();
+          expect(socketManagerEmitWithAck).toHaveBeenCalledWith(ClientEvent.ROOM_HISTORY_GET, {
+            ...defaultHistoryOptions,
+            nspRoomId: mockNspRoomid
+          });
+          expect(socketManagerEmitWithAck).toHaveBeenCalledWith(ClientEvent.ROOM_HISTORY_GET, {
+            ...defaultHistoryOptions,
+            nspRoomId: mockNspRoomid,
+            nextPageToken: mockHistoryResponse.nextPageToken
+          });
         });
       });
 
@@ -140,7 +167,7 @@ describe('History', () => {
 
     describe('get()', () => {
       describe('success', () => {
-        it('should return historical messages for a given room', async () => {
+        it('should return message history for a given room', async () => {
           server.use(
             http.get(mockHistoryEndpoint, () => {
               return HttpResponse.json({
@@ -193,7 +220,7 @@ describe('History', () => {
           );
         });
 
-        it('should return the next page of historical messages for a given room', async () => {
+        it('should return the next page of message history for a given room', async () => {
           const historyResponse = await history.get(defaultHistoryOptions);
           const nextHistoryResponse = await historyResponse.next!();
 
@@ -204,7 +231,7 @@ describe('History', () => {
           );
         });
 
-        it('should iterate through all pages of historical messages for a given room', async () => {
+        it('should iterate through entire message history for a given room', async () => {
           let historyResponse = await history.get(defaultHistoryOptions);
 
           while (historyResponse?.next) {
