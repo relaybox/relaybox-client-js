@@ -15,22 +15,23 @@ export class History {
   private readonly nspRoomId: string;
   private readonly uwsHttpHost: string;
   private readonly socketManager: SocketManager;
-  private nextPageToken?: string;
   private seconds?: number;
   private limit?: number;
   private https?: boolean;
+  private nextPageToken: string | null = null;
+  private itemsRemaining?: number;
   private iterationInProgress: boolean = false;
 
   /**
    * Creates an instance of History.
    * @param {SocketManager} socketManager - The socket manager to handle socket connections.
    * @param {string} uwsHttpHost - The base URL of the WebSocket HTTP server.
-   * @param {string} nspRoomid - The ID of the room for which metrics are being managed.
+   * @param {string} nspRoomId - The ID of the room for which metrics are being managed.
    */
-  constructor(socketManager: SocketManager, uwsHttpHost: string, nspRoomid: string) {
+  constructor(socketManager: SocketManager, uwsHttpHost: string, nspRoomId: string) {
     this.socketManager = socketManager;
     this.uwsHttpHost = uwsHttpHost;
-    this.nspRoomId = nspRoomid;
+    this.nspRoomId = nspRoomId;
   }
 
   /**
@@ -41,18 +42,16 @@ export class History {
    * @throws {Error} - Throws an error if the request fails.
    */
   async get(opts?: HistoryGetOptions, nextPageToken?: string): Promise<HistoryClientResponse> {
-    const { seconds, limit, https } = opts || {};
+    const { seconds, limit, https, items } = opts || {};
 
     this.seconds = seconds;
-    this.limit = limit || HISTORY_MAX_REQUEST_LIMIT;
+    this.limit = limit ?? HISTORY_MAX_REQUEST_LIMIT;
     this.https = https;
     this.iterationInProgress = true;
 
-    if (opts?.https) {
-      return this.getHistoryHttps(seconds, limit, nextPageToken);
-    } else {
-      return this.getHistoryWs(seconds, limit, nextPageToken);
-    }
+    return https
+      ? this.getHistoryHttps(seconds, limit, items, nextPageToken)
+      : this.getHistoryWs(seconds, limit, items, nextPageToken);
   }
 
   /**
@@ -66,6 +65,7 @@ export class History {
   private async getHistoryWs(
     seconds?: number,
     limit?: number,
+    items?: number,
     nextPageToken?: string
   ): Promise<HistoryClientResponse> {
     logger.logInfo(`Fetching message history for room "${this.nspRoomId}" (ws)`);
@@ -74,6 +74,7 @@ export class History {
       const historyRequestData = {
         seconds,
         limit,
+        items,
         nextPageToken,
         nspRoomId: this.nspRoomId
       };
@@ -102,11 +103,12 @@ export class History {
   private async getHistoryHttps(
     seconds?: number,
     limit?: number,
+    items?: number,
     nextPageToken?: string
   ): Promise<HistoryClientResponse> {
     logger.logInfo(`Fetching message history for room "${this.nspRoomId}" (https)`);
 
-    const historyRequestUrl = this.getHistoryRequestUrl(seconds, limit, nextPageToken);
+    const historyRequestUrl = this.getHistoryRequestUrl(seconds, limit, items, nextPageToken);
     const historyRequestParams = this.getHistoryRequestParams();
 
     try {
@@ -147,7 +149,8 @@ export class History {
     const historyOptions = {
       seconds: this.seconds,
       limit: this.limit,
-      https: this.https
+      https: this.https,
+      items: this.itemsRemaining
     };
 
     return this.get(historyOptions, this.nextPageToken);
@@ -159,20 +162,24 @@ export class History {
    * @returns {ClientMessage[]} - An array of client messages extracted from the history response.
    */
   private handleHistoryResponse(historyResponseData?: HistoryResponse): HistoryClientResponse {
+    this.nextPageToken = null;
+    this.itemsRemaining = undefined;
+
     const historyClientResponse: HistoryClientResponse = {
       items: []
     };
 
     if (historyResponseData) {
-      const { messages, nextPageToken } = historyResponseData;
-      historyClientResponse.items = messages;
+      const { messages, nextPageToken, itemsRemaining } = historyResponseData;
+
+      historyClientResponse.items = messages || [];
 
       if (nextPageToken) {
         historyClientResponse.next = this.next.bind(this);
         this.nextPageToken = nextPageToken;
       }
 
-      return historyClientResponse;
+      this.itemsRemaining = itemsRemaining;
     }
 
     return historyClientResponse;
@@ -185,7 +192,12 @@ export class History {
    * @param {string} [nextPageToken] - The token for fetching the next page of results, if available.
    * @returns {URL} - The constructed URL for the history request.
    */
-  private getHistoryRequestUrl(seconds?: number, limit?: number, nextPageToken?: string): URL {
+  private getHistoryRequestUrl(
+    seconds?: number,
+    limit?: number,
+    items?: number,
+    nextPageToken?: string
+  ): URL {
     const pathname = `/rooms/${this.nspRoomId}/messages`;
 
     const url = new URL(pathname, this.uwsHttpHost);
@@ -196,6 +208,10 @@ export class History {
 
     if (limit) {
       url.searchParams.set('limit', limit.toString());
+    }
+
+    if (items) {
+      url.searchParams.set('items', items.toString());
     }
 
     if (nextPageToken) {
@@ -214,7 +230,8 @@ export class History {
       method: HttpMethod.GET,
       mode: HttpMode.CORS as RequestMode,
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        Accept: 'application/json'
       }
     };
   }

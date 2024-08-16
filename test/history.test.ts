@@ -9,7 +9,7 @@ import { ClientEvent } from '../lib/types/event.types';
 
 const server = setupServer();
 const mockUwsHttpHost = 'http://localhost:9090';
-const mockNspRoomid = 'M3wLrtCTJe8Z:chat:one:test';
+const mockNspRoomid = 'ewRnbOj5f2yR:chat:one:test';
 const mockHistoryEndpoint = `${mockUwsHttpHost}/rooms/${mockNspRoomid}/messages`;
 
 vi.mock('../lib/logger', () => ({
@@ -75,7 +75,7 @@ describe('History', () => {
 
     describe('next()', () => {
       describe('success', () => {
-        it('should return message history for a given room', async () => {
+        it('should return message history an next page iterator for a given room', async () => {
           socketManagerEmitWithAck.mockResolvedValueOnce(mockHistoryResponse);
           socketManagerEmitWithAck.mockResolvedValueOnce(mockHistoryNextResponse);
 
@@ -231,12 +231,52 @@ describe('History', () => {
           );
         });
 
-        it('should iterate through entire message history for a given room', async () => {
+        it('should iterate through message history for a given room', async () => {
           let historyResponse = await history.get(defaultHistoryOptions);
+          expect(historyResponse.items).toHaveLength(defaultHistoryOptions.limit);
 
           while (historyResponse?.next) {
             historyResponse = await historyResponse.next();
             expect(historyResponse.items).toHaveLength(defaultHistoryOptions.limit);
+          }
+
+          expect(historyResponse.next).toBeUndefined();
+        });
+
+        it('should iterate through message history for a given room', async () => {
+          server.use(
+            http.get(mockHistoryEndpoint, ({ request }) => {
+              const searchParams = new URL(request.url).searchParams;
+
+              const itemsRemaining =
+                Number(searchParams.get('items')) - mockHistoryResponse.messages.length;
+
+              const responseData = {
+                ...mockHistoryNextResponse,
+                itemsRemaining,
+                ...(itemsRemaining > 0 && { nextPageToken: '123' })
+              };
+
+              return HttpResponse.json({
+                status: 200,
+                data: responseData
+              });
+            })
+          );
+
+          const options = {
+            limit: mockHistoryResponse.messages.length,
+            https: true,
+            items: 10
+          };
+
+          let historyResponse = await history.get(options);
+          expect(historyResponse.items).toHaveLength(options.limit);
+          expect(historyResponse.next).toBeDefined();
+
+          while (historyResponse?.next) {
+            historyResponse = await historyResponse.next();
+            expect(historyResponse.items).toHaveLength(options.limit);
           }
 
           expect(historyResponse.next).toBeUndefined();
