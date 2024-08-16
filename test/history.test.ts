@@ -280,6 +280,25 @@ describe('History', () => {
 
           expect(historyResponse.next).toBeUndefined();
         });
+
+        it.only('should iterate through message history for a given room retruning (n) items', async () => {
+          const options = {
+            limit: 5,
+            https: true,
+            items: 15
+          };
+
+          let historyResponse = await history.get(options);
+          console.log(historyResponse.items);
+          expect(historyResponse.next).toBeDefined();
+
+          while (historyResponse?.next) {
+            historyResponse = await historyResponse.next();
+            console.log(historyResponse.items);
+          }
+
+          expect(historyResponse.next).toBeUndefined();
+        });
       });
 
       describe('error', () => {
