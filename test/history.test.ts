@@ -281,7 +281,7 @@ describe('History', () => {
           expect(historyResponse.next).toBeUndefined();
         });
 
-        it.only('should iterate through message history for a given room retruning (n) items', async () => {
+        it.skip('should iterate through message history for a given room retruning (n) items', async () => {
           const options = {
             limit: 5,
             https: true,

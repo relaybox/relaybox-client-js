@@ -7,8 +7,7 @@ export const mockHistoryResponse = {
       timestamp: 1723717618550
     }
   ],
-  nextPageToken:
-    'eyJrZXkiOiJoaXN0b3J5Om1lc3NhZ2VzOk0zd0xydENUSmU4WjpjaGF0Om9uZTp0ZXN0OjIwMjQtMDgtMTVUMDloIiwibGFzdFNjb3JlIjoxNzIzNzE1NjA5MzA5fQ=='
+  nextPageToken: '123'
 };
 
 export const mockHistoryNextResponse = {
