@@ -1,10 +1,16 @@
 import { logger } from './logger';
 import { request } from './request';
 import { FormattedResponse, HttpMethod, HttpMode } from './types/request.types';
-import { HistoryClientResponse, HistoryGetOptions, HistoryResponse } from './types/history.types';
+import {
+  HistoryClientResponse,
+  HistoryGetOptions,
+  HistoryOrder,
+  HistoryResponse
+} from './types/history.types';
 import { ValidationError } from './errors';
 import { SocketManager } from './socket-manager';
 import { ClientEvent } from './types/event.types';
+import { start } from 'repl';
 
 const HISTORY_MAX_REQUEST_LIMIT = 100;
 
@@ -15,8 +21,11 @@ export class History {
   private readonly nspRoomId: string;
   private readonly uwsHttpHost: string;
   private readonly socketManager: SocketManager;
+  private start?: number;
+  private end?: number;
   private seconds?: number;
   private limit?: number;
+  private order?: HistoryOrder;
   private https?: boolean;
   private nextPageToken: string | null = null;
   private itemsRemaining?: number;
@@ -42,15 +51,18 @@ export class History {
    * @throws {Error} - Throws an error if the request fails.
    */
   async get(opts?: HistoryGetOptions, nextPageToken?: string): Promise<HistoryClientResponse> {
-    const { seconds, limit, https, items } = opts || {};
+    const { start, end, seconds, limit, https, items, order } = opts || {};
 
+    this.start = start;
+    this.end = end;
     this.seconds = seconds;
     this.limit = limit ?? HISTORY_MAX_REQUEST_LIMIT;
+    this.order = order;
     this.https = https;
     this.iterationInProgress = true;
 
     return https
-      ? this.getHistoryHttps(seconds, limit, items, nextPageToken)
+      ? this.getHistoryHttps(start, end, seconds, limit, items, order, nextPageToken)
       : this.getHistoryWs(seconds, limit, items, nextPageToken);
   }
 
@@ -101,14 +113,26 @@ export class History {
    * @throws {Error} - Throws an error if the request fails.
    */
   private async getHistoryHttps(
+    start?: number,
+    end?: number,
     seconds?: number,
     limit?: number,
     items?: number,
+    order?: HistoryOrder,
     nextPageToken?: string
   ): Promise<HistoryClientResponse> {
     logger.logInfo(`Fetching message history for room "${this.nspRoomId}" (https)`);
 
-    const historyRequestUrl = this.getHistoryRequestUrl(seconds, limit, items, nextPageToken);
+    const historyRequestUrl = this.getHistoryRequestUrl(
+      start,
+      end,
+      seconds,
+      limit,
+      items,
+      order,
+      nextPageToken
+    );
+
     const historyRequestParams = this.getHistoryRequestParams();
 
     try {
@@ -148,8 +172,10 @@ export class History {
 
     const historyOptions = {
       seconds: this.seconds,
+      start: this.start,
       limit: this.limit,
       https: this.https,
+      order: this.order,
       items: this.itemsRemaining
     };
 
@@ -193,9 +219,12 @@ export class History {
    * @returns {URL} - The constructed URL for the history request.
    */
   private getHistoryRequestUrl(
+    start?: number,
+    end?: number,
     seconds?: number,
     limit?: number,
     items?: number,
+    order?: HistoryOrder,
     nextPageToken?: string
   ): URL {
     const pathname = `/rooms/${this.nspRoomId}/messages`;
@@ -212,6 +241,18 @@ export class History {
 
     if (items) {
       url.searchParams.set('items', items.toString());
+    }
+
+    if (start) {
+      url.searchParams.set('start', start.toString());
+    }
+
+    if (end) {
+      url.searchParams.set('end', end.toString());
+    }
+
+    if (order) {
+      url.searchParams.set('order', order.toString());
     }
 
     if (nextPageToken) {

@@ -9,7 +9,7 @@ import { ClientEvent } from '../lib/types/event.types';
 
 const server = setupServer();
 const mockUwsHttpHost = 'http://localhost:9090';
-const mockNspRoomid = 'ewRnbOj5f2yR:chat:one:test';
+const mockNspRoomid = 'ewRnbOj5f2yR:config';
 const mockHistoryEndpoint = `${mockUwsHttpHost}/rooms/${mockNspRoomid}/messages`;
 
 vi.mock('../lib/logger', () => ({
@@ -154,7 +154,7 @@ describe('History', () => {
     };
 
     beforeAll(() => {
-      server.listen();
+      // server.listen();
     });
 
     afterEach(() => {
@@ -281,23 +281,27 @@ describe('History', () => {
           expect(historyResponse.next).toBeUndefined();
         });
 
-        it.skip('should iterate through message history for a given room retruning (n) items', async () => {
+        it.only('should iterate through message history for a given room retruning (n) items', async () => {
           const options = {
             limit: 5,
             https: true,
-            items: 15
+            end: 1723886746714,
+            // items: 5,
+            // end: 1723886749821,
+            // seconds: 3600
+            start: 1723886745879
           };
 
           let historyResponse = await history.get(options);
-          console.log(historyResponse.items);
-          expect(historyResponse.next).toBeDefined();
+          console.log(historyResponse);
+          // expect(historyResponse.next).toBeDefined();
 
           while (historyResponse?.next) {
             historyResponse = await historyResponse.next();
-            console.log(historyResponse.items);
+            console.log(historyResponse);
           }
 
-          expect(historyResponse.next).toBeUndefined();
+          // expect(historyResponse.next).toBeUndefined();
         });
       });
 

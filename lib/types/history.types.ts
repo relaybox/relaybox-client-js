@@ -1,10 +1,15 @@
 import { ClientMessage } from './message.types';
 
+export type HistoryOrder = 'asc' | 'desc';
+
 export interface HistoryGetOptions {
+  start?: number;
+  end?: number;
   seconds?: number;
   limit?: number;
   https?: boolean;
   items?: number;
+  order?: HistoryOrder;
 }
 
 export interface HistoryResponse {
