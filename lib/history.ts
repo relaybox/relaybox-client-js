@@ -63,7 +63,7 @@ export class History {
 
     return https
       ? this.getHistoryHttps(start, end, seconds, limit, items, order, nextPageToken)
-      : this.getHistoryWs(seconds, limit, items, nextPageToken);
+      : this.getHistoryWs(start, end, seconds, limit, items, order, nextPageToken);
   }
 
   /**
@@ -75,20 +75,26 @@ export class History {
    * @throws {Error} - Throws an error if the request fails.
    */
   private async getHistoryWs(
+    start?: number,
+    end?: number,
     seconds?: number,
     limit?: number,
     items?: number,
+    order?: HistoryOrder,
     nextPageToken?: string
   ): Promise<HistoryClientResponse> {
     logger.logInfo(`Fetching message history for room "${this.nspRoomId}" (ws)`);
 
     try {
       const historyRequestData = {
+        nspRoomId: this.nspRoomId,
+        start,
+        end,
         seconds,
         limit,
         items,
         nextPageToken,
-        nspRoomId: this.nspRoomId
+        order
       };
 
       const historyResponseData = await this.socketManager.emitWithAck<HistoryResponse>(

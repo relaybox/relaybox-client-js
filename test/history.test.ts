@@ -283,22 +283,25 @@ describe('History', () => {
 
         it.only('should iterate through message history for a given room retruning (n) items', async () => {
           const options = {
-            limit: 5,
+            // limit: 3,
             https: true,
-            end: 1723886746714,
-            // items: 5,
+            // start: 1723971216985,
+            // start: 1723894465983
+            end: 1723983926153,
+            items: 10,
+            limit: 2
             // end: 1723886749821,
             // seconds: 3600
-            start: 1723886745879
+            // start: 1723886745879
           };
 
           let historyResponse = await history.get(options);
-          console.log(historyResponse);
+          console.log(JSON.stringify(historyResponse, null, 2));
           // expect(historyResponse.next).toBeDefined();
 
           while (historyResponse?.next) {
             historyResponse = await historyResponse.next();
-            console.log(historyResponse);
+            console.log(JSON.stringify(historyResponse, null, 2));
           }
 
           // expect(historyResponse.next).toBeUndefined();
