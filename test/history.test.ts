@@ -154,7 +154,7 @@ describe('History', () => {
     };
 
     beforeAll(() => {
-      // server.listen();
+      server.listen();
     });
 
     afterEach(() => {
@@ -281,30 +281,21 @@ describe('History', () => {
           expect(historyResponse.next).toBeUndefined();
         });
 
-        it.only('should iterate through message history for a given room retruning (n) items', async () => {
+        it.skip('should iterate through message history for a given room retruning (n) items', async () => {
           const options = {
-            // limit: 3,
             https: true,
-            // start: 1723971216985,
-            // start: 1723894465983
             end: 1723983926153,
             items: 10,
             limit: 2
-            // end: 1723886749821,
-            // seconds: 3600
-            // start: 1723886745879
           };
 
           let historyResponse = await history.get(options);
           console.log(JSON.stringify(historyResponse, null, 2));
-          // expect(historyResponse.next).toBeDefined();
 
           while (historyResponse?.next) {
             historyResponse = await historyResponse.next();
             console.log(JSON.stringify(historyResponse, null, 2));
           }
-
-          // expect(historyResponse.next).toBeUndefined();
         });
       });
 
