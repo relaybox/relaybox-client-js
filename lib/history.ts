@@ -10,7 +10,6 @@ import {
 import { ValidationError } from './errors';
 import { SocketManager } from './socket-manager';
 import { ClientEvent } from './types/event.types';
-import { start } from 'repl';
 
 const HISTORY_MAX_REQUEST_LIMIT = 100;
 
@@ -179,6 +178,7 @@ export class History {
     const historyOptions = {
       seconds: this.seconds,
       start: this.start,
+      end: this.end,
       limit: this.limit,
       https: this.https,
       order: this.order,
