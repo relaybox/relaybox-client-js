@@ -28,7 +28,6 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "rm -rf dist && tsc && rollup -c rollup.config.mjs",
-    "publish": "npm publish --access public",
     "test": "vitest",
     "dev": "tsc --watch && rollup -c rollup.config.mjs --watch"
   },
