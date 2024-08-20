@@ -9,5 +9,5 @@ export interface RelayBoxOptions {
   authHeaders?: AuthParamsOrHeaders | null;
   authRequestOptions?: AuthRequestOptions;
   authTokenLifeCycle?: AuthTokenLifeCycle;
-  authAction?: (params?: any) => Promise<TokenResponse | undefined>;
+  authAction?: (params?: any) => Promise<TokenResponse>;
 }
