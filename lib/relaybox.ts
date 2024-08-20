@@ -221,23 +221,8 @@ export class RelayBox {
   }
 
   /**
-   * Handles connecting to the server using an API key.
-   * @returns {Promise<void>}
-   */
-  private async handleApiKeyConnect(): Promise<void> {
-    const keyData: AuthKeyData = {
-      apiKey: this.apiKey!
-    };
-
-    if (this.clientId) {
-      keyData.clientId = this.clientId;
-    }
-
-    this.socketManager.apiKeyInitSocket(keyData);
-  }
-
-  /**
-   * Handles connecting to the server using an authentication function.
+   * Handles connecting to the server using an authentication action (NextJS App Router).
+   * @param {boolean} [refresh=false] - Whether this is a token refresh attempt.
    * @returns {Promise<void>}
    * @throws Will throw an error if the authentication fails.
    */
@@ -263,6 +248,22 @@ export class RelayBox {
     if (this.authTokenLifeCycle === AUTH_TOKEN_LIFECYCLE_EXPIRY) {
       this.setAuthTokenRefreshTimeout(tokenResponse.expiresIn);
     }
+  }
+
+  /**
+   * Handles connecting to the server using an API key.
+   * @returns {Promise<void>}
+   */
+  private async handleApiKeyConnect(): Promise<void> {
+    const keyData: AuthKeyData = {
+      apiKey: this.apiKey!
+    };
+
+    if (this.clientId) {
+      keyData.clientId = this.clientId;
+    }
+
+    this.socketManager.apiKeyInitSocket(keyData);
   }
 
   /**

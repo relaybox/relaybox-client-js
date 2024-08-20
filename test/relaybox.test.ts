@@ -158,7 +158,7 @@ describe('RelayBox', () => {
     });
   });
 
-  describe.only('when connecting using a server side auth function', () => {
+  describe('when connecting using a server side auth action', () => {
     it('should successfully connect', async () => {
       const authAction = vi.fn().mockResolvedValueOnce({
         token: mockAuthToken,
