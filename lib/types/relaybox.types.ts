@@ -1,4 +1,5 @@
 import { AuthParamsOrHeaders, AuthRequestOptions, AuthTokenLifeCycle } from './auth.types';
+import { TokenResponse } from './request.types';
 
 export interface RelayBoxOptions {
   authEndpoint?: string;
@@ -8,4 +9,5 @@ export interface RelayBoxOptions {
   authHeaders?: AuthParamsOrHeaders | null;
   authRequestOptions?: AuthRequestOptions;
   authTokenLifeCycle?: AuthTokenLifeCycle;
+  authFunction?: (params: any) => Promise<TokenResponse | undefined>;
 }

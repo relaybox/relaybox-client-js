@@ -37,6 +37,7 @@ import { PresenceFactory, MetricsFactory, HistoryFactory } from './factory';
 import { SocketConnectionError, TokenError, ValidationError } from './errors';
 import { SocketManager } from './socket-manager';
 import { AuthKeyData, AuthRequestOptions, AuthTokenLifeCycle } from './types/auth.types';
+import { TokenResponse } from './types/request.types';
 
 const UWS_HTTP_HOST = process.env.UWS_HTTP_HOST || '';
 const AUTH_TOKEN_REFRESH_BUFFER_SECONDS = 20;
@@ -60,6 +61,7 @@ export class RelayBox {
   private readonly authHeaders?: Record<string, unknown> | null;
   private readonly authParams?: Record<string, unknown> | null;
   private readonly authRequestOptions?: AuthRequestOptions;
+  private readonly authFunction?: (params?: any) => Promise<TokenResponse | undefined>;
   private readonly apiKey?: string;
   private readonly authTokenLifeCycle?: AuthTokenLifeCycle = AUTH_TOKEN_LIFECYCLE_SESSION;
   private readonly uwsHttpHost: string = UWS_HTTP_HOST;
@@ -76,13 +78,14 @@ export class RelayBox {
    * @throws {ValidationError} If neither `authEndpoint` nor `apiKey` is provided.
    */
   constructor(opts: RelayBoxOptions) {
-    if (!opts.apiKey && !opts.authEndpoint) {
-      throw new ValidationError(`Please provide either "authEndpoint" or "apiKey"`);
+    if (!opts.apiKey && !opts.authEndpoint && !opts.authFunction) {
+      throw new ValidationError(`Please provide either "authEndpoint", "apiKey" or "authFunction"`);
     }
 
     this.apiKey = opts.apiKey;
     this.clientId = opts.clientId;
     this.authEndpoint = opts.authEndpoint;
+    this.authFunction = opts.authFunction;
     this.socketManager = new SocketManager();
     this.presenceFactory = new PresenceFactory();
     this.metricsFactory = new MetricsFactory();
@@ -172,6 +175,8 @@ export class RelayBox {
     try {
       if (this.apiKey) {
         await this.handleApiKeyConnect();
+      } else if (this.authFunction) {
+        await this.handleAuthFunctionConnect();
       } else {
         await this.handleAuthTokenConnect();
       }
@@ -229,6 +234,29 @@ export class RelayBox {
     }
 
     this.socketManager.apiKeyInitSocket(keyData);
+  }
+
+  /**
+   * Handles connecting to the server using an authentication function.
+   * @returns {Promise<void>}
+   * @throws Will throw an error if the authentication fails.
+   */
+  private async handleAuthFunctionConnect(): Promise<void> {
+    logger.logInfo(`Fetching auth token response for new connection`);
+
+    if (!this.authFunction) {
+      throw new ValidationError(`No authentication function provided`);
+    }
+
+    const tokenResponse = await this.authFunction(this.authParams);
+
+    if (!tokenResponse) {
+      throw new TokenError(`No token response received`);
+    }
+
+    if (this.authTokenLifeCycle === AUTH_TOKEN_LIFECYCLE_EXPIRY) {
+      this.setAuthTokenRefreshTimeout(tokenResponse.expiresIn);
+    }
   }
 
   /**
