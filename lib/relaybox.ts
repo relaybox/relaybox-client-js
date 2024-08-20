@@ -61,7 +61,7 @@ export class RelayBox {
   private readonly authHeaders?: Record<string, unknown> | null;
   private readonly authParams?: Record<string, unknown> | null;
   private readonly authRequestOptions?: AuthRequestOptions;
-  private readonly authFunction?: (params?: any) => Promise<TokenResponse | undefined>;
+  private readonly authAction?: (params?: any) => Promise<TokenResponse | undefined>;
   private readonly apiKey?: string;
   private readonly authTokenLifeCycle?: AuthTokenLifeCycle = AUTH_TOKEN_LIFECYCLE_SESSION;
   private readonly uwsHttpHost: string = UWS_HTTP_HOST;
@@ -78,14 +78,14 @@ export class RelayBox {
    * @throws {ValidationError} If neither `authEndpoint` nor `apiKey` is provided.
    */
   constructor(opts: RelayBoxOptions) {
-    if (!opts.apiKey && !opts.authEndpoint && !opts.authFunction) {
-      throw new ValidationError(`Please provide either "authEndpoint", "apiKey" or "authFunction"`);
+    if (!opts.apiKey && !opts.authEndpoint && !opts.authAction) {
+      throw new ValidationError(`Please provide either "authEndpoint", "apiKey" or "authAction"`);
     }
 
     this.apiKey = opts.apiKey;
     this.clientId = opts.clientId;
     this.authEndpoint = opts.authEndpoint;
-    this.authFunction = opts.authFunction;
+    this.authAction = opts.authAction;
     this.socketManager = new SocketManager();
     this.presenceFactory = new PresenceFactory();
     this.metricsFactory = new MetricsFactory();
@@ -175,8 +175,8 @@ export class RelayBox {
     try {
       if (this.apiKey) {
         await this.handleApiKeyConnect();
-      } else if (this.authFunction) {
-        await this.handleAuthFunctionConnect();
+      } else if (this.authAction) {
+        await this.handleAuthActionConnect();
       } else {
         await this.handleAuthTokenConnect();
       }
@@ -241,17 +241,23 @@ export class RelayBox {
    * @returns {Promise<void>}
    * @throws Will throw an error if the authentication fails.
    */
-  private async handleAuthFunctionConnect(): Promise<void> {
-    logger.logInfo(`Fetching auth token response for new connection`);
+  private async handleAuthActionConnect(refresh?: boolean): Promise<void> {
+    logger.logInfo(`Fetching auth token response for new connection from server action`);
 
-    if (!this.authFunction) {
+    if (!this.authAction) {
       throw new ValidationError(`No authentication function provided`);
     }
 
-    const tokenResponse = await this.authFunction(this.authParams);
+    const tokenResponse = await this.authAction(this.authParams);
 
     if (!tokenResponse) {
       throw new TokenError(`No token response received`);
+    }
+
+    if (refresh) {
+      this.socketManager.updateSocketAuth(tokenResponse);
+    } else {
+      this.socketManager.authTokenInitSocket(tokenResponse);
     }
 
     if (this.authTokenLifeCycle === AUTH_TOKEN_LIFECYCLE_EXPIRY) {

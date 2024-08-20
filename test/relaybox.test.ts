@@ -160,12 +160,12 @@ describe('RelayBox', () => {
 
   describe.only('when connecting using a server side auth function', () => {
     it('should successfully connect', async () => {
-      const authFunction = vi.fn().mockResolvedValueOnce({
+      const authAction = vi.fn().mockResolvedValueOnce({
         token: mockAuthToken,
         expiresIn: 30
       });
 
-      relayBox = new RelayBox({ authFunction });
+      relayBox = new RelayBox({ authAction });
 
       await relayBox.connect();
 
@@ -174,24 +174,24 @@ describe('RelayBox', () => {
     });
 
     it('should successfully connect, calling the auth function with params', async () => {
-      const authFunction = vi.fn().mockResolvedValueOnce({
+      const authAction = vi.fn().mockResolvedValueOnce({
         token: mockAuthToken,
         expiresIn: 30
       });
 
-      relayBox = new RelayBox({ authFunction, authParams: { foo: 'bar' } });
+      relayBox = new RelayBox({ authAction, authParams: { foo: 'bar' } });
 
       await relayBox.connect();
 
       expect(relayBox.clientId).toEqual(mockClientId);
       expect(relayBox.connectionId).toEqual(mockConnectionId);
-      expect(authFunction).toHaveBeenCalledWith({ foo: 'bar' });
+      expect(authAction).toHaveBeenCalledWith({ foo: 'bar' });
     });
 
     it('should throw an error if token is undefined', async () => {
-      const authFunction = vi.fn().mockResolvedValueOnce(undefined);
+      const authAction = vi.fn().mockResolvedValueOnce(undefined);
 
-      relayBox = new RelayBox({ authFunction });
+      relayBox = new RelayBox({ authAction });
 
       await expect(relayBox.connect()).rejects.toThrow(TokenError);
     });
