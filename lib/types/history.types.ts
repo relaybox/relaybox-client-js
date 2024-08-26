@@ -22,3 +22,13 @@ export interface HistoryClientResponse {
   items: ClientMessage[];
   next?: () => Promise<HistoryClientResponse> | HistoryClientResponse;
 }
+
+export enum HistoryQueryParam {
+  START = 'start',
+  END = 'end',
+  SECONDS = 'seconds',
+  LIMIT = 'limit',
+  ITEMS = 'items',
+  ORDER = 'order',
+  NEXT_PAGE_TOKEN = 'nextPageToken'
+}

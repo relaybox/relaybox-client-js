@@ -5,6 +5,7 @@ import {
   HistoryClientResponse,
   HistoryGetOptions,
   HistoryOrder,
+  HistoryQueryParam,
   HistoryResponse
 } from './types/history.types';
 import { ValidationError } from './errors';
@@ -238,31 +239,31 @@ export class History {
     const url = new URL(pathname, this.uwsHttpHost);
 
     if (seconds) {
-      url.searchParams.set('seconds', seconds.toString());
+      url.searchParams.set(HistoryQueryParam.SECONDS, seconds.toString());
     }
 
     if (limit) {
-      url.searchParams.set('limit', limit.toString());
+      url.searchParams.set(HistoryQueryParam.LIMIT, limit.toString());
     }
 
     if (items) {
-      url.searchParams.set('items', items.toString());
+      url.searchParams.set(HistoryQueryParam.ITEMS, items.toString());
     }
 
     if (start) {
-      url.searchParams.set('start', start.toString());
+      url.searchParams.set(HistoryQueryParam.START, start.toString());
     }
 
     if (end) {
-      url.searchParams.set('end', end.toString());
+      url.searchParams.set(HistoryQueryParam.END, end.toString());
     }
 
     if (order) {
-      url.searchParams.set('order', order.toString());
+      url.searchParams.set(HistoryQueryParam.ORDER, order.toString());
     }
 
     if (nextPageToken) {
-      url.searchParams.set('nextPageToken', nextPageToken);
+      url.searchParams.set(HistoryQueryParam.NEXT_PAGE_TOKEN, nextPageToken);
     }
 
     return url;
