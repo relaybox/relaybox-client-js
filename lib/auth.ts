@@ -5,10 +5,13 @@ import { FormattedResponse, HttpMethod, TokenResponse } from './types';
 import { validateEmail, validateStringLength } from './validation';
 
 const AUTH_SERVICE_PATHNAME = '/users';
+const AUTH_SERVICE_VERIFICATION_CODE_LENGTH = 6;
+const AUTH_SERVICE_MIN_PASSWORD_LENGTH = 5;
 
 enum AuthEndpoint {
   CREATE = `/create`,
-  LOGIN = `/authenticate`
+  LOGIN = `/authenticate`,
+  VERIFY = `/verify`
 }
 
 export class Auth {
@@ -27,7 +30,7 @@ export class Auth {
     return this.#tokenResponse;
   }
 
-  private async fetch<T>(
+  private async authServiceRequest<T>(
     endpoint: AuthEndpoint,
     params: RequestInit = {}
   ): Promise<FormattedResponse<T>> {
@@ -51,15 +54,47 @@ export class Auth {
 
   public async create(email: string, password: string): Promise<any> {
     validateEmail(email);
-    validateStringLength(password);
+    validateStringLength(password, AUTH_SERVICE_MIN_PASSWORD_LENGTH);
 
     try {
-      const response = await this.fetch(AuthEndpoint.CREATE, {
-        method: HttpMethod.POST
+      const requestBody = {
+        email,
+        password
+      };
+
+      const response = await this.authServiceRequest(AuthEndpoint.CREATE, {
+        method: HttpMethod.POST,
+        body: JSON.stringify(requestBody)
       });
 
       if (!response?.data) {
         throw new Error('Failed to create user');
+      }
+
+      return true;
+    } catch (err: any) {
+      logger.logError(err.message);
+      throw err;
+    }
+  }
+
+  public async verify(email: string, code: string): Promise<any> {
+    validateEmail(email);
+    validateStringLength(code, AUTH_SERVICE_VERIFICATION_CODE_LENGTH, true);
+
+    try {
+      const requestBody = {
+        email,
+        code
+      };
+
+      const response = await this.authServiceRequest(AuthEndpoint.VERIFY, {
+        method: HttpMethod.POST,
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!response?.data) {
+        throw new Error('Failed to verify user');
       }
 
       return true;
@@ -74,8 +109,14 @@ export class Auth {
     validateStringLength(password);
 
     try {
-      const response = await this.fetch<TokenResponse>(AuthEndpoint.LOGIN, {
-        method: HttpMethod.POST
+      const requestBody = {
+        email,
+        password
+      };
+
+      const response = await this.authServiceRequest<TokenResponse>(AuthEndpoint.LOGIN, {
+        method: HttpMethod.POST,
+        body: JSON.stringify(requestBody)
       });
 
       if (!response?.data) {

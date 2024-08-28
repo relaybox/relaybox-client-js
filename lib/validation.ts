@@ -30,7 +30,15 @@ export function validateEmail(email: string): boolean {
   return true;
 }
 
-export function validateStringLength(value: string, length: number = STRING_LENGTH_MIN): boolean {
+export function validateStringLength(
+  value: string,
+  length: number = STRING_LENGTH_MIN,
+  exact?: boolean
+): boolean {
+  if (exact && value.length !== length) {
+    throw new ValidationError('String length does not match the exact length');
+  }
+
   if (value.length < length) {
     throw new ValidationError('String less than the minimum length');
   }

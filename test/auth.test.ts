@@ -7,11 +7,16 @@ import { ValidationError } from '../lib/errors';
 
 const mockPublicKey = 'appId.keyId';
 const mockRbAuthAuthServiceHost = 'http://localhost:4005/dev';
+const mockAuthEmail = '1@1.com';
+const mockAuthPassword = 'password';
+const mockAuthCode = '123456';
 
 const server = setupServer();
 
-interface AuthHeaders {
-  clientId: string;
+interface AuthRequestBody {
+  email?: string;
+  password?: string;
+  code?: string;
 }
 
 vi.mock('../lib/logger', () => ({
@@ -48,24 +53,28 @@ describe('Auth', () => {
     describe('success', () => {
       beforeEach(() => {
         server.use(
-          http.post(`${mockRbAuthAuthServiceHost}/users/authenticate`, ({ request }) => {
-            const publicKey = request.headers.get('X-Ds-Key-Name');
+          http.post<never, AuthRequestBody, any>(
+            `${mockRbAuthAuthServiceHost}/users/authenticate`,
+            async ({ request }) => {
+              const publicKey = request.headers.get('X-Ds-Key-Name');
+              const { email, password } = await request.json();
 
-            if (publicKey) {
-              return HttpResponse.json({
-                token: 'auth-token',
-                refreshToken: 'refresh-token',
-                expiresIn: 30
-              });
+              if (publicKey && email === mockAuthEmail && password === mockAuthPassword) {
+                return HttpResponse.json({
+                  token: 'auth-token',
+                  refreshToken: 'refresh-token',
+                  expiresIn: 30
+                });
+              }
+
+              return new HttpResponse(null, { status: 400 });
             }
-
-            return new HttpResponse(null, { status: 400 });
-          })
+          )
         );
       });
 
       it('should successfully fetch auth token from the auth service', async () => {
-        const tokenResponse = await auth.login('1@1.com', 'password');
+        const tokenResponse = await auth.login(mockAuthEmail, mockAuthPassword);
 
         expect(tokenResponse).toEqual(
           expect.objectContaining({
@@ -80,11 +89,13 @@ describe('Auth', () => {
 
     describe('error', () => {
       it('should throw validation error if email is invalid', async () => {
-        await expect(auth.login('invalid email', 'password')).rejects.toThrow(ValidationError);
+        await expect(auth.login('invalid email', mockAuthPassword)).rejects.toThrow(
+          ValidationError
+        );
       });
 
       it('should throw validation error if password is invalid', async () => {
-        await expect(auth.login('1@1.com', '')).rejects.toThrow(ValidationError);
+        await expect(auth.login(mockAuthEmail, '')).rejects.toThrow(ValidationError);
       });
     });
   });
@@ -93,17 +104,21 @@ describe('Auth', () => {
     describe('success', () => {
       beforeEach(() => {
         server.use(
-          http.post(`${mockRbAuthAuthServiceHost}/users/create`, ({ request }) => {
-            const publicKey = request.headers.get('X-Ds-Key-Name');
+          http.post<never, AuthRequestBody, any>(
+            `${mockRbAuthAuthServiceHost}/users/create`,
+            async ({ request }) => {
+              const publicKey = request.headers.get('X-Ds-Key-Name');
+              const { email, password } = await request.json();
 
-            if (publicKey) {
-              return HttpResponse.json({
-                message: 'User created successfully'
-              });
+              if (publicKey && email === mockAuthEmail && password === mockAuthPassword) {
+                return HttpResponse.json({
+                  message: 'User created successfully'
+                });
+              }
+
+              return new HttpResponse(null, { status: 400 });
             }
-
-            return new HttpResponse(null, { status: 400 });
-          })
+          )
         );
       });
 
@@ -114,11 +129,49 @@ describe('Auth', () => {
 
     describe('error', () => {
       it('should throw validation error if email is invalid', async () => {
-        await expect(auth.login('invalid email', 'password')).rejects.toThrow(ValidationError);
+        await expect(auth.create('invalid email', 'password')).rejects.toThrow(ValidationError);
       });
 
       it('should throw validation error if pssword is invalid', async () => {
-        await expect(auth.login('1@1.com', '')).rejects.toThrow(ValidationError);
+        await expect(auth.create('1@1.com', '')).rejects.toThrow(ValidationError);
+      });
+    });
+  });
+
+  describe('verify', () => {
+    describe('success', () => {
+      beforeEach(() => {
+        server.use(
+          http.post<never, AuthRequestBody, any>(
+            `${mockRbAuthAuthServiceHost}/users/verify`,
+            async ({ request }) => {
+              const publicKey = request.headers.get('X-Ds-Key-Name');
+              const { email, code } = await request.json();
+
+              if (publicKey && email === mockAuthEmail && code === mockAuthCode) {
+                return HttpResponse.json({
+                  message: 'User verified successfully'
+                });
+              }
+
+              return new HttpResponse(null, { status: 400 });
+            }
+          )
+        );
+      });
+
+      it('should successfully verify a user', async () => {
+        await expect(auth.verify(mockAuthEmail, mockAuthCode)).resolves.toEqual(true);
+      });
+    });
+
+    describe('error', () => {
+      it('should throw validation error if email is invalid', async () => {
+        await expect(auth.verify('invalid email', mockAuthCode)).rejects.toThrow(ValidationError);
+      });
+
+      it('should throw validation error if pssword is invalid', async () => {
+        await expect(auth.verify(mockAuthEmail, '')).rejects.toThrow(ValidationError);
       });
     });
   });

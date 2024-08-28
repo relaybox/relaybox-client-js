@@ -11,6 +11,7 @@ export interface FormattedResponse<T> {
 export interface TokenResponse {
   token: string;
   expiresIn: number;
+  refreshToken?: string;
 }
 
 export interface KeyData {
