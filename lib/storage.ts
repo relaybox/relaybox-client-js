@@ -21,7 +21,7 @@ export function getItem(key: string, storageType?: StorageType): string | null {
       return null;
     }
 
-    return item;
+    return parsedItem.value;
   } catch (err) {
     return null;
   }

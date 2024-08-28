@@ -1,10 +1,10 @@
-import { Auth } from '../lib/auth';
+import { Auth, REFRESH_TOKEN_KEY } from '../lib/auth';
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
 import { SocketManager } from '../lib/socket-manager';
 import { setupServer } from 'msw/node';
 import { HttpResponse, http } from 'msw';
 import { ValidationError } from '../lib/errors';
-import { mockUserData } from './mock/auth.mock';
+import { mockTokenResponse, mockUserData } from './mock/auth.mock';
 import { setItem, removeItem, getItem } from '../lib/storage';
 import { StorageType } from '../lib/types/storage.types';
 
@@ -62,14 +62,7 @@ describe('Auth', () => {
           const { email, password } = await request.json();
 
           if (publicKey && email === mockAuthEmail && password === mockAuthPassword) {
-            return HttpResponse.json({
-              token: 'auth-token',
-              refreshToken: 'refresh-token',
-              expiresIn: 30,
-              destroyAt: 100,
-              authStorageType: StorageType.SESSION,
-              user: mockUserData
-            });
+            return HttpResponse.json(mockTokenResponse);
           }
 
           return new HttpResponse(null, { status: 400 });
@@ -121,11 +114,23 @@ describe('Auth', () => {
           const authorization = request.headers.get('Authorization');
 
           if (publicKey && authorization) {
-            return HttpResponse.json({
-              token: 'auth-token',
-              expiresIn: 30,
-              expiresAt: 100
-            });
+            return HttpResponse.json(mockTokenResponse);
+          }
+
+          return new HttpResponse(null, { status: 400 });
+        }
+      )
+    );
+
+    server.use(
+      http.post<never, AuthRequestBody, any>(
+        `${mockRbAuthAuthServiceHost}/users/session`,
+        async ({ request }) => {
+          const publicKey = request.headers.get('X-Ds-Key-Name');
+          const authorization = request.headers.get('Authorization');
+
+          if (publicKey && authorization) {
+            return HttpResponse.json(mockTokenResponse);
           }
 
           return new HttpResponse(null, { status: 400 });
@@ -156,7 +161,7 @@ describe('Auth', () => {
       it('should successfully fetch auth token from the auth service', async () => {
         const userData = await auth.login(mockAuthEmail, mockAuthPassword);
 
-        expect(userData).toEqual(expect.objectContaining(mockUserData));
+        expect(userData).toEqual(expect.objectContaining(mockTokenResponse));
 
         expect(auth.tokenResponse).toEqual(
           expect.objectContaining({
@@ -168,9 +173,9 @@ describe('Auth', () => {
         expect(auth.refreshToken).toEqual('refresh-token');
         expect(auth.user).toEqual(mockUserData);
         expect(setItem).toHaveBeenCalledWith(
-          'relaybox:refreshToken',
+          REFRESH_TOKEN_KEY,
           JSON.stringify({
-            refreshToken: 'refresh-token',
+            value: 'refresh-token',
             expiresAt: 100
           }),
           StorageType.SESSION
@@ -231,14 +236,48 @@ describe('Auth', () => {
     describe('success', () => {
       it('should successfully fetch auth token from the auth service', async () => {
         await auth.tokenRefresh();
+        expect(auth.tokenResponse).toEqual(expect.objectContaining(mockTokenResponse));
+      });
+    });
+  });
+
+  describe.skip('getSession', () => {
+    describe('success', () => {
+      it('should successfully fetch auth token from the auth service', async () => {
+        // getItem.mockReturnValueOnce('refreshToken')
+        const userData = await auth.getSession();
+
+        expect(userData).toEqual(expect.objectContaining(mockUserData));
 
         expect(auth.tokenResponse).toEqual(
           expect.objectContaining({
             token: 'auth-token',
-            expiresIn: 30,
-            expiresAt: 100
+            expiresIn: 30
           })
         );
+
+        expect(auth.refreshToken).toEqual('refresh-token');
+        expect(auth.user).toEqual(mockUserData);
+        expect(setItem).toHaveBeenCalledWith(
+          REFRESH_TOKEN_KEY,
+          JSON.stringify({
+            value: 'refresh-token',
+            expiresAt: 100
+          }),
+          StorageType.SESSION
+        );
+      });
+    });
+
+    describe('error', () => {
+      it('should throw validation error if email is invalid', async () => {
+        await expect(auth.login('invalid email', mockAuthPassword)).rejects.toThrow(
+          ValidationError
+        );
+      });
+
+      it('should throw validation error if password is invalid', async () => {
+        await expect(auth.login(mockAuthEmail, '')).rejects.toThrow(ValidationError);
       });
     });
   });
