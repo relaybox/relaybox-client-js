@@ -90,7 +90,7 @@ export class Auth {
     return response;
   }
 
-  public async create(email: string, password: string): Promise<any> {
+  public async create(email: string, password: string): Promise<boolean> {
     logger.logInfo(`Creating user with email: ${email}`);
 
     validateEmail(email);
@@ -113,12 +113,12 @@ export class Auth {
 
       return true;
     } catch (err: any) {
-      logger.logError(err.message);
+      logger.logError(err.message, err);
       throw err;
     }
   }
 
-  public async verify(email: string, code: string): Promise<any> {
+  public async verify(email: string, code: string): Promise<boolean> {
     logger.logInfo(`Verifying email: ${email}`);
 
     validateEmail(email);
@@ -141,12 +141,12 @@ export class Auth {
 
       return true;
     } catch (err: any) {
-      logger.logError(err.message);
+      logger.logError(err.message, err);
       throw err;
     }
   }
 
-  public async login(email: string, password: string): Promise<any> {
+  public async login(email: string, password: string): Promise<AuthUser> {
     logger.logInfo(`Logging in with email: ${email}`);
 
     validateEmail(email);
@@ -179,12 +179,12 @@ export class Auth {
 
       return user;
     } catch (err: any) {
-      logger.logError(err.message);
+      logger.logError(err.message, err);
       throw err;
     }
   }
 
-  public async tokenRefresh(): Promise<any> {
+  public async tokenRefresh(): Promise<TokenResponse> {
     logger.logInfo(`Refreshing auth token`);
 
     try {
@@ -203,7 +203,7 @@ export class Auth {
 
       return response.data;
     } catch (err: any) {
-      logger.logError(err.message);
+      logger.logError(err.message, err);
       throw err;
     }
   }

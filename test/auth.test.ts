@@ -1,5 +1,5 @@
 import { Auth } from '../lib/auth';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
 import { SocketManager } from '../lib/socket-manager';
 import { setupServer } from 'msw/node';
 import { HttpResponse, http } from 'msw';
@@ -53,44 +53,106 @@ describe('Auth', () => {
   let auth: Auth;
   let socketManager: SocketManager;
 
-  beforeEach(() => {
+  beforeAll(() => {
+    server.use(
+      http.post<never, AuthRequestBody, any>(
+        `${mockRbAuthAuthServiceHost}/users/authenticate`,
+        async ({ request }) => {
+          const publicKey = request.headers.get('X-Ds-Key-Name');
+          const { email, password } = await request.json();
+
+          if (publicKey && email === mockAuthEmail && password === mockAuthPassword) {
+            return HttpResponse.json({
+              token: 'auth-token',
+              refreshToken: 'refresh-token',
+              expiresIn: 30,
+              destroyAt: 100,
+              authStorageType: StorageType.SESSION,
+              user: mockUserData
+            });
+          }
+
+          return new HttpResponse(null, { status: 400 });
+        }
+      )
+    );
+
+    server.use(
+      http.post<never, AuthRequestBody, any>(
+        `${mockRbAuthAuthServiceHost}/users/create`,
+        async ({ request }) => {
+          const publicKey = request.headers.get('X-Ds-Key-Name');
+          const { email, password } = await request.json();
+
+          if (publicKey && email === mockAuthEmail && password === mockAuthPassword) {
+            return HttpResponse.json({
+              message: 'User created successfully'
+            });
+          }
+
+          return new HttpResponse(null, { status: 400 });
+        }
+      )
+    );
+
+    server.use(
+      http.post<never, AuthRequestBody, any>(
+        `${mockRbAuthAuthServiceHost}/users/verify`,
+        async ({ request }) => {
+          const publicKey = request.headers.get('X-Ds-Key-Name');
+          const { email, code } = await request.json();
+
+          if (publicKey && email === mockAuthEmail && code === mockAuthCode) {
+            return HttpResponse.json({
+              message: 'User verified successfully'
+            });
+          }
+
+          return new HttpResponse(null, { status: 400 });
+        }
+      )
+    );
+
+    server.use(
+      http.get<never, AuthRequestBody, any>(
+        `${mockRbAuthAuthServiceHost}/users/token/refresh`,
+        async ({ request }) => {
+          const publicKey = request.headers.get('X-Ds-Key-Name');
+          const authorization = request.headers.get('Authorization');
+
+          if (publicKey && authorization) {
+            return HttpResponse.json({
+              token: 'auth-token',
+              expiresIn: 30,
+              expiresAt: 100
+            });
+          }
+
+          return new HttpResponse(null, { status: 400 });
+        }
+      )
+    );
+
     server.listen();
+  });
+
+  afterAll(() => {
+    server.close();
+  });
+
+  beforeEach(() => {
+    // server.resetHandlers();
     socketManager = new SocketManager();
     auth = new Auth(socketManager, mockPublicKey, mockRbAuthAuthServiceHost);
   });
 
   afterEach(() => {
-    server.resetHandlers();
+    // server.resetHandlers();
     vi.restoreAllMocks();
   });
 
   describe('login', () => {
     describe('success', () => {
-      beforeEach(() => {
-        server.use(
-          http.post<never, AuthRequestBody, any>(
-            `${mockRbAuthAuthServiceHost}/users/authenticate`,
-            async ({ request }) => {
-              const publicKey = request.headers.get('X-Ds-Key-Name');
-              const { email, password } = await request.json();
-
-              if (publicKey && email === mockAuthEmail && password === mockAuthPassword) {
-                return HttpResponse.json({
-                  token: 'auth-token',
-                  refreshToken: 'refresh-token',
-                  expiresIn: 30,
-                  destroyAt: 100,
-                  authStorageType: StorageType.SESSION,
-                  user: mockUserData
-                });
-              }
-
-              return new HttpResponse(null, { status: 400 });
-            }
-          )
-        );
-      });
-
       it('should successfully fetch auth token from the auth service', async () => {
         const userData = await auth.login(mockAuthEmail, mockAuthPassword);
 
@@ -131,26 +193,6 @@ describe('Auth', () => {
 
   describe('create', () => {
     describe('success', () => {
-      beforeEach(() => {
-        server.use(
-          http.post<never, AuthRequestBody, any>(
-            `${mockRbAuthAuthServiceHost}/users/create`,
-            async ({ request }) => {
-              const publicKey = request.headers.get('X-Ds-Key-Name');
-              const { email, password } = await request.json();
-
-              if (publicKey && email === mockAuthEmail && password === mockAuthPassword) {
-                return HttpResponse.json({
-                  message: 'User created successfully'
-                });
-              }
-
-              return new HttpResponse(null, { status: 400 });
-            }
-          )
-        );
-      });
-
       it('should successfully create a user', async () => {
         await expect(auth.create('1@1.com', 'password')).resolves.toEqual(true);
       });
@@ -169,26 +211,6 @@ describe('Auth', () => {
 
   describe('verify', () => {
     describe('success', () => {
-      beforeEach(() => {
-        server.use(
-          http.post<never, AuthRequestBody, any>(
-            `${mockRbAuthAuthServiceHost}/users/verify`,
-            async ({ request }) => {
-              const publicKey = request.headers.get('X-Ds-Key-Name');
-              const { email, code } = await request.json();
-
-              if (publicKey && email === mockAuthEmail && code === mockAuthCode) {
-                return HttpResponse.json({
-                  message: 'User verified successfully'
-                });
-              }
-
-              return new HttpResponse(null, { status: 400 });
-            }
-          )
-        );
-      });
-
       it('should successfully verify a user', async () => {
         await expect(auth.verify(mockAuthEmail, mockAuthCode)).resolves.toEqual(true);
       });
@@ -207,28 +229,6 @@ describe('Auth', () => {
 
   describe('tokenRefresh', () => {
     describe('success', () => {
-      beforeEach(() => {
-        server.use(
-          http.get<never, AuthRequestBody, any>(
-            `${mockRbAuthAuthServiceHost}/users/tokenRefresh`,
-            async ({ request }) => {
-              const publicKey = request.headers.get('X-Ds-Key-Name');
-              const authorization = request.headers.get('Authorization');
-
-              if (publicKey && authorization) {
-                return HttpResponse.json({
-                  token: 'auth-token',
-                  expiresIn: 30,
-                  expiresAt: 100
-                });
-              }
-
-              return new HttpResponse(null, { status: 400 });
-            }
-          )
-        );
-      });
-
       it('should successfully fetch auth token from the auth service', async () => {
         await auth.tokenRefresh();
 
