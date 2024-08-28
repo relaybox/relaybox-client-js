@@ -10,4 +10,5 @@ export interface RelayBoxOptions {
   authRequestOptions?: AuthRequestOptions;
   authTokenLifeCycle?: AuthTokenLifeCycle;
   authAction?: (params?: any) => Promise<TokenResponse>;
+  publicKey?: string;
 }

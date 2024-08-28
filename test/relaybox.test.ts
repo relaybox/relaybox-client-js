@@ -16,6 +16,7 @@ const mockClientId = 'G2-xcysmPiVz';
 const mockConnectionId = '_pSOuC2GvW4O';
 const mockAuthEndpoint = 'https://api.example.com/ds/auth';
 const mockAuthToken = 'eyJhb.eyJrZXlOYW1lIjoiRz.5hg9z5Gd4YI9jSw1Y66gz6q';
+const mockPublicKey = 'appId.keyId';
 
 let socket: any;
 let getSocketMockInstance: MockInstance;
@@ -67,7 +68,7 @@ describe('RelayBox', () => {
   });
 
   describe('when connecting using either api key or auth token', () => {
-    it('should throw ValidationError if neither "apiKey" nor "authEndpoint" is provided', () => {
+    it('should throw ValidationError if neither "apiKey", "authEndpoint", "authAction" nor "publicKey" is provided', () => {
       expect(() => new RelayBox({})).toThrow(ValidationError);
     });
 
@@ -194,6 +195,13 @@ describe('RelayBox', () => {
       relayBox = new RelayBox({ authAction });
 
       await expect(relayBox.connect()).rejects.toThrow(TokenError);
+    });
+  });
+
+  describe('when initializing using a public key', () => {
+    it('should initialize an instance with the provided public key', async () => {
+      const relayBox = new RelayBox({ publicKey: mockPublicKey });
+      expect(relayBox.auth).toBeDefined();
     });
   });
 });

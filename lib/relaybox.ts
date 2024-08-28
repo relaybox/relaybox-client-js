@@ -38,8 +38,10 @@ import { SocketConnectionError, TokenError, ValidationError } from './errors';
 import { SocketManager } from './socket-manager';
 import { AuthKeyData, AuthRequestOptions, AuthTokenLifeCycle } from './types/auth.types';
 import { TokenResponse } from './types/request.types';
+import { Auth } from './auth';
 
 const UWS_HTTP_HOST = process.env.UWS_HTTP_HOST || '';
+const RB_AUTH_SERVICE_HOST = process.env.RB_AUTH_SERVICE_HOST || '';
 const AUTH_TOKEN_REFRESH_BUFFER_SECONDS = 20;
 const AUTH_TOKEN_REFRESH_RETRY_MS = 10000;
 const AUTH_TOKEN_REFRESH_JITTER_RANGE_MS = 2000;
@@ -63,14 +65,17 @@ export class RelayBox {
   private readonly authRequestOptions?: AuthRequestOptions;
   private readonly authAction?: (params?: any) => Promise<TokenResponse | undefined>;
   private readonly apiKey?: string;
+  private readonly publicKey?: string;
   private readonly authTokenLifeCycle?: AuthTokenLifeCycle = AUTH_TOKEN_LIFECYCLE_SESSION;
   private readonly uwsHttpHost: string = UWS_HTTP_HOST;
+  private readonly rbAuthServiceHost: string = RB_AUTH_SERVICE_HOST;
   private socketManagerListeners: SocketManagerListener[] = [];
   private refreshTimeout: NodeJS.Timeout | number | null = null;
 
   public readonly connection: EventEmitter;
   public clientId?: string | number;
   public connectionId: string | null = null;
+  public auth: Auth | null = null;
 
   /**
    * Creates an instance of RelayBox.
@@ -78,11 +83,14 @@ export class RelayBox {
    * @throws {ValidationError} If neither `authEndpoint` nor `apiKey` is provided.
    */
   constructor(opts: RelayBoxOptions) {
-    if (!opts.apiKey && !opts.authEndpoint && !opts.authAction) {
-      throw new ValidationError(`Please provide either "authEndpoint", "apiKey" or "authAction"`);
+    if (!opts.apiKey && !opts.authEndpoint && !opts.authAction && !opts.publicKey) {
+      throw new ValidationError(
+        `Please provide either "authEndpoint", "apiKey", "authAction" or "publicKey"`
+      );
     }
 
     this.apiKey = opts.apiKey;
+    this.publicKey = opts.publicKey;
     this.clientId = opts.clientId;
     this.authEndpoint = opts.authEndpoint;
     this.authAction = opts.authAction;
@@ -97,7 +105,23 @@ export class RelayBox {
     this.authRequestOptions = opts.authRequestOptions;
     this.authTokenLifeCycle = opts.authTokenLifeCycle;
 
+    if (this.publicKey) {
+      this.auth = this.createAuthInstance(
+        this.socketManager,
+        this.publicKey,
+        this.rbAuthServiceHost
+      );
+    }
+
     this.registerSocketManagerListeners();
+  }
+
+  private createAuthInstance(
+    socketManager: SocketManager,
+    publicKey: string,
+    rbAuthServiceHost: string
+  ): Auth {
+    return new Auth(socketManager, publicKey, rbAuthServiceHost);
   }
 
   /**
