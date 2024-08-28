@@ -1,3 +1,5 @@
+import { AuthUser } from './auth.types';
+
 export interface ApiData {
   message?: string;
 }
@@ -13,6 +15,7 @@ export interface TokenResponse {
   expiresIn: number;
   refreshToken?: string;
   expiresAt?: number;
+  user?: AuthUser;
 }
 
 export interface KeyData {

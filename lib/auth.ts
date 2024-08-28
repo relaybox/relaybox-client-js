@@ -1,7 +1,7 @@
 import { logger } from './logger';
 import { request } from './request';
 import { SocketManager } from './socket-manager';
-import { FormattedResponse, HttpMethod, TokenResponse } from './types';
+import { AuthUser, FormattedResponse, HttpMethod, TokenResponse } from './types';
 import { validateEmail, validateStringLength } from './validation';
 
 const AUTH_SERVICE_PATHNAME = '/users';
@@ -19,6 +19,7 @@ export class Auth {
   private readonly publicKey: string;
   private readonly rbAuthServiceHost: string;
   #tokenResponse: TokenResponse | null = null;
+  #refreshToken: string | null = null;
 
   constructor(socketManager: SocketManager, publicKey: string, rbAuthServiceHost: string) {
     this.socketManager = socketManager;
@@ -27,27 +28,15 @@ export class Auth {
   }
 
   get tokenResponse(): TokenResponse | null {
-    const tokenResponse = this.#tokenResponse;
-
-    if (!tokenResponse) {
-      return null;
-    }
-
-    const { refreshToken, ...rest } = tokenResponse;
-
-    return rest;
+    return this.#tokenResponse;
   }
 
   get authToken(): string | undefined {
     return this.#tokenResponse?.token;
   }
 
-  get refreshToken(): string | undefined {
-    return this.#tokenResponse?.refreshToken;
-  }
-
-  get expiresIn(): number | undefined {
-    return this.#tokenResponse?.expiresIn;
+  get refreshToken(): string | null {
+    return this.#refreshToken;
   }
 
   private async authServiceRequest<T>(
@@ -143,9 +132,12 @@ export class Auth {
         throw new Error('No token response received');
       }
 
-      this.#tokenResponse = response.data;
+      const { refreshToken, user, ...tokenResponse } = response.data;
 
-      return this.#tokenResponse;
+      this.#tokenResponse = tokenResponse;
+      this.#refreshToken = refreshToken!;
+
+      return user;
     } catch (err: any) {
       logger.logError(err.message);
       throw err;

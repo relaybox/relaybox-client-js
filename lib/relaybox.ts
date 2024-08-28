@@ -451,4 +451,8 @@ export class RelayBox {
     this.socketManagerListeners = [];
     this.socketManager.disconnectSocket();
   }
+
+  reconnect() {
+    this.socketManager.disconnectSocket();
+  }
 }

@@ -279,9 +279,9 @@ export class SocketManager {
 
   disconnectSocket(): void {
     if (this.socket) {
-      this.eventEmitter.removeAllListeners();
+      // this.eventEmitter.removeAllListeners();
       this.connection?.close();
-      this.socket = null;
+      // this.socket = null;
 
       logger.logInfo('Socket disconnected');
     }

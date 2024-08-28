@@ -23,3 +23,20 @@ export interface AuthKeyData {
   apiKey: string;
   clientId?: string | number;
 }
+
+export enum AuthProvider {
+  EMAIL = 'email',
+  GITHUB = 'github',
+  GOOGLE = 'google'
+}
+
+export interface AuthUser {
+  id: string;
+  clientId: string;
+  username: string;
+  email: string;
+  createdAt: string;
+  updatedAt: string;
+  provider: AuthProvider;
+  providerId: string | null;
+}

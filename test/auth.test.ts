@@ -4,6 +4,7 @@ import { SocketManager } from '../lib/socket-manager';
 import { setupServer } from 'msw/node';
 import { HttpResponse, http } from 'msw';
 import { ValidationError } from '../lib/errors';
+import { mockUserData } from './mock/auth.mock';
 
 const mockPublicKey = 'appId.keyId';
 const mockRbAuthAuthServiceHost = 'http://localhost:4005/dev';
@@ -63,7 +64,8 @@ describe('Auth', () => {
                 return HttpResponse.json({
                   token: 'auth-token',
                   refreshToken: 'refresh-token',
-                  expiresIn: 30
+                  expiresIn: 30,
+                  user: mockUserData
                 });
               }
 
@@ -74,16 +76,18 @@ describe('Auth', () => {
       });
 
       it('should successfully fetch auth token from the auth service', async () => {
-        const tokenResponse = await auth.login(mockAuthEmail, mockAuthPassword);
+        const userData = await auth.login(mockAuthEmail, mockAuthPassword);
 
-        expect(tokenResponse).toEqual(
+        expect(userData).toEqual(expect.objectContaining(mockUserData));
+
+        expect(auth.tokenResponse).toEqual(
           expect.objectContaining({
             token: 'auth-token',
-            refreshToken: 'refresh-token',
             expiresIn: 30
           })
         );
-        expect(tokenResponse).toEqual(auth.tokenResponse);
+
+        expect(auth.refreshToken).toEqual('refresh-token');
       });
     });
 
