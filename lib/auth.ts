@@ -1,12 +1,16 @@
+import { TokenError } from './errors';
 import { logger } from './logger';
 import { request } from './request';
 import { SocketManager } from './socket-manager';
+import { setItem } from './storage';
 import { AuthUser, FormattedResponse, HttpMethod, TokenResponse } from './types';
+import { StorageType } from './types/storage.types';
 import { validateEmail, validateStringLength } from './validation';
 
 const AUTH_SERVICE_PATHNAME = '/users';
 const AUTH_SERVICE_VERIFICATION_CODE_LENGTH = 6;
 const AUTH_SERVICE_MIN_PASSWORD_LENGTH = 5;
+const REFRESH_TOKEN_KEY = 'relaybox:refreshToken';
 
 enum AuthEndpoint {
   CREATE = `/create`,
@@ -17,21 +21,22 @@ enum AuthEndpoint {
 export class Auth {
   private readonly socketManager: SocketManager;
   private readonly publicKey: string;
-  private readonly rbAuthServiceHost: string;
+  private readonly authServiceHost: string;
   #tokenResponse: TokenResponse | null = null;
   #refreshToken: string | null = null;
+  #user: AuthUser | null = null;
 
-  constructor(socketManager: SocketManager, publicKey: string, rbAuthServiceHost: string) {
+  constructor(socketManager: SocketManager, publicKey: string, authServiceHost: string) {
     this.socketManager = socketManager;
     this.publicKey = publicKey;
-    this.rbAuthServiceHost = rbAuthServiceHost;
+    this.authServiceHost = authServiceHost;
   }
 
   get tokenResponse(): TokenResponse | null {
     return this.#tokenResponse;
   }
 
-  get authToken(): string | undefined {
+  get token(): string | undefined {
     return this.#tokenResponse?.token;
   }
 
@@ -39,11 +44,34 @@ export class Auth {
     return this.#refreshToken;
   }
 
+  get user(): AuthUser | null {
+    return this.#user;
+  }
+
+  set tokenResponse(value: TokenResponse | null) {
+    this.#tokenResponse = value;
+  }
+
+  set user(value: AuthUser | null) {
+    this.#user = value;
+  }
+
+  private setRefreshToken(value: string, expiresAt?: number, storageType?: StorageType): void {
+    const refreshTokenData = {
+      refreshToken: value,
+      expiresAt
+    };
+
+    setItem(REFRESH_TOKEN_KEY, JSON.stringify(refreshTokenData), storageType);
+
+    this.#refreshToken = value;
+  }
+
   private async authServiceRequest<T>(
     endpoint: AuthEndpoint,
     params: RequestInit = {}
   ): Promise<FormattedResponse<T>> {
-    const requestUrl = `${this.rbAuthServiceHost}${AUTH_SERVICE_PATHNAME}${endpoint}`;
+    const requestUrl = `${this.authServiceHost}${AUTH_SERVICE_PATHNAME}${endpoint}`;
 
     const defaultHeaders = {
       'Content-Type': 'application/json',
@@ -132,10 +160,15 @@ export class Auth {
         throw new Error('No token response received');
       }
 
-      const { refreshToken, user, ...tokenResponse } = response.data;
+      const { refreshToken, user, destroyAt, authStorageType, ...tokenResponse } = response.data;
 
-      this.#tokenResponse = tokenResponse;
-      this.#refreshToken = refreshToken!;
+      if (!refreshToken || !user || !tokenResponse) {
+        throw new TokenError('Auth token response is invalid');
+      }
+
+      this.setRefreshToken(refreshToken, destroyAt, authStorageType);
+      this.user = user;
+      this.tokenResponse = tokenResponse;
 
       return user;
     } catch (err: any) {

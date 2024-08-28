@@ -1,10 +1,12 @@
 import { Auth } from '../lib/auth';
-import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { SocketManager } from '../lib/socket-manager';
 import { setupServer } from 'msw/node';
 import { HttpResponse, http } from 'msw';
 import { ValidationError } from '../lib/errors';
 import { mockUserData } from './mock/auth.mock';
+import { setItem, removeItem, getItem } from '../lib/storage';
+import { StorageType } from '../lib/types/storage.types';
 
 const mockPublicKey = 'appId.keyId';
 const mockRbAuthAuthServiceHost = 'http://localhost:4005/dev';
@@ -26,6 +28,18 @@ vi.mock('../lib/logger', () => ({
     logError: vi.fn()
   }
 }));
+
+vi.mock('../lib/storage', () => {
+  const setItem = vi.fn();
+  const removeItem = vi.fn();
+  const getItem = vi.fn();
+
+  return {
+    setItem,
+    removeItem,
+    getItem
+  };
+});
 
 const socketManagerEmitWithAck = vi.fn();
 
@@ -65,6 +79,8 @@ describe('Auth', () => {
                   token: 'auth-token',
                   refreshToken: 'refresh-token',
                   expiresIn: 30,
+                  destroyAt: 100,
+                  authStorageType: StorageType.SESSION,
                   user: mockUserData
                 });
               }
@@ -88,6 +104,15 @@ describe('Auth', () => {
         );
 
         expect(auth.refreshToken).toEqual('refresh-token');
+        expect(auth.user).toEqual(mockUserData);
+        expect(setItem).toHaveBeenCalledWith(
+          'relaybox:refreshToken',
+          JSON.stringify({
+            refreshToken: 'refresh-token',
+            expiresAt: 100
+          }),
+          StorageType.SESSION
+        );
       });
     });
 

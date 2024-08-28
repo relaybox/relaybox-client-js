@@ -1,4 +1,5 @@
 import { AuthUser } from './auth.types';
+import { StorageType } from './storage.types';
 
 export interface ApiData {
   message?: string;
@@ -16,6 +17,8 @@ export interface TokenResponse {
   refreshToken?: string;
   expiresAt?: number;
   user?: AuthUser;
+  authStorageType?: StorageType;
+  destroyAt?: number;
 }
 
 export interface KeyData {

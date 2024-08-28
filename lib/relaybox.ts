@@ -41,7 +41,7 @@ import { TokenResponse } from './types/request.types';
 import { Auth } from './auth';
 
 const UWS_HTTP_HOST = process.env.UWS_HTTP_HOST || '';
-const RB_AUTH_SERVICE_HOST = process.env.RB_AUTH_SERVICE_HOST || '';
+const AUTH_SERVICE_HOST = process.env.AUTH_SERVICE_HOST || '';
 const AUTH_TOKEN_REFRESH_BUFFER_SECONDS = 20;
 const AUTH_TOKEN_REFRESH_RETRY_MS = 10000;
 const AUTH_TOKEN_REFRESH_JITTER_RANGE_MS = 2000;
@@ -68,7 +68,7 @@ export class RelayBox {
   private readonly publicKey?: string;
   private readonly authTokenLifeCycle?: AuthTokenLifeCycle = AUTH_TOKEN_LIFECYCLE_SESSION;
   private readonly uwsHttpHost: string = UWS_HTTP_HOST;
-  private readonly rbAuthServiceHost: string = RB_AUTH_SERVICE_HOST;
+  private readonly rbAuthServiceHost: string = AUTH_SERVICE_HOST;
   private socketManagerListeners: SocketManagerListener[] = [];
   private refreshTimeout: NodeJS.Timeout | number | null = null;
 
@@ -201,7 +201,7 @@ export class RelayBox {
         await this.handleApiKeyConnect();
       } else if (this.authAction) {
         await this.handleAuthActionConnect();
-      } else if (this.auth?.authToken) {
+      } else if (this.auth?.token) {
         await this.handleAuthServiceConnect();
       } else {
         await this.handleAuthTokenConnect();

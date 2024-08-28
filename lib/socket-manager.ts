@@ -121,6 +121,7 @@ export class SocketManager {
   }
 
   authTokenInitSocket(tokenResponse: TokenResponse): void {
+    console.log(tokenResponse);
     if (!tokenResponse) {
       const message = `Invalid token response`;
       logger.logError(message);
