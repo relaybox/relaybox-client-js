@@ -204,4 +204,42 @@ describe('Auth', () => {
       });
     });
   });
+
+  describe('tokenRefresh', () => {
+    describe('success', () => {
+      beforeEach(() => {
+        server.use(
+          http.get<never, AuthRequestBody, any>(
+            `${mockRbAuthAuthServiceHost}/users/tokenRefresh`,
+            async ({ request }) => {
+              const publicKey = request.headers.get('X-Ds-Key-Name');
+              const authorization = request.headers.get('Authorization');
+
+              if (publicKey && authorization) {
+                return HttpResponse.json({
+                  token: 'auth-token',
+                  expiresIn: 30,
+                  expiresAt: 100
+                });
+              }
+
+              return new HttpResponse(null, { status: 400 });
+            }
+          )
+        );
+      });
+
+      it('should successfully fetch auth token from the auth service', async () => {
+        await auth.tokenRefresh();
+
+        expect(auth.tokenResponse).toEqual(
+          expect.objectContaining({
+            token: 'auth-token',
+            expiresIn: 30,
+            expiresAt: 100
+          })
+        );
+      });
+    });
+  });
 });

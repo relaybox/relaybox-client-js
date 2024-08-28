@@ -42,11 +42,10 @@ import { Auth } from './auth';
 
 const UWS_HTTP_HOST = process.env.UWS_HTTP_HOST || '';
 const AUTH_SERVICE_HOST = process.env.AUTH_SERVICE_HOST || '';
+const SOCKET_CONNECTION_ACK_TIMEOUT_MS = 2000;
 const AUTH_TOKEN_REFRESH_BUFFER_SECONDS = 20;
 const AUTH_TOKEN_REFRESH_RETRY_MS = 10000;
 const AUTH_TOKEN_REFRESH_JITTER_RANGE_MS = 2000;
-const SOCKET_CONNECTION_ACK_TIMEOUT_MS = 2000;
-
 const AUTH_TOKEN_LIFECYCLE_SESSION = 'session';
 const AUTH_TOKEN_LIFECYCLE_EXPIRY = 'expiry';
 
@@ -202,7 +201,7 @@ export class RelayBox {
       } else if (this.authAction) {
         await this.handleAuthActionConnect();
       } else if (this.auth?.token) {
-        await this.handleAuthServiceConnect();
+        await this.handleAuthServiceConnect(forceNewConnection);
       } else {
         await this.handleAuthTokenConnect();
       }
@@ -292,8 +291,23 @@ export class RelayBox {
     this.socketManager.apiKeyInitSocket(keyData);
   }
 
+  /**
+   * Handles connecting to the server using an authentication service.
+   * @param {boolean} [refresh=false] - Whether this is a token refresh attempt.
+   * @returns {Promise<void>}
+   * @throws Will throw an error if the auth service is not configured.
+   * @throws Will throw an error if the auth service returns an invalid token response.
+   */
   private async handleAuthServiceConnect(refresh?: boolean): Promise<void> {
-    const tokenResponse = this.auth?.tokenResponse;
+    if (!this.auth) {
+      throw new Error(`Auth service not configured`);
+    }
+
+    if (refresh) {
+      await this.auth.tokenRefresh();
+    }
+
+    const tokenResponse = this.auth.tokenResponse;
 
     if (!tokenResponse) {
       throw new TokenError(`No token response found`);

@@ -15,7 +15,8 @@ const REFRESH_TOKEN_KEY = 'relaybox:refreshToken';
 enum AuthEndpoint {
   CREATE = `/create`,
   LOGIN = `/authenticate`,
-  VERIFY = `/verify`
+  VERIFY = `/verify`,
+  TOKEN_REFRESH = '/token/refresh'
 }
 
 export class Auth {
@@ -90,6 +91,8 @@ export class Auth {
   }
 
   public async create(email: string, password: string): Promise<any> {
+    logger.logInfo(`Creating user with email: ${email}`);
+
     validateEmail(email);
     validateStringLength(password, AUTH_SERVICE_MIN_PASSWORD_LENGTH);
 
@@ -116,6 +119,8 @@ export class Auth {
   }
 
   public async verify(email: string, code: string): Promise<any> {
+    logger.logInfo(`Verifying email: ${email}`);
+
     validateEmail(email);
     validateStringLength(code, AUTH_SERVICE_VERIFICATION_CODE_LENGTH, true);
 
@@ -142,6 +147,8 @@ export class Auth {
   }
 
   public async login(email: string, password: string): Promise<any> {
+    logger.logInfo(`Logging in with email: ${email}`);
+
     validateEmail(email);
     validateStringLength(password);
 
@@ -171,6 +178,30 @@ export class Auth {
       this.tokenResponse = tokenResponse;
 
       return user;
+    } catch (err: any) {
+      logger.logError(err.message);
+      throw err;
+    }
+  }
+
+  public async tokenRefresh(): Promise<any> {
+    logger.logInfo(`Refreshing auth token`);
+
+    try {
+      const response = await this.authServiceRequest<TokenResponse>(AuthEndpoint.TOKEN_REFRESH, {
+        method: HttpMethod.GET,
+        headers: {
+          Authorization: `Bearer ${this.refreshToken}`
+        }
+      });
+
+      if (!response?.data) {
+        throw new Error('No token response received');
+      }
+
+      this.tokenResponse = response.data;
+
+      return response.data;
     } catch (err: any) {
       logger.logError(err.message);
       throw err;
