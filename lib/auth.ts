@@ -1,7 +1,6 @@
 import { TokenError } from './errors';
 import { logger } from './logger';
 import { request } from './request';
-import { SocketManager } from './socket-manager';
 import { getItem, setItem } from './storage';
 import { AuthUser, FormattedResponse, HttpMethod, TokenResponse } from './types';
 import { StorageType } from './types/storage.types';
@@ -21,15 +20,13 @@ enum AuthEndpoint {
 }
 
 export class Auth {
-  private readonly socketManager: SocketManager;
   private readonly publicKey: string;
   private readonly authServiceHost: string;
   #tokenResponse: TokenResponse | null = null;
   #refreshToken: string | null = null;
   #user: AuthUser | null = null;
 
-  constructor(socketManager: SocketManager, publicKey: string, authServiceHost: string) {
-    this.socketManager = socketManager;
+  constructor(publicKey: string, authServiceHost: string) {
     this.publicKey = publicKey;
     this.authServiceHost = authServiceHost;
   }

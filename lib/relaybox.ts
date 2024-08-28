@@ -67,7 +67,7 @@ export class RelayBox {
   private readonly publicKey?: string;
   private readonly authTokenLifeCycle?: AuthTokenLifeCycle = AUTH_TOKEN_LIFECYCLE_SESSION;
   private readonly uwsHttpHost: string = UWS_HTTP_HOST;
-  private readonly rbAuthServiceHost: string = AUTH_SERVICE_HOST;
+  private readonly authServiceHost: string = AUTH_SERVICE_HOST;
   private socketManagerListeners: SocketManagerListener[] = [];
   private refreshTimeout: NodeJS.Timeout | number | null = null;
 
@@ -105,11 +105,7 @@ export class RelayBox {
     this.authTokenLifeCycle = opts.authTokenLifeCycle;
 
     if (this.publicKey) {
-      this.auth = this.createAuthInstance(
-        this.socketManager,
-        this.publicKey,
-        this.rbAuthServiceHost
-      );
+      this.auth = this.createAuthInstance(this.socketManager, this.publicKey, this.authServiceHost);
     }
 
     this.registerSocketManagerListeners();
@@ -118,9 +114,9 @@ export class RelayBox {
   private createAuthInstance(
     socketManager: SocketManager,
     publicKey: string,
-    rbAuthServiceHost: string
+    authServiceHost: string
   ): Auth {
-    return new Auth(socketManager, publicKey, rbAuthServiceHost);
+    return new Auth(publicKey, authServiceHost);
   }
 
   /**

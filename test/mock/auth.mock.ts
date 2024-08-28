@@ -15,7 +15,14 @@ export const mockTokenResponse = {
   token: 'auth-token',
   refreshToken: 'refresh-token',
   expiresIn: 30,
+  expiresAt: 100,
   destroyAt: 100,
   authStorageType: StorageType.SESSION,
   user: mockUserData
+};
+
+export const mockTokenRefreshResponse = {
+  token: 'auth-token',
+  expiresIn: 30,
+  expiresAt: 100
 };
