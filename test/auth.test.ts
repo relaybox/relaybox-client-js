@@ -1,11 +1,10 @@
 import { Auth, REFRESH_TOKEN_KEY } from '../lib/auth';
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
-import { SocketManager } from '../lib/socket-manager';
 import { setupServer } from 'msw/node';
 import { HttpResponse, http } from 'msw';
 import { ValidationError } from '../lib/errors';
 import { mockTokenRefreshResponse, mockTokenResponse, mockUserData } from './mock/auth.mock';
-import { setItem, removeItem, getItem } from '../lib/storage';
+import { setItem, getItem } from '../lib/storage';
 import { StorageType } from '../lib/types/storage.types';
 
 const mockPublicKey = 'appId.keyId';
@@ -232,7 +231,9 @@ describe('Auth', () => {
           StorageType.SESSION
         );
       });
+    });
 
+    describe('error', () => {
       it('should return null if no refresh token is found', async () => {
         const mockedGetItem = vi.mocked(getItem);
         mockedGetItem.mockReturnValueOnce(null);

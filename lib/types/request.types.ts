@@ -16,9 +16,9 @@ export interface TokenResponse {
   expiresIn: number;
   refreshToken?: string;
   expiresAt?: number;
+  destroyAt?: number;
   user?: AuthUser;
   authStorageType?: StorageType;
-  destroyAt?: number;
 }
 
 export interface KeyData {

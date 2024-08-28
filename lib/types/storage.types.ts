@@ -1,4 +1,4 @@
 export enum StorageType {
-  PERSIST = 'persist',
-  SESSION = 'session'
+  PERSIST = 'persist', // Local storage
+  SESSION = 'session' // Session storage
 }

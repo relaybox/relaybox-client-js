@@ -101,8 +101,8 @@ export class Auth {
     const requestUrl = `${this.authServiceHost}${AUTH_SERVICE_PATHNAME}${endpoint}`;
 
     const defaultHeaders = {
-      'Content-Type': 'application/json',
       Accept: 'application/json',
+      'Content-Type': 'application/json',
       'X-Ds-Key-Name': this.publicKey
     };
 
@@ -190,7 +190,7 @@ export class Auth {
       });
 
       if (!response?.data) {
-        throw new Error('No token response received');
+        throw new Error('No token response data');
       }
 
       return this.handleTokenResponse(response.data);
@@ -212,7 +212,7 @@ export class Auth {
       });
 
       if (!response?.data) {
-        throw new Error('No token response received');
+        throw new Error('No token response data');
       }
 
       this.tokenResponse = response.data;
