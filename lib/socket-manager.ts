@@ -25,7 +25,7 @@ export class SocketManager {
   private reconnectAttempts: number = 0;
   private reconnectionTimeout: NodeJS.Timeout | number | null = null;
   private pendingAcknowledgements: Map<string, SocketEventHandler> = new Map();
-  private tokenExpiryUtc: number | null = null;
+  private tokenExpiryUnix: number | null = null;
 
   public id?: string;
   public eventEmitter: EventEmitter;
@@ -48,7 +48,7 @@ export class SocketManager {
 
   connectSocket(): void {
     if (this.tokenExpired()) {
-      this.eventEmitter.emit(SocketEvent.AUTH_TOKEN_EXPIRED, this.tokenExpiryUtc);
+      this.eventEmitter.emit(SocketEvent.AUTH_TOKEN_EXPIRED, this.tokenExpiryUnix);
     } else {
       this.connectionString = this.getConnectionString();
       this.connection = new WebSocket(this.connectionString!);
@@ -128,7 +128,7 @@ export class SocketManager {
     }
 
     this.tokenResponse = tokenResponse;
-    this.tokenExpiryUtc = this.getTokenExpiryUtc(tokenResponse);
+    this.tokenExpiryUnix = tokenResponse.expiresAt || this.getTokenExpiryUnix(tokenResponse);
 
     if (this.socket) {
       this.updateSocketAuth(tokenResponse);
@@ -151,7 +151,7 @@ export class SocketManager {
 
   updateSocketAuth(tokenResponse: TokenResponse): void {
     this.tokenResponse = tokenResponse;
-    this.tokenExpiryUtc = this.getTokenExpiryUtc(tokenResponse);
+    this.tokenExpiryUnix = this.getTokenExpiryUnix(tokenResponse);
 
     this.socketAuth = {
       ...this.socketAuth,
@@ -312,19 +312,19 @@ export class SocketManager {
     return this.socket.state;
   }
 
-  private getTokenExpiryUtc(tokenResponse: TokenResponse): number {
+  private getTokenExpiryUnix(tokenResponse: TokenResponse): number {
     const unixTime = new Date().getTime();
     return unixTime + tokenResponse.expiresIn * 1000;
   }
 
   private tokenExpired(): boolean {
-    if (this.tokenExpiryUtc) {
+    if (this.tokenExpiryUnix) {
       const now = new Date().getTime();
-      const tokenExpired = this.tokenExpiryUtc <= now;
+      const tokenExpired = this.tokenExpiryUnix <= now;
 
       if (tokenExpired) {
         logger.logWarning('Socket auth token expired', {
-          tokenExpiryUtc: this.tokenExpiryUtc,
+          tokenExpiryUnix: this.tokenExpiryUnix,
           now
         });
       }

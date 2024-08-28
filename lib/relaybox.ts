@@ -201,6 +201,8 @@ export class RelayBox {
         await this.handleApiKeyConnect();
       } else if (this.authAction) {
         await this.handleAuthActionConnect();
+      } else if (this.auth?.authToken) {
+        await this.handleAuthServiceConnect();
       } else {
         await this.handleAuthTokenConnect();
       }
@@ -288,6 +290,16 @@ export class RelayBox {
     }
 
     this.socketManager.apiKeyInitSocket(keyData);
+  }
+
+  private async handleAuthServiceConnect(refresh?: boolean): Promise<void> {
+    const tokenResponse = this.auth?.tokenResponse;
+
+    if (!tokenResponse) {
+      throw new TokenError(`No token response found`);
+    }
+
+    this.socketManager.authTokenInitSocket(tokenResponse);
   }
 
   /**

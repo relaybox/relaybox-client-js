@@ -12,6 +12,7 @@ export interface TokenResponse {
   token: string;
   expiresIn: number;
   refreshToken?: string;
+  expiresAt?: number;
 }
 
 export interface KeyData {

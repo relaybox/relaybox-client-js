@@ -27,7 +27,27 @@ export class Auth {
   }
 
   get tokenResponse(): TokenResponse | null {
-    return this.#tokenResponse;
+    const tokenResponse = this.#tokenResponse;
+
+    if (!tokenResponse) {
+      return null;
+    }
+
+    const { refreshToken, ...rest } = tokenResponse;
+
+    return rest;
+  }
+
+  get authToken(): string | undefined {
+    return this.#tokenResponse?.token;
+  }
+
+  get refreshToken(): string | undefined {
+    return this.#tokenResponse?.refreshToken;
+  }
+
+  get expiresIn(): number | undefined {
+    return this.#tokenResponse?.expiresIn;
   }
 
   private async authServiceRequest<T>(
