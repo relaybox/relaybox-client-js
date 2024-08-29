@@ -112,7 +112,7 @@ describe('serviceRequest', () => {
       server.use(
         http.get(mockUrl, async () => {
           return HttpResponse.json(
-            { name: 'AuthenticationError', message: 'failed' },
+            { name: 'AuthenticationError', message: 'failed', data: { schema: false } },
             { status: 400 }
           );
         })
@@ -128,10 +128,11 @@ describe('serviceRequest', () => {
         expect(err.name).toEqual('AuthenticationError');
         expect(err.status).toEqual(400);
         expect(err.message).toEqual('failed');
+        expect(err.data).toEqual({ schema: false });
       }
     });
 
-    it('should throw a NetworkError if request fails without a response', async () => {
+    it('should throw NetworkError when service is unavailable', async () => {
       server.use(
         http.get(mockUrl, async () => {
           return HttpResponse.error();

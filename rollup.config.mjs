@@ -30,6 +30,7 @@ export default {
     replace({
       'process.env.UWS_SERVER_HOST': JSON.stringify(process.env.UWS_SERVER_HOST),
       'process.env.UWS_HTTP_HOST': JSON.stringify(process.env.UWS_HTTP_HOST),
+      'process.env.AUTH_SERVICE_URL': JSON.stringify(process.env.AUTH_SERVICE_URL),
       'process.env.AUTH_SERVICE_HOST': JSON.stringify(process.env.AUTH_SERVICE_HOST),
       preventAssignment: true
     }),

@@ -19,7 +19,7 @@ import { StorageType } from './types/storage.types';
 
 const AUTH_SERVICE_PATHNAME = '/users';
 export const REFRESH_TOKEN_KEY = 'rb:token:refresh';
-const AUTH_POPUP_EVENT = 'message';
+const AUTH_POPUP_MESSAGE_EVENT = 'message';
 
 enum AuthEndpoint {
   CREATE = `/create`,
@@ -34,13 +34,15 @@ enum AuthEndpoint {
 
 export class Auth {
   private readonly publicKey: string;
+  private readonly authServiceUrl: string;
   private readonly authServiceHost: string;
   #tokenResponse: TokenResponse | null = null;
   #refreshToken: string | null = null;
   #user: AuthUser | null = null;
 
-  constructor(publicKey: string, authServiceHost: string) {
+  constructor(publicKey: string, authServiceUrl: string, authServiceHost: string) {
     this.publicKey = publicKey;
+    this.authServiceUrl = authServiceUrl;
     this.authServiceHost = authServiceHost;
   }
 
@@ -94,7 +96,6 @@ export class Auth {
   }
 
   private handleTokenResponse(tokenResponseData: TokenResponse): TokenResponse {
-    console.log(tokenResponseData);
     const { refreshToken, user, destroyAt, authStorageType, ...tokenResponse } = tokenResponseData;
 
     if (!refreshToken || !user || !tokenResponse) {
@@ -112,7 +113,7 @@ export class Auth {
     endpoint: AuthEndpoint,
     params: RequestInit = {}
   ): Promise<T> {
-    const requestUrl = `${this.authServiceHost}${AUTH_SERVICE_PATHNAME}${endpoint}`;
+    const requestUrl = `${this.authServiceUrl}${AUTH_SERVICE_PATHNAME}${endpoint}`;
 
     const defaultHeaders = {
       Accept: 'application/json',
@@ -324,22 +325,22 @@ export class Auth {
     const top = window.screen.height / 2 - height / 2;
 
     window.open(
-      `${this.authServiceHost}/users/idp/${provider}/authorize?keyName=${this.publicKey}`,
+      `${this.authServiceUrl}/users/idp/${provider}/authorize?keyName=${this.publicKey}`,
       'popup',
       `width=${width},height=${height},left=${left},top=${top}`
     );
 
-    window.addEventListener(AUTH_POPUP_EVENT, this.handleAuthMessage.bind(this));
+    window.addEventListener(AUTH_POPUP_MESSAGE_EVENT, this.handleAuthMessage.bind(this));
   }
 
   private handleAuthMessage(event: MessageEvent): void {
-    if (event.origin !== 'http://localhost:4005') {
+    if (event.origin !== this.authServiceHost) {
       return;
     }
 
     const { data: tokenResponse } = event;
     this.handleTokenResponse(tokenResponse);
 
-    window.removeEventListener(AUTH_POPUP_EVENT, this.handleAuthMessage);
+    window.removeEventListener(AUTH_POPUP_MESSAGE_EVENT, this.handleAuthMessage);
   }
 }

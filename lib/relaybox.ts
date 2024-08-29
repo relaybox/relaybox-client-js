@@ -41,6 +41,7 @@ import { TokenResponse } from './types/request.types';
 import { Auth } from './auth';
 
 const UWS_HTTP_HOST = process.env.UWS_HTTP_HOST || '';
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || '';
 const AUTH_SERVICE_HOST = process.env.AUTH_SERVICE_HOST || '';
 const SOCKET_CONNECTION_ACK_TIMEOUT_MS = 2000;
 const AUTH_TOKEN_REFRESH_BUFFER_SECONDS = 20;
@@ -67,6 +68,7 @@ export class RelayBox {
   private readonly publicKey?: string;
   private readonly authTokenLifeCycle?: AuthTokenLifeCycle = AUTH_TOKEN_LIFECYCLE_SESSION;
   private readonly uwsHttpHost: string = UWS_HTTP_HOST;
+  private readonly authServiceUrl: string = AUTH_SERVICE_URL;
   private readonly authServiceHost: string = AUTH_SERVICE_HOST;
   private socketManagerListeners: SocketManagerListener[] = [];
   private refreshTimeout: NodeJS.Timeout | number | null = null;
@@ -105,14 +107,22 @@ export class RelayBox {
     this.authTokenLifeCycle = opts.authTokenLifeCycle;
 
     if (this.publicKey) {
-      this.auth = this.createAuthInstance(this.publicKey, this.authServiceHost);
+      this.auth = this.createAuthInstance(
+        this.publicKey,
+        this.authServiceUrl,
+        this.authServiceHost
+      );
     }
 
     this.registerSocketManagerListeners();
   }
 
-  private createAuthInstance(publicKey: string, authServiceHost: string): Auth {
-    return new Auth(publicKey, authServiceHost);
+  private createAuthInstance(
+    publicKey: string,
+    authServiceUrl: string,
+    authServiceHost: string
+  ): Auth {
+    return new Auth(publicKey, authServiceUrl, authServiceHost);
   }
 
   /**

@@ -7,7 +7,8 @@ import { setItem, getItem } from '../lib/storage';
 import { StorageType } from '../lib/types/storage.types';
 
 const mockPublicKey = 'appId.keyId';
-const mockRbAuthAuthServiceHost = 'http://localhost:4005/dev';
+const mockAuthAuthServiceHost = 'http://localhost:4005';
+const mockAuthAuthServiceUrl = 'http://localhost:4005/dev';
 const mockAuthEmail = '1@1.com';
 const mockAuthPassword = 'password';
 const mockAuthCode = '123456';
@@ -39,7 +40,7 @@ describe('Auth', () => {
   beforeAll(() => {
     server.use(
       http.post<never, AuthRequestBody, any>(
-        `${mockRbAuthAuthServiceHost}/users/authenticate`,
+        `${mockAuthAuthServiceUrl}/users/authenticate`,
         async ({ request }) => {
           const publicKey = request.headers.get('X-Ds-Key-Name');
           const { email, password } = await request.json();
@@ -55,7 +56,7 @@ describe('Auth', () => {
 
     server.use(
       http.post<never, AuthRequestBody, any>(
-        `${mockRbAuthAuthServiceHost}/users/create`,
+        `${mockAuthAuthServiceUrl}/users/create`,
         async ({ request }) => {
           const publicKey = request.headers.get('X-Ds-Key-Name');
           const { email, password } = await request.json();
@@ -73,7 +74,7 @@ describe('Auth', () => {
 
     server.use(
       http.post<never, AuthRequestBody, any>(
-        `${mockRbAuthAuthServiceHost}/users/verify`,
+        `${mockAuthAuthServiceUrl}/users/verify`,
         async ({ request }) => {
           const publicKey = request.headers.get('X-Ds-Key-Name');
           const { email, code } = await request.json();
@@ -91,7 +92,7 @@ describe('Auth', () => {
 
     server.use(
       http.post<never, AuthRequestBody, any>(
-        `${mockRbAuthAuthServiceHost}/users/password-reset`,
+        `${mockAuthAuthServiceUrl}/users/password-reset`,
         async ({ request }) => {
           const publicKey = request.headers.get('X-Ds-Key-Name');
           const { email } = await request.json();
@@ -109,7 +110,7 @@ describe('Auth', () => {
 
     server.use(
       http.post<never, AuthRequestBody, any>(
-        `${mockRbAuthAuthServiceHost}/users/password-confirm`,
+        `${mockAuthAuthServiceUrl}/users/password-confirm`,
         async ({ request }) => {
           const publicKey = request.headers.get('X-Ds-Key-Name');
           const { code, password } = await request.json();
@@ -127,7 +128,7 @@ describe('Auth', () => {
 
     server.use(
       http.get<never, AuthRequestBody, any>(
-        `${mockRbAuthAuthServiceHost}/users/token/refresh`,
+        `${mockAuthAuthServiceUrl}/users/token/refresh`,
         async ({ request }) => {
           const publicKey = request.headers.get('X-Ds-Key-Name');
           const authorization = request.headers.get('Authorization');
@@ -143,7 +144,7 @@ describe('Auth', () => {
 
     server.use(
       http.get<never, AuthRequestBody, any>(
-        `${mockRbAuthAuthServiceHost}/users/session`,
+        `${mockAuthAuthServiceUrl}/users/session`,
         async ({ request }) => {
           const publicKey = request.headers.get('X-Ds-Key-Name');
           const authorization = request.headers.get('Authorization');
@@ -159,7 +160,7 @@ describe('Auth', () => {
 
     server.use(
       http.post<never, AuthRequestBody, any>(
-        `${mockRbAuthAuthServiceHost}/users/generate-verification-code`,
+        `${mockAuthAuthServiceUrl}/users/generate-verification-code`,
         async ({ request }) => {
           const publicKey = request.headers.get('X-Ds-Key-Name');
           const { email } = await request.json();
@@ -184,7 +185,7 @@ describe('Auth', () => {
 
   beforeEach(() => {
     // server.resetHandlers();
-    auth = new Auth(mockPublicKey, mockRbAuthAuthServiceHost);
+    auth = new Auth(mockPublicKey, mockAuthAuthServiceUrl, mockAuthAuthServiceHost);
   });
 
   afterEach(() => {
