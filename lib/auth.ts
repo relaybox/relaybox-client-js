@@ -1,6 +1,6 @@
 import { TokenError } from './errors';
 import { logger } from './logger';
-import { request } from './request';
+import { request, serviceRequest } from './request';
 import { getItem, setItem } from './storage';
 import { AuthUser, FormattedResponse, HttpMethod, TokenResponse } from './types';
 import { StorageType } from './types/storage.types';
@@ -111,12 +111,12 @@ export class Auth {
       ...(params?.headers || {})
     };
 
-    const response = await request<T>(requestUrl, params);
+    const response = await serviceRequest<T>(requestUrl, params);
 
     return response;
   }
 
-  public async create(email: string, password: string): Promise<boolean> {
+  public async create(email: string, password: string): Promise<FormattedResponse> {
     logger.logInfo(`Creating user with email: ${email}`);
 
     validateEmail(email);
@@ -137,14 +137,14 @@ export class Auth {
         throw new Error('Failed to create user');
       }
 
-      return true;
+      return response;
     } catch (err: any) {
       logger.logError(err.message, err);
       throw err;
     }
   }
 
-  public async verify(email: string, code: string): Promise<boolean> {
+  public async verify(email: string, code: string): Promise<FormattedResponse> {
     logger.logInfo(`Verifying email: ${email}`);
 
     validateEmail(email);
@@ -165,7 +165,7 @@ export class Auth {
         throw new Error('Failed to verify user');
       }
 
-      return true;
+      return response;
     } catch (err: any) {
       logger.logError(err.message, err);
       throw err;

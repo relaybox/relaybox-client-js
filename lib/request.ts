@@ -37,3 +37,26 @@ export async function request<T>(
 
   return formattedResponse;
 }
+
+export async function serviceRequest<T>(
+  url: URL | string,
+  params: RequestInit
+): Promise<FormattedResponse<T>> {
+  try {
+    const response = await fetch(url, { ...params, cache: 'no-store' });
+
+    const formattedResponse = await formatResponse<T>(response);
+
+    if (!response.ok) {
+      throw new HTTPRequestError(`${formattedResponse.message}`, formattedResponse.status);
+    }
+
+    return formattedResponse;
+  } catch (err: unknown) {
+    if (err instanceof TypeError && NODE_FETCH_ERR_MESSAGES.includes(err.message)) {
+      throw new NetworkError('Network request failed: Unable to connect to the server', 0);
+    } else {
+      throw err;
+    }
+  }
+}

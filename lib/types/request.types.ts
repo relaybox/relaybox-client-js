@@ -5,7 +5,7 @@ export interface ApiData {
   message?: string;
 }
 
-export interface FormattedResponse<T> {
+export interface FormattedResponse<T = any> {
   status: number;
   data?: T;
   message?: string;
