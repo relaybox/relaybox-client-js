@@ -46,7 +46,8 @@ export interface AuthUser {
 
 export enum AuthEvent {
   USER_CREATED = 'user:created',
-  USER_AUTHENTICATED = 'user:authenticated'
+  USER_AUTHENTICATED = 'user:authenticated',
+  USER_SIGNED_OUT = 'user:signed_out'
 }
 
 export type AuthEventAllowedValues = `${AuthEvent}`;

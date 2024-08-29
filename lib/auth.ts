@@ -2,7 +2,7 @@ import EventEmitter from 'eventemitter3';
 import { TokenError } from './errors';
 import { logger } from './logger';
 import { serviceRequest } from './request';
-import { getItem, setItem } from './storage';
+import { getItem, removeItem, setItem } from './storage';
 import {
   AuthCreateOptions,
   AuthEvent,
@@ -98,6 +98,10 @@ export class Auth extends EventEmitter {
     }
 
     return refreshTokenData;
+  }
+
+  private removeRefreshToken(): void {
+    removeItem(REFRESH_TOKEN_KEY);
   }
 
   private handleTokenResponse(tokenResponseData: TokenResponse): TokenResponse {
@@ -356,5 +360,13 @@ export class Auth extends EventEmitter {
     this.emit(AuthEvent.USER_AUTHENTICATED, tokenResponse);
 
     window.removeEventListener(AUTH_POPUP_MESSAGE_EVENT, this.handleAuthMessage);
+  }
+
+  public logout(): void {
+    this.removeRefreshToken();
+    this.user = null;
+    this.tokenResponse = null;
+
+    this.emit(AuthEvent.USER_SIGNED_OUT);
   }
 }
