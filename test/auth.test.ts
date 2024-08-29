@@ -201,6 +201,18 @@ describe('Auth', () => {
     });
   });
 
+  // describe.only('create', () => {
+  //   describe('success', () => {
+  //     it('should successfully create a user', async () => {
+  //       try {
+  //         await auth.create('1@1.com', 'password');
+  //       } catch (err) {
+  //         console.log(err);
+  //       }
+  //     });
+  //   });
+  // });
+
   describe('verify', () => {
     describe('success', () => {
       it('should successfully verify a user', async () => {

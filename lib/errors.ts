@@ -40,11 +40,11 @@ export class HTTPServiceError extends Error {
   public status: number;
   public data?: unknown;
 
-  constructor(message: string, status?: any, data?: unknown) {
+  constructor(status: number, message: string, err: any) {
     super(message);
     this.status = status;
-    this.name = ErrorName.HTTP_SERVICE_ERROR;
-    this.data = data;
+    this.name = err.name;
+    this.data = err.data || null;
   }
 }
 

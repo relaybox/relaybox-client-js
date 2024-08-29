@@ -2,7 +2,7 @@ import { TokenError } from './errors';
 import { logger } from './logger';
 import { serviceRequest } from './request';
 import { getItem, setItem } from './storage';
-import { AuthUser, FormattedResponse, HttpMethod, TokenResponse } from './types';
+import { AuthUser, FormattedResponse, HttpMethod, ServiceData, TokenResponse } from './types';
 import { StorageType } from './types/storage.types';
 import { validateEmail, validateStringLength } from './validation';
 
@@ -99,7 +99,7 @@ export class Auth {
   private async authServiceRequest<T>(
     endpoint: AuthEndpoint,
     params: RequestInit = {}
-  ): Promise<FormattedResponse<T>> {
+  ): Promise<T> {
     const requestUrl = `${this.authServiceHost}${AUTH_SERVICE_PATHNAME}${endpoint}`;
 
     const defaultHeaders = {
@@ -118,7 +118,7 @@ export class Auth {
     return response;
   }
 
-  public async create(email: string, password: string): Promise<FormattedResponse> {
+  public async create(email: string, password: string): Promise<ServiceData> {
     logger.logInfo(`Creating user with email: ${email}`);
 
     try {
@@ -127,14 +127,10 @@ export class Auth {
         password
       };
 
-      const response = await this.authServiceRequest(AuthEndpoint.CREATE, {
+      const response = await this.authServiceRequest<ServiceData>(AuthEndpoint.CREATE, {
         method: HttpMethod.POST,
         body: JSON.stringify(requestBody)
       });
-
-      if (!response?.data) {
-        throw new Error('Failed to create user');
-      }
 
       return response;
     } catch (err: any) {
@@ -143,7 +139,7 @@ export class Auth {
     }
   }
 
-  public async verify(email: string, code: string): Promise<FormattedResponse> {
+  public async verify(email: string, code: string): Promise<ServiceData> {
     logger.logInfo(`Verifying email: ${email}`);
 
     try {
@@ -152,14 +148,10 @@ export class Auth {
         code
       };
 
-      const response = await this.authServiceRequest(AuthEndpoint.VERIFY, {
+      const response = await this.authServiceRequest<ServiceData>(AuthEndpoint.VERIFY, {
         method: HttpMethod.POST,
         body: JSON.stringify(requestBody)
       });
-
-      if (!response?.data) {
-        throw new Error('Failed to verify user');
-      }
 
       return response;
     } catch (err: any) {
@@ -182,11 +174,7 @@ export class Auth {
         body: JSON.stringify(requestBody)
       });
 
-      if (!response?.data) {
-        throw new Error('No token response data');
-      }
-
-      return this.handleTokenResponse(response.data);
+      return this.handleTokenResponse(response);
     } catch (err: any) {
       logger.logError(err.message, err);
       throw err;
@@ -204,13 +192,9 @@ export class Auth {
         }
       });
 
-      if (!response?.data) {
-        throw new Error('No token response data');
-      }
+      this.tokenResponse = response;
 
-      this.tokenResponse = response.data;
-
-      return response.data;
+      return response;
     } catch (err: any) {
       logger.logError(err.message, err);
       throw err;
@@ -234,18 +218,14 @@ export class Auth {
         }
       });
 
-      if (!response?.data) {
-        throw new Error('Session data not found');
-      }
-
-      return this.handleTokenResponse(response.data);
+      return this.handleTokenResponse(response);
     } catch (err: any) {
       logger.logError(err.message, err);
       throw err;
     }
   }
 
-  public async passwordReset(email: string): Promise<FormattedResponse> {
+  public async passwordReset(email: string): Promise<ServiceData> {
     logger.logInfo(`Password reset request for email: ${email}`);
 
     try {
@@ -253,14 +233,10 @@ export class Auth {
         email
       };
 
-      const response = await this.authServiceRequest(AuthEndpoint.PASSWORD_RESET, {
+      const response = await this.authServiceRequest<ServiceData>(AuthEndpoint.PASSWORD_RESET, {
         method: HttpMethod.POST,
         body: JSON.stringify(requestBody)
       });
-
-      if (!response?.data) {
-        throw new Error('Failed to initiate password reset request');
-      }
 
       return response;
     } catch (err: any) {
@@ -273,7 +249,7 @@ export class Auth {
     email: string,
     password: string,
     code: string
-  ): Promise<FormattedResponse> {
+  ): Promise<ServiceData> {
     logger.logInfo(`Verifying password reset`);
 
     try {
@@ -283,14 +259,10 @@ export class Auth {
         code
       };
 
-      const response = await this.authServiceRequest(AuthEndpoint.PASSWORD_CONFIRM, {
+      const response = await this.authServiceRequest<ServiceData>(AuthEndpoint.PASSWORD_CONFIRM, {
         method: HttpMethod.POST,
         body: JSON.stringify(requestBody)
       });
-
-      if (!response?.data) {
-        throw new Error('Failed to confirm password reset');
-      }
 
       return response;
     } catch (err: any) {
