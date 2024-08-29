@@ -23,8 +23,8 @@ afterAll(() => {
   server.close();
 });
 
-describe('getAuthTokenResponse', () => {
-  describe('Success - 200', () => {
+describe('request', () => {
+  describe('success - 200', () => {
     it('should return valid response with status and data attributes from get request', async () => {
       server.use(http.get(mockUrl, () => HttpResponse.json(mockResponse)));
 
@@ -55,7 +55,7 @@ describe('getAuthTokenResponse', () => {
     });
   });
 
-  describe('Error - 4xx / 5xx', () => {
+  describe('error - 4xx / 5xx', () => {
     it('should throw HTTPRequestError when response is 4xx', async () => {
       server.use(http.get(mockUrl, () => new HttpResponse(null, { status: 400 })));
 
@@ -129,6 +129,20 @@ describe('serviceRequest', () => {
         expect(err.status).toEqual(400);
         expect(err.message).toEqual('failed');
       }
+    });
+
+    it('should throw a NetworkError if request fails without a response', async () => {
+      server.use(
+        http.get(mockUrl, async () => {
+          return HttpResponse.error();
+        })
+      );
+
+      const requestParams = {
+        method: HttpMethod.GET
+      };
+
+      await expect(serviceRequest(mockUrl, requestParams)).rejects.toThrow(NetworkError);
     });
   });
 });

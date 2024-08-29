@@ -2,13 +2,10 @@ import { TokenError } from './errors';
 import { logger } from './logger';
 import { serviceRequest } from './request';
 import { getItem, setItem } from './storage';
-import { AuthUser, FormattedResponse, HttpMethod, ServiceData, TokenResponse } from './types';
+import { AuthUser, HttpMethod, ServiceData, TokenResponse } from './types';
 import { StorageType } from './types/storage.types';
-import { validateEmail, validateStringLength } from './validation';
 
 const AUTH_SERVICE_PATHNAME = '/users';
-const AUTH_SERVICE_VERIFICATION_CODE_LENGTH = 6;
-const AUTH_SERVICE_MIN_PASSWORD_LENGTH = 5;
 export const REFRESH_TOKEN_KEY = 'rb:token:refresh';
 
 enum AuthEndpoint {

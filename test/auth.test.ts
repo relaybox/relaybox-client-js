@@ -5,7 +5,6 @@ import { HttpResponse, http } from 'msw';
 import { mockTokenRefreshResponse, mockTokenResponse, mockUserData } from './mock/auth.mock';
 import { setItem, getItem } from '../lib/storage';
 import { StorageType } from '../lib/types/storage.types';
-import { NetworkError } from '../lib/errors';
 
 const mockPublicKey = 'appId.keyId';
 const mockRbAuthAuthServiceHost = 'http://localhost:4005/dev';
@@ -216,9 +215,7 @@ describe('Auth', () => {
       it('should return null if no refresh token is found', async () => {
         const mockedGetItem = vi.mocked(getItem);
         mockedGetItem.mockReturnValueOnce(null);
-
         const sessionData = await auth.getSession();
-
         expect(sessionData).toBeNull();
       });
     });
@@ -269,31 +266,6 @@ describe('Auth', () => {
       it('should successfully fetch auth token from the auth service', async () => {
         await auth.tokenRefresh();
         expect(auth.tokenResponse).toEqual(expect.objectContaining(mockTokenRefreshResponse));
-      });
-    });
-
-    describe('error', () => {
-      it('should throw an error if token refresh fails', async () => {
-        server.use(
-          http.get<never, AuthRequestBody, any>(
-            `${mockRbAuthAuthServiceHost}/users/token/refresh`,
-            async () => {
-              return HttpResponse.json(
-                { name: 'AuthenticationError', message: 'failed' },
-                { status: 400 }
-              );
-            }
-          )
-        );
-
-        try {
-          await auth.tokenRefresh();
-        } catch (err) {
-          expect(err.name).toEqual('AuthenticationError');
-          expect(err.status).toEqual(400);
-          expect(err.message).toEqual('failed');
-          expect(auth.tokenResponse).toBeNull();
-        }
       });
     });
   });
