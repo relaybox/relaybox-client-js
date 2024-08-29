@@ -44,6 +44,15 @@ export interface AuthUser {
   providerId: string | null;
 }
 
+export enum AuthEvent {
+  USER_CREATED = 'user:created',
+  USER_AUTHENTICATED = 'user:authenticated'
+}
+
+export type AuthEventAllowedValues = `${AuthEvent}`;
+
+export type AuthEventHandler = (...args: any[]) => void;
+
 export interface AuthLoginOptions {
   email: string;
   password: string;

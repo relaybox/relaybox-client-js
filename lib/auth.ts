@@ -1,9 +1,13 @@
+import EventEmitter from 'eventemitter3';
 import { TokenError } from './errors';
 import { logger } from './logger';
 import { serviceRequest } from './request';
 import { getItem, setItem } from './storage';
 import {
   AuthCreateOptions,
+  AuthEvent,
+  AuthEventAllowedValues,
+  AuthEventHandler,
   AuthLoginOptions,
   AuthPasswordConfirmOptions,
   AuthPasswordResetOptions,
@@ -32,7 +36,7 @@ enum AuthEndpoint {
   GENERATE_VERIFICATION_CODE = '/generate-verification-code'
 }
 
-export class Auth {
+export class Auth extends EventEmitter {
   private readonly publicKey: string;
   private readonly authServiceUrl: string;
   private readonly authServiceHost: string;
@@ -41,6 +45,7 @@ export class Auth {
   #user: AuthUser | null = null;
 
   constructor(publicKey: string, authServiceUrl: string, authServiceHost: string) {
+    super();
     this.publicKey = publicKey;
     this.authServiceUrl = authServiceUrl;
     this.authServiceHost = authServiceHost;
@@ -145,6 +150,8 @@ export class Auth {
         body: JSON.stringify(requestBody)
       });
 
+      this.emit(AuthEvent.USER_CREATED, response);
+
       return response;
     } catch (err: any) {
       logger.logError(err.message, err);
@@ -211,6 +218,8 @@ export class Auth {
         method: HttpMethod.POST,
         body: JSON.stringify(requestBody)
       });
+
+      this.emit(AuthEvent.USER_AUTHENTICATED, response);
 
       return this.handleTokenResponse(response);
     } catch (err: any) {
@@ -315,6 +324,10 @@ export class Auth {
     }
   }
 
+  public onAuthEvent(event: AuthEventAllowedValues, handler: AuthEventHandler): void {
+    this.on(event, handler);
+  }
+
   public async signInWithProvider({
     provider,
     popup = true,
@@ -340,6 +353,7 @@ export class Auth {
 
     const { data: tokenResponse } = event;
     this.handleTokenResponse(tokenResponse);
+    this.emit(AuthEvent.USER_AUTHENTICATED, tokenResponse);
 
     window.removeEventListener(AUTH_POPUP_MESSAGE_EVENT, this.handleAuthMessage);
   }
