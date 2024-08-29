@@ -5,7 +5,7 @@ export interface ApiData {
   message?: string;
 }
 
-export interface ServiceData {
+export interface ServiceResponseData {
   message?: string;
 }
 

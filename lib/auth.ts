@@ -2,11 +2,24 @@ import { TokenError } from './errors';
 import { logger } from './logger';
 import { serviceRequest } from './request';
 import { getItem, setItem } from './storage';
-import { AuthUser, HttpMethod, ServiceData, TokenResponse } from './types';
+import {
+  AuthCreateOptions,
+  AuthLoginOptions,
+  AuthPasswordConfirmOptions,
+  AuthPasswordResetOptions,
+  AuthResendVerificationOptions,
+  AuthSignInWithProviderOptions,
+  AuthUser,
+  AuthVerifyOptions,
+  HttpMethod,
+  ServiceResponseData,
+  TokenResponse
+} from './types';
 import { StorageType } from './types/storage.types';
 
 const AUTH_SERVICE_PATHNAME = '/users';
 export const REFRESH_TOKEN_KEY = 'rb:token:refresh';
+const AUTH_POPUP_EVENT = 'message';
 
 enum AuthEndpoint {
   CREATE = `/create`,
@@ -15,7 +28,8 @@ enum AuthEndpoint {
   TOKEN_REFRESH = '/token/refresh',
   SESSION = '/session',
   PASSWORD_RESET = '/password-reset',
-  PASSWORD_CONFIRM = '/password-confirm'
+  PASSWORD_CONFIRM = '/password-confirm',
+  GENERATE_VERIFICATION_CODE = '/generate-verification-code'
 }
 
 export class Auth {
@@ -80,6 +94,7 @@ export class Auth {
   }
 
   private handleTokenResponse(tokenResponseData: TokenResponse): TokenResponse {
+    console.log(tokenResponseData);
     const { refreshToken, user, destroyAt, authStorageType, ...tokenResponse } = tokenResponseData;
 
     if (!refreshToken || !user || !tokenResponse) {
@@ -115,7 +130,7 @@ export class Auth {
     return response;
   }
 
-  public async create(email: string, password: string): Promise<ServiceData> {
+  public async signUp({ email, password }: AuthCreateOptions): Promise<ServiceResponseData> {
     logger.logInfo(`Creating user with email: ${email}`);
 
     try {
@@ -124,7 +139,7 @@ export class Auth {
         password
       };
 
-      const response = await this.authServiceRequest<ServiceData>(AuthEndpoint.CREATE, {
+      const response = await this.authServiceRequest<ServiceResponseData>(AuthEndpoint.CREATE, {
         method: HttpMethod.POST,
         body: JSON.stringify(requestBody)
       });
@@ -136,7 +151,7 @@ export class Auth {
     }
   }
 
-  public async verify(email: string, code: string): Promise<ServiceData> {
+  public async verify({ email, code }: AuthVerifyOptions): Promise<ServiceResponseData> {
     logger.logInfo(`Verifying email: ${email}`);
 
     try {
@@ -145,7 +160,7 @@ export class Auth {
         code
       };
 
-      const response = await this.authServiceRequest<ServiceData>(AuthEndpoint.VERIFY, {
+      const response = await this.authServiceRequest<ServiceResponseData>(AuthEndpoint.VERIFY, {
         method: HttpMethod.POST,
         body: JSON.stringify(requestBody)
       });
@@ -157,7 +172,32 @@ export class Auth {
     }
   }
 
-  public async login(email: string, password: string): Promise<TokenResponse> {
+  public async resendVerification({
+    email
+  }: AuthResendVerificationOptions): Promise<ServiceResponseData> {
+    logger.logInfo(`Resending verifcation email: ${email}`);
+
+    try {
+      const requestBody = {
+        email
+      };
+
+      const response = await this.authServiceRequest<ServiceResponseData>(
+        AuthEndpoint.GENERATE_VERIFICATION_CODE,
+        {
+          method: HttpMethod.POST,
+          body: JSON.stringify(requestBody)
+        }
+      );
+
+      return response;
+    } catch (err: any) {
+      logger.logError(err.message, err);
+      throw err;
+    }
+  }
+
+  public async signIn({ email, password }: AuthLoginOptions): Promise<TokenResponse> {
     logger.logInfo(`Logging in with email: ${email}`);
 
     try {
@@ -222,7 +262,7 @@ export class Auth {
     }
   }
 
-  public async passwordReset(email: string): Promise<ServiceData> {
+  public async passwordReset({ email }: AuthPasswordResetOptions): Promise<ServiceResponseData> {
     logger.logInfo(`Password reset request for email: ${email}`);
 
     try {
@@ -230,10 +270,13 @@ export class Auth {
         email
       };
 
-      const response = await this.authServiceRequest<ServiceData>(AuthEndpoint.PASSWORD_RESET, {
-        method: HttpMethod.POST,
-        body: JSON.stringify(requestBody)
-      });
+      const response = await this.authServiceRequest<ServiceResponseData>(
+        AuthEndpoint.PASSWORD_RESET,
+        {
+          method: HttpMethod.POST,
+          body: JSON.stringify(requestBody)
+        }
+      );
 
       return response;
     } catch (err: any) {
@@ -242,11 +285,11 @@ export class Auth {
     }
   }
 
-  public async passwordConfirm(
-    email: string,
-    password: string,
-    code: string
-  ): Promise<ServiceData> {
+  public async passwordConfirm({
+    email,
+    password,
+    code
+  }: AuthPasswordConfirmOptions): Promise<ServiceResponseData> {
     logger.logInfo(`Verifying password reset`);
 
     try {
@@ -256,15 +299,47 @@ export class Auth {
         code
       };
 
-      const response = await this.authServiceRequest<ServiceData>(AuthEndpoint.PASSWORD_CONFIRM, {
-        method: HttpMethod.POST,
-        body: JSON.stringify(requestBody)
-      });
+      const response = await this.authServiceRequest<ServiceResponseData>(
+        AuthEndpoint.PASSWORD_CONFIRM,
+        {
+          method: HttpMethod.POST,
+          body: JSON.stringify(requestBody)
+        }
+      );
 
       return response;
     } catch (err: any) {
       logger.logError(err.message, err);
       throw err;
     }
+  }
+
+  public async signInWithProvider({
+    provider,
+    popup = true,
+    width = 450,
+    height = 600
+  }: AuthSignInWithProviderOptions): Promise<void> {
+    const left = window.screen.width / 2 - width / 2;
+    const top = window.screen.height / 2 - height / 2;
+
+    window.open(
+      `${this.authServiceHost}/users/idp/${provider}/authorize?keyName=${this.publicKey}`,
+      'popup',
+      `width=${width},height=${height},left=${left},top=${top}`
+    );
+
+    window.addEventListener(AUTH_POPUP_EVENT, this.handleAuthMessage.bind(this));
+  }
+
+  private handleAuthMessage(event: MessageEvent): void {
+    if (event.origin !== 'http://localhost:4005') {
+      return;
+    }
+
+    const { data: tokenResponse } = event;
+    this.handleTokenResponse(tokenResponse);
+
+    window.removeEventListener(AUTH_POPUP_EVENT, this.handleAuthMessage);
   }
 }

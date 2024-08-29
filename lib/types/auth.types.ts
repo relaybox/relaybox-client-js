@@ -18,6 +18,7 @@ export interface AuthRequestOptions {
 }
 
 export type AuthParamsOrHeaders = Record<string, unknown> | (() => Record<string, unknown> | null);
+
 export type AuthTokenLifeCycle = 'session' | 'expiry';
 export interface AuthKeyData {
   apiKey: string;
@@ -30,6 +31,8 @@ export enum AuthProvider {
   GOOGLE = 'google'
 }
 
+export type AuthProviderOptions = `${AuthProvider}`;
+
 export interface AuthUser {
   id: string;
   clientId: string;
@@ -39,4 +42,40 @@ export interface AuthUser {
   updatedAt: string;
   provider: AuthProvider;
   providerId: string | null;
+}
+
+export interface AuthLoginOptions {
+  email: string;
+  password: string;
+}
+
+export interface AuthCreateOptions {
+  email: string;
+  password: string;
+}
+
+export interface AuthVerifyOptions {
+  email: string;
+  code: string;
+}
+
+export interface AuthPasswordResetOptions {
+  email: string;
+}
+
+export interface AuthResendVerificationOptions {
+  email: string;
+}
+
+export interface AuthPasswordConfirmOptions {
+  email: string;
+  password: string;
+  code: string;
+}
+
+export interface AuthSignInWithProviderOptions {
+  provider: AuthProviderOptions;
+  popup?: boolean;
+  width?: number;
+  height?: number;
 }

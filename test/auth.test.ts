@@ -157,6 +157,24 @@ describe('Auth', () => {
       )
     );
 
+    server.use(
+      http.post<never, AuthRequestBody, any>(
+        `${mockRbAuthAuthServiceHost}/users/generate-verification-code`,
+        async ({ request }) => {
+          const publicKey = request.headers.get('X-Ds-Key-Name');
+          const { email } = await request.json();
+
+          if (publicKey && email === mockAuthEmail) {
+            return HttpResponse.json({
+              message: 'Verification code sent'
+            });
+          }
+
+          return new HttpResponse(null, { status: 400 });
+        }
+      )
+    );
+
     server.listen();
   });
 
@@ -176,7 +194,7 @@ describe('Auth', () => {
   describe('login', () => {
     describe('success', () => {
       it('should successfully fetch auth token from the auth service', async () => {
-        const sessionData = await auth.login(mockAuthEmail, mockAuthPassword);
+        const sessionData = await auth.signIn({ email: mockAuthEmail, password: mockAuthPassword });
 
         expect(sessionData).toEqual(expect.objectContaining(mockTokenResponse));
         expect(auth.tokenResponse).toEqual(mockTokenRefreshResponse);
@@ -224,9 +242,9 @@ describe('Auth', () => {
   describe('create', () => {
     describe('success', () => {
       it('should successfully create a user', async () => {
-        await expect(auth.create('1@1.com', 'password')).resolves.toEqual(
-          expect.objectContaining({ message: expect.any(String) })
-        );
+        await expect(
+          auth.signUp({ email: mockAuthEmail, password: mockAuthPassword })
+        ).resolves.toEqual(expect.objectContaining({ message: expect.any(String) }));
       });
     });
   });
@@ -234,7 +252,7 @@ describe('Auth', () => {
   describe('verify', () => {
     describe('success', () => {
       it('should successfully verify a user', async () => {
-        await expect(auth.verify(mockAuthEmail, mockAuthCode)).resolves.toEqual(
+        await expect(auth.verify({ email: mockAuthEmail, code: mockAuthCode })).resolves.toEqual(
           expect.objectContaining({ message: expect.any(String) })
         );
       });
@@ -244,7 +262,7 @@ describe('Auth', () => {
   describe('passwordReset', () => {
     describe('success', () => {
       it('should successfully initiate password reset flow', async () => {
-        await expect(auth.passwordReset(mockAuthEmail)).resolves.toEqual(
+        await expect(auth.passwordReset({ email: mockAuthEmail })).resolves.toEqual(
           expect.objectContaining({ message: expect.any(String) })
         );
       });
@@ -255,7 +273,11 @@ describe('Auth', () => {
     describe('success', () => {
       it('should successfully confirm password reset', async () => {
         await expect(
-          auth.passwordConfirm(mockAuthEmail, mockAuthPassword, mockAuthCode)
+          auth.passwordConfirm({
+            email: mockAuthEmail,
+            password: mockAuthPassword,
+            code: mockAuthCode
+          })
         ).resolves.toEqual(expect.objectContaining({ message: expect.any(String) }));
       });
     });
@@ -266,6 +288,16 @@ describe('Auth', () => {
       it('should successfully fetch auth token from the auth service', async () => {
         await auth.tokenRefresh();
         expect(auth.tokenResponse).toEqual(expect.objectContaining(mockTokenRefreshResponse));
+      });
+    });
+  });
+
+  describe('resendVerification', () => {
+    describe('success', () => {
+      it('should successfully fetch auth token from the auth service', async () => {
+        await expect(auth.resendVerification({ email: mockAuthEmail })).resolves.toEqual(
+          expect.objectContaining({ message: expect.any(String) })
+        );
       });
     });
   });
