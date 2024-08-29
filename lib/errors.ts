@@ -35,6 +35,18 @@ export class HTTPRequestError extends Error {
   }
 }
 
+export class HTTPServiceError extends Error {
+  public status: number;
+  public data?: Record<string, unknown>;
+
+  constructor(message: string, status?: any, data?: Record<string, unknown>) {
+    super(message);
+    this.status = status;
+    this.name = ErrorName.HTTP_REQUEST_ERROR;
+    this.data = data;
+  }
+}
+
 export class SignatureError extends Error {
   constructor(message: string, public details?: any) {
     super(message);

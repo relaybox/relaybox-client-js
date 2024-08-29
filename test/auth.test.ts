@@ -91,6 +91,42 @@ describe('Auth', () => {
     );
 
     server.use(
+      http.post<never, AuthRequestBody, any>(
+        `${mockRbAuthAuthServiceHost}/users/password-reset`,
+        async ({ request }) => {
+          const publicKey = request.headers.get('X-Ds-Key-Name');
+          const { email } = await request.json();
+
+          if (publicKey && email === mockAuthEmail) {
+            return HttpResponse.json({
+              message: 'Password reset request initialized'
+            });
+          }
+
+          return new HttpResponse(null, { status: 400 });
+        }
+      )
+    );
+
+    server.use(
+      http.post<never, AuthRequestBody, any>(
+        `${mockRbAuthAuthServiceHost}/users/password-confirm`,
+        async ({ request }) => {
+          const publicKey = request.headers.get('X-Ds-Key-Name');
+          const { code, password } = await request.json();
+
+          if (publicKey && code === mockAuthCode && password === mockAuthPassword) {
+            return HttpResponse.json({
+              message: 'Password reset successful'
+            });
+          }
+
+          return new HttpResponse(null, { status: 400 });
+        }
+      )
+    );
+
+    server.use(
       http.get<never, AuthRequestBody, any>(
         `${mockRbAuthAuthServiceHost}/users/token/refresh`,
         async ({ request }) => {
@@ -171,7 +207,9 @@ describe('Auth', () => {
   describe('create', () => {
     describe('success', () => {
       it('should successfully create a user', async () => {
-        await expect(auth.create('1@1.com', 'password')).resolves.toEqual(true);
+        await expect(auth.create('1@1.com', 'password')).resolves.toEqual(
+          expect.objectContaining({ status: 200 })
+        );
       });
     });
 
@@ -189,7 +227,9 @@ describe('Auth', () => {
   describe('verify', () => {
     describe('success', () => {
       it('should successfully verify a user', async () => {
-        await expect(auth.verify(mockAuthEmail, mockAuthCode)).resolves.toEqual(true);
+        await expect(auth.verify(mockAuthEmail, mockAuthCode)).resolves.toEqual(
+          expect.objectContaining({ status: 200 })
+        );
       });
     });
 
@@ -200,6 +240,52 @@ describe('Auth', () => {
 
       it('should throw validation error if pssword is invalid', async () => {
         await expect(auth.verify(mockAuthEmail, '')).rejects.toThrow(ValidationError);
+      });
+    });
+  });
+
+  describe('passwordReset', () => {
+    describe('success', () => {
+      it('should successfully initiate password reset flow', async () => {
+        await expect(auth.passwordReset(mockAuthEmail)).resolves.toEqual(
+          expect.objectContaining({ status: 200 })
+        );
+      });
+    });
+
+    describe('error', () => {
+      it('should throw validation error if email is invalid', async () => {
+        await expect(auth.passwordReset('invalid email')).rejects.toThrow(ValidationError);
+      });
+    });
+  });
+
+  describe('passwordConfirm', () => {
+    describe('success', () => {
+      it('should successfully confirm password reset', async () => {
+        await expect(
+          auth.passwordConfirm(mockAuthEmail, mockAuthPassword, mockAuthCode)
+        ).resolves.toEqual(expect.objectContaining({ status: 200 }));
+      });
+    });
+
+    describe('error', () => {
+      it('should throw validation error if email is invalid', async () => {
+        await expect(
+          auth.passwordConfirm('invalid-email', mockAuthPassword, mockAuthCode)
+        ).rejects.toThrow(ValidationError);
+      });
+
+      it('should throw validation error if password is invalid', async () => {
+        await expect(auth.passwordConfirm(mockAuthEmail, '12', mockAuthCode)).rejects.toThrow(
+          ValidationError
+        );
+      });
+
+      it('should throw validation error if verification code is invalid', async () => {
+        await expect(auth.passwordConfirm(mockAuthEmail, mockAuthPassword, '')).rejects.toThrow(
+          ValidationError
+        );
       });
     });
   });

@@ -1,6 +1,6 @@
 import { TokenError } from './errors';
 import { logger } from './logger';
-import { request, serviceRequest } from './request';
+import { serviceRequest } from './request';
 import { getItem, setItem } from './storage';
 import { AuthUser, FormattedResponse, HttpMethod, TokenResponse } from './types';
 import { StorageType } from './types/storage.types';
@@ -16,7 +16,9 @@ enum AuthEndpoint {
   LOGIN = `/authenticate`,
   VERIFY = `/verify`,
   TOKEN_REFRESH = '/token/refresh',
-  SESSION = '/session'
+  SESSION = '/session',
+  PASSWORD_RESET = '/password-reset',
+  PASSWORD_CONFIRM = '/password-confirm'
 }
 
 export class Auth {
@@ -119,12 +121,11 @@ export class Auth {
   public async create(email: string, password: string): Promise<FormattedResponse> {
     logger.logInfo(`Creating user with email: ${email}`);
 
-    validateEmail(email);
-    validateStringLength(password, AUTH_SERVICE_MIN_PASSWORD_LENGTH);
+    const validatedEmail = validateEmail(email);
 
     try {
       const requestBody = {
-        email,
+        email: validatedEmail,
         password
       };
 
@@ -147,13 +148,18 @@ export class Auth {
   public async verify(email: string, code: string): Promise<FormattedResponse> {
     logger.logInfo(`Verifying email: ${email}`);
 
-    validateEmail(email);
-    validateStringLength(code, AUTH_SERVICE_VERIFICATION_CODE_LENGTH, true);
+    const validatedEmail = validateEmail(email);
+    const validatedCode = validateStringLength(
+      code,
+      AUTH_SERVICE_VERIFICATION_CODE_LENGTH,
+      true,
+      'Code must be 6 characters'
+    );
 
     try {
       const requestBody = {
-        email,
-        code
+        email: validatedEmail,
+        code: validatedCode
       };
 
       const response = await this.authServiceRequest(AuthEndpoint.VERIFY, {
@@ -175,12 +181,11 @@ export class Auth {
   public async login(email: string, password: string): Promise<TokenResponse> {
     logger.logInfo(`Logging in with email: ${email}`);
 
-    validateEmail(email);
-    validateStringLength(password);
+    const validatedEmail = validateEmail(email);
 
     try {
       const requestBody = {
-        email,
+        email: validatedEmail,
         password
       };
 
@@ -246,6 +251,70 @@ export class Auth {
       }
 
       return this.handleTokenResponse(response.data);
+    } catch (err: any) {
+      logger.logError(err.message, err);
+      throw err;
+    }
+  }
+
+  public async passwordReset(email: string): Promise<FormattedResponse> {
+    logger.logInfo(`Password reset request for email: ${email}`);
+
+    const validatedEmail = validateEmail(email);
+
+    try {
+      const requestBody = {
+        email: validatedEmail
+      };
+
+      const response = await this.authServiceRequest(AuthEndpoint.PASSWORD_RESET, {
+        method: HttpMethod.POST,
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!response?.data) {
+        throw new Error('Failed to initiate password reset request');
+      }
+
+      return response;
+    } catch (err: any) {
+      logger.logError(err.message, err);
+      throw err;
+    }
+  }
+
+  public async passwordConfirm(
+    email: string,
+    password: string,
+    code: string
+  ): Promise<FormattedResponse> {
+    logger.logInfo(`Verifying password reset`);
+
+    const validatedEmail = validateEmail(email);
+    const validatedCode = validateStringLength(
+      code,
+      AUTH_SERVICE_VERIFICATION_CODE_LENGTH,
+      true,
+      'Code must be 6 characters'
+    );
+
+    try {
+      const requestBody = {
+        email: validatedEmail,
+        password,
+        code: validatedCode
+      };
+
+      const response = await this.authServiceRequest(AuthEndpoint.PASSWORD_CONFIRM, {
+        method: HttpMethod.POST,
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!response?.data) {
+        throw new Error('Failed to confirm password reset');
+      }
+
+      return response;
     } catch (err: any) {
       logger.logError(err.message, err);
       throw err;

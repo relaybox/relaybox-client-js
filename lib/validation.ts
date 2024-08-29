@@ -20,28 +20,33 @@ export function validateUserData(userData: any, maxSize?: number): boolean {
   return true;
 }
 
-export function validateEmail(email: string): boolean {
+export function validateEmail(email: string): string {
   const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
 
   if (!emailRegex.test(email)) {
     throw new ValidationError('Invalid email address');
   }
 
-  return true;
+  return email;
 }
 
 export function validateStringLength(
   value: string,
   length: number = STRING_LENGTH_MIN,
-  exact?: boolean
-): boolean {
+  exact?: boolean,
+  errorMessage?: string
+): string {
+  if (!value) {
+    throw new ValidationError(errorMessage || 'No value provided');
+  }
+
   if (exact && value.length !== length) {
-    throw new ValidationError('String length does not match the exact length');
+    throw new ValidationError(errorMessage || 'String length does not match the exact length');
   }
 
   if (value.length < length) {
-    throw new ValidationError('String less than the minimum length');
+    throw new ValidationError(errorMessage || 'String less than the minimum length');
   }
 
-  return true;
+  return value;
 }
