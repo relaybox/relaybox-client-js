@@ -87,3 +87,48 @@ describe('getAuthTokenResponse', () => {
     });
   });
 });
+
+describe('serviceRequest', () => {
+  describe('success - 200', () => {
+    it('should throw an error if token refresh fails', async () => {
+      const mockResponse = { test: true };
+
+      server.use(
+        http.get(mockUrl, async () => {
+          return HttpResponse.json(mockResponse);
+        })
+      );
+
+      const requestParams = {
+        method: HttpMethod.GET
+      };
+
+      await expect(serviceRequest(mockUrl, requestParams)).resolves.toEqual(mockResponse);
+    });
+  });
+
+  describe('error - 4xx / 5xx', () => {
+    it('should throw a named error if status non 2xx', async () => {
+      server.use(
+        http.get(mockUrl, async () => {
+          return HttpResponse.json(
+            { name: 'AuthenticationError', message: 'failed' },
+            { status: 400 }
+          );
+        })
+      );
+
+      const requestParams = {
+        method: HttpMethod.GET
+      };
+
+      try {
+        await serviceRequest(mockUrl, requestParams);
+      } catch (err) {
+        expect(err.name).toEqual('AuthenticationError');
+        expect(err.status).toEqual(400);
+        expect(err.message).toEqual('failed');
+      }
+    });
+  });
+});

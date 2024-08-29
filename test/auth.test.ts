@@ -5,6 +5,7 @@ import { HttpResponse, http } from 'msw';
 import { mockTokenRefreshResponse, mockTokenResponse, mockUserData } from './mock/auth.mock';
 import { setItem, getItem } from '../lib/storage';
 import { StorageType } from '../lib/types/storage.types';
+import { NetworkError } from '../lib/errors';
 
 const mockPublicKey = 'appId.keyId';
 const mockRbAuthAuthServiceHost = 'http://localhost:4005/dev';
@@ -191,67 +192,6 @@ describe('Auth', () => {
     });
   });
 
-  describe('create', () => {
-    describe('success', () => {
-      it('should successfully create a user', async () => {
-        await expect(auth.create('1@1.com', 'password')).resolves.toEqual(
-          expect.objectContaining({ status: 200 })
-        );
-      });
-    });
-  });
-
-  // describe.only('create', () => {
-  //   describe('success', () => {
-  //     it('should successfully create a user', async () => {
-  //       try {
-  //         await auth.create('1@1.com', 'password');
-  //       } catch (err) {
-  //         console.log(err);
-  //       }
-  //     });
-  //   });
-  // });
-
-  describe('verify', () => {
-    describe('success', () => {
-      it('should successfully verify a user', async () => {
-        await expect(auth.verify(mockAuthEmail, mockAuthCode)).resolves.toEqual(
-          expect.objectContaining({ status: 200 })
-        );
-      });
-    });
-  });
-
-  describe('passwordReset', () => {
-    describe('success', () => {
-      it('should successfully initiate password reset flow', async () => {
-        await expect(auth.passwordReset(mockAuthEmail)).resolves.toEqual(
-          expect.objectContaining({ status: 200 })
-        );
-      });
-    });
-  });
-
-  describe('passwordConfirm', () => {
-    describe('success', () => {
-      it('should successfully confirm password reset', async () => {
-        await expect(
-          auth.passwordConfirm(mockAuthEmail, mockAuthPassword, mockAuthCode)
-        ).resolves.toEqual(expect.objectContaining({ status: 200 }));
-      });
-    });
-  });
-
-  describe('tokenRefresh', () => {
-    describe('success', () => {
-      it('should successfully fetch auth token from the auth service', async () => {
-        await auth.tokenRefresh();
-        expect(auth.tokenResponse).toEqual(expect.objectContaining(mockTokenRefreshResponse));
-      });
-    });
-  });
-
   describe('getSession', () => {
     describe('success', () => {
       it('should successfully fetch auth token from the auth service', async () => {
@@ -280,6 +220,80 @@ describe('Auth', () => {
         const sessionData = await auth.getSession();
 
         expect(sessionData).toBeNull();
+      });
+    });
+  });
+
+  describe('create', () => {
+    describe('success', () => {
+      it('should successfully create a user', async () => {
+        await expect(auth.create('1@1.com', 'password')).resolves.toEqual(
+          expect.objectContaining({ message: expect.any(String) })
+        );
+      });
+    });
+  });
+
+  describe('verify', () => {
+    describe('success', () => {
+      it('should successfully verify a user', async () => {
+        await expect(auth.verify(mockAuthEmail, mockAuthCode)).resolves.toEqual(
+          expect.objectContaining({ message: expect.any(String) })
+        );
+      });
+    });
+  });
+
+  describe('passwordReset', () => {
+    describe('success', () => {
+      it('should successfully initiate password reset flow', async () => {
+        await expect(auth.passwordReset(mockAuthEmail)).resolves.toEqual(
+          expect.objectContaining({ message: expect.any(String) })
+        );
+      });
+    });
+  });
+
+  describe('passwordConfirm', () => {
+    describe('success', () => {
+      it('should successfully confirm password reset', async () => {
+        await expect(
+          auth.passwordConfirm(mockAuthEmail, mockAuthPassword, mockAuthCode)
+        ).resolves.toEqual(expect.objectContaining({ message: expect.any(String) }));
+      });
+    });
+  });
+
+  describe('tokenRefresh', () => {
+    describe('success', () => {
+      it('should successfully fetch auth token from the auth service', async () => {
+        await auth.tokenRefresh();
+        expect(auth.tokenResponse).toEqual(expect.objectContaining(mockTokenRefreshResponse));
+      });
+    });
+
+    describe('error', () => {
+      it('should throw an error if token refresh fails', async () => {
+        server.use(
+          http.get<never, AuthRequestBody, any>(
+            `${mockRbAuthAuthServiceHost}/users/token/refresh`,
+            async () => {
+              return HttpResponse.json(
+                { name: 'AuthenticationError', message: 'failed' },
+                { status: 400 }
+              );
+            }
+          )
+        );
+
+        try {
+          await auth.tokenRefresh();
+        } catch (err) {
+          expect(err.name).toEqual('AuthenticationError');
+          expect(err.status).toEqual(400);
+          expect(err.message).toEqual('failed');
+          expect(auth.tokenResponse).toBeNull();
+        }
       });
     });
   });
