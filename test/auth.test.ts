@@ -2,7 +2,6 @@ import { Auth, REFRESH_TOKEN_KEY } from '../lib/auth';
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
 import { setupServer } from 'msw/node';
 import { HttpResponse, http } from 'msw';
-import { ValidationError } from '../lib/errors';
 import { mockTokenRefreshResponse, mockTokenResponse, mockUserData } from './mock/auth.mock';
 import { setItem, getItem } from '../lib/storage';
 import { StorageType } from '../lib/types/storage.types';
@@ -190,18 +189,6 @@ describe('Auth', () => {
         );
       });
     });
-
-    describe('error', () => {
-      it('should throw validation error if email is invalid', async () => {
-        await expect(auth.login('invalid email', mockAuthPassword)).rejects.toThrow(
-          ValidationError
-        );
-      });
-
-      it('should throw validation error if password is invalid', async () => {
-        await expect(auth.login(mockAuthEmail, '')).rejects.toThrow(ValidationError);
-      });
-    });
   });
 
   describe('create', () => {
@@ -210,16 +197,6 @@ describe('Auth', () => {
         await expect(auth.create('1@1.com', 'password')).resolves.toEqual(
           expect.objectContaining({ status: 200 })
         );
-      });
-    });
-
-    describe('error', () => {
-      it('should throw validation error if email is invalid', async () => {
-        await expect(auth.create('invalid email', 'password')).rejects.toThrow(ValidationError);
-      });
-
-      it('should throw validation error if pssword is invalid', async () => {
-        await expect(auth.create('1@1.com', '')).rejects.toThrow(ValidationError);
       });
     });
   });
@@ -232,16 +209,6 @@ describe('Auth', () => {
         );
       });
     });
-
-    describe('error', () => {
-      it('should throw validation error if email is invalid', async () => {
-        await expect(auth.verify('invalid email', mockAuthCode)).rejects.toThrow(ValidationError);
-      });
-
-      it('should throw validation error if pssword is invalid', async () => {
-        await expect(auth.verify(mockAuthEmail, '')).rejects.toThrow(ValidationError);
-      });
-    });
   });
 
   describe('passwordReset', () => {
@@ -252,12 +219,6 @@ describe('Auth', () => {
         );
       });
     });
-
-    describe('error', () => {
-      it('should throw validation error if email is invalid', async () => {
-        await expect(auth.passwordReset('invalid email')).rejects.toThrow(ValidationError);
-      });
-    });
   });
 
   describe('passwordConfirm', () => {
@@ -266,26 +227,6 @@ describe('Auth', () => {
         await expect(
           auth.passwordConfirm(mockAuthEmail, mockAuthPassword, mockAuthCode)
         ).resolves.toEqual(expect.objectContaining({ status: 200 }));
-      });
-    });
-
-    describe('error', () => {
-      it('should throw validation error if email is invalid', async () => {
-        await expect(
-          auth.passwordConfirm('invalid-email', mockAuthPassword, mockAuthCode)
-        ).rejects.toThrow(ValidationError);
-      });
-
-      it('should throw validation error if password is invalid', async () => {
-        await expect(auth.passwordConfirm(mockAuthEmail, '12', mockAuthCode)).rejects.toThrow(
-          ValidationError
-        );
-      });
-
-      it('should throw validation error if verification code is invalid', async () => {
-        await expect(auth.passwordConfirm(mockAuthEmail, mockAuthPassword, '')).rejects.toThrow(
-          ValidationError
-        );
       });
     });
   });

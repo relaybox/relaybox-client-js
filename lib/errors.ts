@@ -2,6 +2,7 @@ enum ErrorName {
   VALIDATION_ERROR = 'ValidationError',
   NETWORK_ERROR = 'NetworkError',
   HTTP_REQUEST_ERROR = 'HTTPRequestError',
+  HTTP_SERVICE_ERROR = 'HTTPServiceError',
   SIGNATURE_ERROR = 'SignatureError',
   TOKEN_ERROR = 'TokenError',
   SOCKET_CONNECTION_ERROR = 'SocketConnectionError',
@@ -37,12 +38,12 @@ export class HTTPRequestError extends Error {
 
 export class HTTPServiceError extends Error {
   public status: number;
-  public data?: Record<string, unknown>;
+  public data?: unknown;
 
-  constructor(message: string, status?: any, data?: Record<string, unknown>) {
+  constructor(message: string, status?: any, data?: unknown) {
     super(message);
     this.status = status;
-    this.name = ErrorName.HTTP_REQUEST_ERROR;
+    this.name = ErrorName.HTTP_SERVICE_ERROR;
     this.data = data;
   }
 }

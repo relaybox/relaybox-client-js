@@ -121,11 +121,9 @@ export class Auth {
   public async create(email: string, password: string): Promise<FormattedResponse> {
     logger.logInfo(`Creating user with email: ${email}`);
 
-    const validatedEmail = validateEmail(email);
-
     try {
       const requestBody = {
-        email: validatedEmail,
+        email,
         password
       };
 
@@ -148,18 +146,10 @@ export class Auth {
   public async verify(email: string, code: string): Promise<FormattedResponse> {
     logger.logInfo(`Verifying email: ${email}`);
 
-    const validatedEmail = validateEmail(email);
-    const validatedCode = validateStringLength(
-      code,
-      AUTH_SERVICE_VERIFICATION_CODE_LENGTH,
-      true,
-      'Code must be 6 characters'
-    );
-
     try {
       const requestBody = {
-        email: validatedEmail,
-        code: validatedCode
+        email,
+        code
       };
 
       const response = await this.authServiceRequest(AuthEndpoint.VERIFY, {
@@ -181,11 +171,9 @@ export class Auth {
   public async login(email: string, password: string): Promise<TokenResponse> {
     logger.logInfo(`Logging in with email: ${email}`);
 
-    const validatedEmail = validateEmail(email);
-
     try {
       const requestBody = {
-        email: validatedEmail,
+        email,
         password
       };
 
@@ -260,11 +248,9 @@ export class Auth {
   public async passwordReset(email: string): Promise<FormattedResponse> {
     logger.logInfo(`Password reset request for email: ${email}`);
 
-    const validatedEmail = validateEmail(email);
-
     try {
       const requestBody = {
-        email: validatedEmail
+        email
       };
 
       const response = await this.authServiceRequest(AuthEndpoint.PASSWORD_RESET, {
@@ -290,19 +276,11 @@ export class Auth {
   ): Promise<FormattedResponse> {
     logger.logInfo(`Verifying password reset`);
 
-    const validatedEmail = validateEmail(email);
-    const validatedCode = validateStringLength(
-      code,
-      AUTH_SERVICE_VERIFICATION_CODE_LENGTH,
-      true,
-      'Code must be 6 characters'
-    );
-
     try {
       const requestBody = {
-        email: validatedEmail,
+        email,
         password,
-        code: validatedCode
+        code
       };
 
       const response = await this.authServiceRequest(AuthEndpoint.PASSWORD_CONFIRM, {

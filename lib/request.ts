@@ -1,4 +1,4 @@
-import { HTTPRequestError, NetworkError } from './errors';
+import { HTTPRequestError, HTTPServiceError, NetworkError } from './errors';
 import { ApiData, FormattedResponse } from './types/request.types';
 
 const NODE_FETCH_ERR_MESSAGES = ['Failed to fetch'];
@@ -48,7 +48,11 @@ export async function serviceRequest<T>(
     const formattedResponse = await formatResponse<T>(response);
 
     if (!response.ok) {
-      throw new HTTPRequestError(`${formattedResponse.message}`, formattedResponse.status);
+      throw new HTTPServiceError(
+        formattedResponse.message || 'Service request failed',
+        formattedResponse.status,
+        formattedResponse.data
+      );
     }
 
     return formattedResponse;
