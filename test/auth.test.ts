@@ -346,13 +346,14 @@ describe('Auth', () => {
 
   describe('signOut', () => {
     describe('success', () => {
-      it('should successfully fetch auth token from the auth service', async () => {
+      it('should successfully sign a user out and destroy session', async () => {
         const session = await auth.signIn({ email: mockAuthEmail, password: mockAuthPassword });
         auth.signOut();
         expect(auth.emit).toHaveBeenCalledWith(
           AuthEvent.SIGN_OUT,
           expect.objectContaining(session.user)
         );
+        expect(auth.user).toBeNull();
       });
     });
   });

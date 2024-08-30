@@ -352,7 +352,7 @@ export class Auth extends EventEmitter {
     this.on(event, handler);
   }
 
-  public async signInWithProvider({
+  public async signInWithOauth({
     provider,
     popup = true,
     width = 450,
