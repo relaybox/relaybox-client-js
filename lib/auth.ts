@@ -40,6 +40,7 @@ export class Auth extends EventEmitter {
   private readonly publicKey: string;
   private readonly authServiceUrl: string;
   private readonly authServiceHost: string;
+  private authStorageType?: StorageType = StorageType.SESSION;
   #tokenResponse: TokenResponse | null = null;
   #refreshToken: string | null = null;
   #user: AuthUser | null = null;
@@ -101,7 +102,7 @@ export class Auth extends EventEmitter {
   }
 
   private removeRefreshToken(): void {
-    removeItem(REFRESH_TOKEN_KEY);
+    removeItem(REFRESH_TOKEN_KEY, this.authStorageType);
   }
 
   private handleTokenResponse(tokenResponseData: TokenResponse): TokenResponse {
@@ -114,6 +115,7 @@ export class Auth extends EventEmitter {
     this.setRefreshToken(refreshToken, destroyAt, authStorageType);
     this.user = user;
     this.tokenResponse = tokenResponse;
+    this.authStorageType = authStorageType;
 
     return tokenResponseData;
   }
@@ -154,7 +156,7 @@ export class Auth extends EventEmitter {
         body: JSON.stringify(requestBody)
       });
 
-      this.emit(AuthEvent.USER_CREATED, response);
+      this.emit(AuthEvent.SIGN_UP, response);
 
       return response;
     } catch (err: any) {
@@ -176,6 +178,8 @@ export class Auth extends EventEmitter {
         method: HttpMethod.POST,
         body: JSON.stringify(requestBody)
       });
+
+      this.emit(AuthEvent.VERIFY, response);
 
       return response;
     } catch (err: any) {
@@ -202,6 +206,8 @@ export class Auth extends EventEmitter {
         }
       );
 
+      this.emit(AuthEvent.RESEND_VERIFICATION, response);
+
       return response;
     } catch (err: any) {
       logger.logError(err.message, err);
@@ -223,13 +229,21 @@ export class Auth extends EventEmitter {
         body: JSON.stringify(requestBody)
       });
 
-      this.emit(AuthEvent.USER_AUTHENTICATED, response);
+      this.emit(AuthEvent.SIGN_IN, response);
 
       return this.handleTokenResponse(response);
     } catch (err: any) {
       logger.logError(err.message, err);
       throw err;
     }
+  }
+
+  public signOut(): void {
+    this.removeRefreshToken();
+    this.user = null;
+    this.tokenResponse = null;
+
+    this.emit(AuthEvent.SIGN_OUT);
   }
 
   public async tokenRefresh(): Promise<TokenResponse> {
@@ -244,6 +258,8 @@ export class Auth extends EventEmitter {
       });
 
       this.tokenResponse = response;
+
+      this.emit(AuthEvent.TOKEN_REFRESH, response);
 
       return response;
     } catch (err: any) {
@@ -292,6 +308,8 @@ export class Auth extends EventEmitter {
         }
       );
 
+      this.emit(AuthEvent.PASSWORD_RESET, response);
+
       return response;
     } catch (err: any) {
       logger.logError(err.message, err);
@@ -320,6 +338,8 @@ export class Auth extends EventEmitter {
           body: JSON.stringify(requestBody)
         }
       );
+
+      this.emit(AuthEvent.PASSWORD_CONFIRM, response);
 
       return response;
     } catch (err: any) {
@@ -357,16 +377,8 @@ export class Auth extends EventEmitter {
 
     const { data: tokenResponse } = event;
     this.handleTokenResponse(tokenResponse);
-    this.emit(AuthEvent.USER_AUTHENTICATED, tokenResponse);
+    this.emit(AuthEvent.SIGN_IN, tokenResponse);
 
     window.removeEventListener(AUTH_POPUP_MESSAGE_EVENT, this.handleAuthMessage);
-  }
-
-  public logout(): void {
-    this.removeRefreshToken();
-    this.user = null;
-    this.tokenResponse = null;
-
-    this.emit(AuthEvent.USER_SIGNED_OUT);
   }
 }

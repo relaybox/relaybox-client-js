@@ -5,6 +5,7 @@ import { HttpResponse, http } from 'msw';
 import { mockTokenRefreshResponse, mockTokenResponse, mockUserData } from './mock/auth.mock';
 import { setItem, getItem } from '../lib/storage';
 import { StorageType } from '../lib/types/storage.types';
+import { AuthEvent } from '../lib/types';
 
 const mockPublicKey = 'appId.keyId';
 const mockAuthAuthServiceHost = 'http://localhost:4005';
@@ -19,6 +20,13 @@ interface AuthRequestBody {
   email?: string;
   password?: string;
   code?: string;
+}
+
+function getMockApiErrorResponse() {
+  return HttpResponse.json(
+    { name: 'Error', message: 'failed', data: { schema: false } },
+    { status: 400 }
+  );
 }
 
 vi.mock('../lib/logger', () => ({
@@ -49,7 +57,7 @@ describe('Auth', () => {
             return HttpResponse.json(mockTokenResponse);
           }
 
-          return new HttpResponse(null, { status: 400 });
+          return getMockApiErrorResponse();
         }
       )
     );
@@ -63,11 +71,12 @@ describe('Auth', () => {
 
           if (publicKey && email === mockAuthEmail && password === mockAuthPassword) {
             return HttpResponse.json({
+              id: 1,
               message: 'User created successfully'
             });
           }
 
-          return new HttpResponse(null, { status: 400 });
+          return getMockApiErrorResponse();
         }
       )
     );
@@ -85,7 +94,7 @@ describe('Auth', () => {
             });
           }
 
-          return new HttpResponse(null, { status: 400 });
+          return getMockApiErrorResponse();
         }
       )
     );
@@ -103,7 +112,7 @@ describe('Auth', () => {
             });
           }
 
-          return new HttpResponse(null, { status: 400 });
+          return getMockApiErrorResponse();
         }
       )
     );
@@ -121,7 +130,7 @@ describe('Auth', () => {
             });
           }
 
-          return new HttpResponse(null, { status: 400 });
+          return getMockApiErrorResponse();
         }
       )
     );
@@ -137,7 +146,7 @@ describe('Auth', () => {
             return HttpResponse.json(mockTokenRefreshResponse);
           }
 
-          return new HttpResponse(null, { status: 400 });
+          return getMockApiErrorResponse();
         }
       )
     );
@@ -153,7 +162,7 @@ describe('Auth', () => {
             return HttpResponse.json(mockTokenResponse);
           }
 
-          return new HttpResponse(null, { status: 400 });
+          return getMockApiErrorResponse();
         }
       )
     );
@@ -171,7 +180,7 @@ describe('Auth', () => {
             });
           }
 
-          return new HttpResponse(null, { status: 400 });
+          return getMockApiErrorResponse();
         }
       )
     );
@@ -186,6 +195,7 @@ describe('Auth', () => {
   beforeEach(() => {
     // server.resetHandlers();
     auth = new Auth(mockPublicKey, mockAuthAuthServiceUrl, mockAuthAuthServiceHost);
+    vi.spyOn(auth, 'emit').mockImplementation(() => true);
   });
 
   afterEach(() => {
@@ -206,6 +216,7 @@ describe('Auth', () => {
           JSON.stringify({ value: 'refresh-token', expiresAt: 100 }),
           StorageType.SESSION
         );
+        expect(auth.emit).toHaveBeenCalledWith(AuthEvent.SIGN_IN, mockTokenResponse);
       });
     });
   });
@@ -246,6 +257,10 @@ describe('Auth', () => {
         await expect(
           auth.signUp({ email: mockAuthEmail, password: mockAuthPassword })
         ).resolves.toEqual(expect.objectContaining({ message: expect.any(String) }));
+        expect(auth.emit).toHaveBeenCalledWith(
+          AuthEvent.SIGN_UP,
+          expect.objectContaining({ id: 1 })
+        );
       });
     });
   });
@@ -256,6 +271,10 @@ describe('Auth', () => {
         await expect(auth.verify({ email: mockAuthEmail, code: mockAuthCode })).resolves.toEqual(
           expect.objectContaining({ message: expect.any(String) })
         );
+        expect(auth.emit).toHaveBeenCalledWith(
+          AuthEvent.VERIFY,
+          expect.objectContaining({ message: expect.any(String) })
+        );
       });
     });
   });
@@ -264,6 +283,10 @@ describe('Auth', () => {
     describe('success', () => {
       it('should successfully initiate password reset flow', async () => {
         await expect(auth.passwordReset({ email: mockAuthEmail })).resolves.toEqual(
+          expect.objectContaining({ message: expect.any(String) })
+        );
+        expect(auth.emit).toHaveBeenCalledWith(
+          AuthEvent.PASSWORD_RESET,
           expect.objectContaining({ message: expect.any(String) })
         );
       });
@@ -280,6 +303,10 @@ describe('Auth', () => {
             code: mockAuthCode
           })
         ).resolves.toEqual(expect.objectContaining({ message: expect.any(String) }));
+        expect(auth.emit).toHaveBeenCalledWith(
+          AuthEvent.PASSWORD_CONFIRM,
+          expect.objectContaining({ message: expect.any(String) })
+        );
       });
     });
   });
@@ -289,6 +316,11 @@ describe('Auth', () => {
       it('should successfully fetch auth token from the auth service', async () => {
         await auth.tokenRefresh();
         expect(auth.tokenResponse).toEqual(expect.objectContaining(mockTokenRefreshResponse));
+        expect(auth.emit).toHaveBeenCalledWith(AuthEvent.TOKEN_REFRESH, {
+          token: expect.any(String),
+          expiresIn: expect.any(Number),
+          expiresAt: expect.any(Number)
+        });
       });
     });
   });
@@ -297,6 +329,10 @@ describe('Auth', () => {
     describe('success', () => {
       it('should successfully fetch auth token from the auth service', async () => {
         await expect(auth.resendVerification({ email: mockAuthEmail })).resolves.toEqual(
+          expect.objectContaining({ message: expect.any(String) })
+        );
+        expect(auth.emit).toHaveBeenCalledWith(
+          AuthEvent.RESEND_VERIFICATION,
           expect.objectContaining({ message: expect.any(String) })
         );
       });

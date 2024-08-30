@@ -45,12 +45,17 @@ export interface AuthUser {
 }
 
 export enum AuthEvent {
-  USER_CREATED = 'user:created',
-  USER_AUTHENTICATED = 'user:authenticated',
-  USER_SIGNED_OUT = 'user:signed_out'
+  SIGN_UP = 'SIGN_UP',
+  SIGN_IN = 'SIGN_IN',
+  SIGN_OUT = 'SIGN_OUT',
+  TOKEN_REFRESH = 'TOKEN_REFRESH',
+  PASSWORD_RESET = 'PASSWORD_RESET',
+  PASSWORD_CONFIRM = 'PASSWORD_CONFIRM',
+  VERIFY = 'VERIFY',
+  RESEND_VERIFICATION = 'RESEND_VERIFICATION'
 }
 
-export type AuthEventAllowedValues = `${AuthEvent}`;
+export type AuthEventAllowedValues = 'SIGN_UP' | 'SIGN_IN' | 'SIGN_OUT';
 
 export type AuthEventHandler = (...args: any[]) => void;
 
