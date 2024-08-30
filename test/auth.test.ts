@@ -236,7 +236,7 @@ describe('Auth', () => {
         const sessionData = await auth.signIn({ email: mockAuthEmail, password: mockAuthPassword });
 
         expect(sessionData).toEqual(expect.objectContaining(mockTokenResponse));
-        expect(auth.tokenResponse).toEqual(mockTokenRefreshResponse);
+        expect(auth.tokenResponse).toEqual(expect.objectContaining({ token: 'auth-token' }));
         expect(auth.refreshToken).toEqual('refresh-token');
         expect(auth.user).toEqual(mockUserData);
         expect(setItem).toHaveBeenCalledWith(
@@ -258,7 +258,7 @@ describe('Auth', () => {
         const sessionData = await auth.getSession();
 
         expect(sessionData).toEqual(expect.objectContaining(mockTokenResponse));
-        expect(auth.tokenResponse).toEqual(mockTokenRefreshResponse);
+        expect(auth.tokenResponse).toEqual(expect.objectContaining({ token: 'auth-token' }));
         expect(auth.refreshToken).toEqual('refresh-token');
         expect(auth.user).toEqual(mockUserData);
         expect(setItem).toHaveBeenCalledWith(
@@ -314,8 +314,13 @@ describe('Auth', () => {
   describe('tokenRefresh', () => {
     describe('success', () => {
       it('should successfully fetch auth token from the auth service', async () => {
+        await auth.signIn({ email: mockAuthEmail, password: mockAuthPassword });
+        expect(auth.tokenResponse).toEqual(expect.objectContaining({ token: 'auth-token' }));
+
         await auth.tokenRefresh();
-        expect(auth.tokenResponse).toEqual(expect.objectContaining(mockTokenRefreshResponse));
+        expect(auth.tokenResponse).toEqual(
+          expect.objectContaining({ token: 'auth-token-refresh' })
+        );
         expect(auth.emit).toHaveBeenCalledWith(AuthEvent.TOKEN_REFRESH, {
           token: expect.any(String),
           expiresIn: expect.any(Number),

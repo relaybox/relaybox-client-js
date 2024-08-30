@@ -41,9 +41,7 @@ export class Auth extends EventEmitter {
   private readonly authServiceUrl: string;
   private readonly authServiceHost: string;
   private authStorageType?: StorageType = StorageType.SESSION;
-  #tokenResponse: TokenResponse | null = null;
-  #refreshToken: string | null = null;
-  #user: AuthUser | null = null;
+  #session: TokenResponse | null = null;
 
   constructor(publicKey: string, authServiceUrl: string, authServiceHost: string) {
     super();
@@ -53,27 +51,27 @@ export class Auth extends EventEmitter {
   }
 
   get tokenResponse(): TokenResponse | null {
-    return this.#tokenResponse;
+    if (!this.#session) {
+      return null;
+    }
+
+    return {
+      token: this.#session?.token,
+      expiresAt: this.#session?.expiresAt,
+      expiresIn: this.#session?.expiresIn
+    };
   }
 
-  get token(): string | undefined {
-    return this.#tokenResponse?.token;
+  get token(): string | null {
+    return this.#session?.token || null;
   }
 
   get refreshToken(): string | null {
-    return this.#refreshToken;
+    return this.#session?.refreshToken || null;
   }
 
   get user(): AuthUser | null {
-    return this.#user;
-  }
-
-  set tokenResponse(value: TokenResponse | null) {
-    this.#tokenResponse = value;
-  }
-
-  set user(value: AuthUser | null) {
-    this.#user = value;
+    return this.#session?.user || null;
   }
 
   private setRefreshToken(value: string, expiresAt?: number, storageType?: StorageType): void {
@@ -83,12 +81,10 @@ export class Auth extends EventEmitter {
     };
 
     setItem(REFRESH_TOKEN_KEY, JSON.stringify(refreshTokenData), storageType);
-
-    this.#refreshToken = value;
   }
 
   private getRefreshToken(): string | null {
-    let refreshTokenData = this.#refreshToken;
+    let refreshTokenData = this.refreshToken;
 
     if (!refreshTokenData) {
       refreshTokenData = getItem(REFRESH_TOKEN_KEY, StorageType.SESSION);
@@ -113,9 +109,7 @@ export class Auth extends EventEmitter {
     }
 
     this.setRefreshToken(refreshToken, destroyAt, authStorageType);
-    this.user = user;
-    this.tokenResponse = tokenResponse;
-    this.authStorageType = authStorageType;
+    this.#session = tokenResponseData;
 
     return tokenResponseData;
   }
@@ -240,11 +234,9 @@ export class Auth extends EventEmitter {
 
   public signOut(): void {
     this.removeRefreshToken();
-    this.tokenResponse = null;
 
     this.emit(AuthEvent.SIGN_OUT, this.user);
-
-    this.user = null;
+    this.#session = null;
   }
 
   public async tokenRefresh(): Promise<TokenResponse> {
@@ -258,7 +250,10 @@ export class Auth extends EventEmitter {
         }
       });
 
-      this.tokenResponse = response;
+      this.#session = {
+        ...this.#session,
+        ...response
+      };
 
       this.emit(AuthEvent.TOKEN_REFRESH, response);
 
@@ -271,6 +266,10 @@ export class Auth extends EventEmitter {
 
   public async getSession(): Promise<TokenResponse | null> {
     logger.logInfo(`Getting auth session`);
+
+    if (this.#session) {
+      return this.#session;
+    }
 
     try {
       const currentRefreshToken = this.getRefreshToken();

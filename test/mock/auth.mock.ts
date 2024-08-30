@@ -22,7 +22,7 @@ export const mockTokenResponse = {
 };
 
 export const mockTokenRefreshResponse = {
-  token: 'auth-token',
+  token: 'auth-token-refresh',
   expiresIn: 30,
   expiresAt: 100
 };
