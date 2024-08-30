@@ -202,7 +202,35 @@ describe('Auth', () => {
     vi.restoreAllMocks();
   });
 
-  describe('login', () => {
+  describe('signUp', () => {
+    describe('success', () => {
+      it('should successfully create a user', async () => {
+        await expect(
+          auth.signUp({ email: mockAuthEmail, password: mockAuthPassword })
+        ).resolves.toEqual(expect.objectContaining({ message: expect.any(String) }));
+        expect(auth.emit).toHaveBeenCalledWith(
+          AuthEvent.SIGN_UP,
+          expect.objectContaining({ id: 1 })
+        );
+      });
+    });
+  });
+
+  describe('verify', () => {
+    describe('success', () => {
+      it('should successfully verify a user', async () => {
+        await expect(auth.verify({ email: mockAuthEmail, code: mockAuthCode })).resolves.toEqual(
+          expect.objectContaining({ message: expect.any(String) })
+        );
+        expect(auth.emit).toHaveBeenCalledWith(
+          AuthEvent.VERIFY,
+          expect.objectContaining({ message: expect.any(String) })
+        );
+      });
+    });
+  });
+
+  describe('signIn', () => {
     describe('success', () => {
       it('should successfully fetch auth token from the auth service', async () => {
         const sessionData = await auth.signIn({ email: mockAuthEmail, password: mockAuthPassword });
@@ -247,34 +275,6 @@ describe('Auth', () => {
         mockedGetItem.mockReturnValueOnce(null);
         const sessionData = await auth.getSession();
         expect(sessionData).toBeNull();
-      });
-    });
-  });
-
-  describe('create', () => {
-    describe('success', () => {
-      it('should successfully create a user', async () => {
-        await expect(
-          auth.signUp({ email: mockAuthEmail, password: mockAuthPassword })
-        ).resolves.toEqual(expect.objectContaining({ message: expect.any(String) }));
-        expect(auth.emit).toHaveBeenCalledWith(
-          AuthEvent.SIGN_UP,
-          expect.objectContaining({ id: 1 })
-        );
-      });
-    });
-  });
-
-  describe('verify', () => {
-    describe('success', () => {
-      it('should successfully verify a user', async () => {
-        await expect(auth.verify({ email: mockAuthEmail, code: mockAuthCode })).resolves.toEqual(
-          expect.objectContaining({ message: expect.any(String) })
-        );
-        expect(auth.emit).toHaveBeenCalledWith(
-          AuthEvent.VERIFY,
-          expect.objectContaining({ message: expect.any(String) })
-        );
       });
     });
   });
@@ -334,6 +334,19 @@ describe('Auth', () => {
         expect(auth.emit).toHaveBeenCalledWith(
           AuthEvent.RESEND_VERIFICATION,
           expect.objectContaining({ message: expect.any(String) })
+        );
+      });
+    });
+  });
+
+  describe('signOut', () => {
+    describe('success', () => {
+      it('should successfully fetch auth token from the auth service', async () => {
+        const session = await auth.signIn({ email: mockAuthEmail, password: mockAuthPassword });
+        auth.signOut();
+        expect(auth.emit).toHaveBeenCalledWith(
+          AuthEvent.SIGN_OUT,
+          expect.objectContaining(session.user)
         );
       });
     });

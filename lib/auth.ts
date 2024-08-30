@@ -240,10 +240,11 @@ export class Auth extends EventEmitter {
 
   public signOut(): void {
     this.removeRefreshToken();
-    this.user = null;
     this.tokenResponse = null;
 
-    this.emit(AuthEvent.SIGN_OUT);
+    this.emit(AuthEvent.SIGN_OUT, this.user);
+
+    this.user = null;
   }
 
   public async tokenRefresh(): Promise<TokenResponse> {
