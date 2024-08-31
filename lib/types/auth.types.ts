@@ -110,3 +110,7 @@ export interface AuthSignInWithProviderOptions {
   width?: number;
   height?: number;
 }
+
+export interface AuthSessionOptions {
+  verify?: boolean;
+}

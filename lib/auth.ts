@@ -12,6 +12,7 @@ import {
   AuthPasswordConfirmOptions,
   AuthPasswordResetOptions,
   AuthResendVerificationOptions,
+  AuthSessionOptions,
   AuthSignInWithProviderOptions,
   AuthUser,
   AuthVerifyOptions,
@@ -263,10 +264,12 @@ export class Auth extends EventEmitter {
     }
   }
 
-  public async getSession(): Promise<TokenResponse | null> {
+  public async getSession({
+    verify = false
+  }: AuthSessionOptions = {}): Promise<TokenResponse | null> {
     logger.logInfo(`Getting auth session`);
 
-    if (this.#session) {
+    if (this.#session && !verify) {
       return this.#session;
     }
 
