@@ -40,7 +40,6 @@ export class Auth extends EventEmitter {
   private readonly publicKey: string;
   private readonly authServiceUrl: string;
   private readonly authServiceHost: string;
-  private authStorageType?: StorageType = StorageType.SESSION;
   #session: TokenResponse | null = null;
 
   constructor(publicKey: string, authServiceUrl: string, authServiceHost: string) {
@@ -98,7 +97,7 @@ export class Auth extends EventEmitter {
   }
 
   private removeRefreshToken(): void {
-    removeItem(REFRESH_TOKEN_KEY, this.authStorageType);
+    removeItem(REFRESH_TOKEN_KEY, this.#session?.authStorageType);
   }
 
   private handleTokenResponse(tokenResponseData: TokenResponse): TokenResponse {

@@ -20,6 +20,7 @@ export interface AuthRequestOptions {
 export type AuthParamsOrHeaders = Record<string, unknown> | (() => Record<string, unknown> | null);
 
 export type AuthTokenLifeCycle = 'session' | 'expiry';
+
 export interface AuthKeyData {
   apiKey: string;
   clientId?: string | number;
@@ -33,15 +34,22 @@ export enum AuthProvider {
 
 export type AuthProviderOptions = `${AuthProvider}`;
 
-export interface AuthUser {
+export interface AuthUserIdentity {
   id: string;
-  clientId: string;
-  username: string;
-  email: string;
-  createdAt: string;
-  updatedAt: string;
   provider: AuthProvider;
   providerId: string | null;
+  verifiedAt: Date;
+}
+
+export interface AuthUser {
+  id: string;
+  orgId: string;
+  clientId: string;
+  username?: string;
+  email?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  identities: AuthUserIdentity[];
 }
 
 export enum AuthEvent {
@@ -55,7 +63,15 @@ export enum AuthEvent {
   RESEND_VERIFICATION = 'RESEND_VERIFICATION'
 }
 
-export type AuthEventAllowedValues = 'SIGN_UP' | 'SIGN_IN' | 'SIGN_OUT';
+export type AuthEventAllowedValues =
+  | 'SIGN_UP'
+  | 'SIGN_IN'
+  | 'SIGN_OUT'
+  | 'TOKEN_REFRESH'
+  | 'PASSWORD_RESET'
+  | 'PASSWORD_CONFIRM'
+  | 'VERIFY'
+  | 'RESEND_VERIFICATION';
 
 export type AuthEventHandler = (...args: any[]) => void;
 

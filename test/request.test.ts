@@ -90,7 +90,7 @@ describe('request', () => {
 
 describe('serviceRequest', () => {
   describe('success - 200', () => {
-    it('should throw an error if token refresh fails', async () => {
+    it('should return json data from service request', async () => {
       const mockResponse = { test: true };
 
       server.use(
@@ -110,7 +110,7 @@ describe('serviceRequest', () => {
   describe('error - 4xx / 5xx', () => {
     it('should throw a named error if status non 2xx', async () => {
       server.use(
-        http.get(mockUrl, async () => {
+        http.get(mockUrl, () => {
           return HttpResponse.json(
             { name: 'AuthenticationError', message: 'failed', data: { schema: false } },
             { status: 400 }
@@ -134,7 +134,7 @@ describe('serviceRequest', () => {
 
     it('should throw NetworkError when service is unavailable', async () => {
       server.use(
-        http.get(mockUrl, async () => {
+        http.get(mockUrl, () => {
           return HttpResponse.error();
         })
       );
