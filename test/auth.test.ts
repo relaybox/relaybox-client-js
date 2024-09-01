@@ -22,6 +22,12 @@ interface AuthRequestBody {
   code?: string;
 }
 
+interface AuthMfaRequestBody {
+  factorId?: string;
+  challengeId?: string;
+  code?: string;
+}
+
 function getMockApiErrorResponse() {
   return HttpResponse.json(
     { name: 'Error', message: 'failed', data: { schema: false } },
@@ -178,6 +184,64 @@ describe('Auth', () => {
             return HttpResponse.json({
               message: 'Verification code sent'
             });
+          }
+
+          return getMockApiErrorResponse();
+        }
+      )
+    );
+
+    server.use(
+      http.post<never, AuthRequestBody, any>(
+        `${mockAuthAuthServiceUrl}/users/mfa/enroll`,
+        async ({ request }) => {
+          const bearerToken = request.headers.get('Authorization');
+          const publicKey = request.headers.get('X-Ds-Key-Name');
+
+          if (publicKey && bearerToken) {
+            return HttpResponse.json({
+              id: 'mfa-factor-id',
+              type: 'totp',
+              secret: 'mfa-secret',
+              qrCode: 'mfa-qr-code'
+            });
+          }
+
+          return getMockApiErrorResponse();
+        }
+      )
+    );
+
+    server.use(
+      http.post<never, AuthMfaRequestBody, any>(
+        `${mockAuthAuthServiceUrl}/users/mfa/challenge`,
+        async ({ request }) => {
+          const bearerToken = request.headers.get('Authorization');
+          const publicKey = request.headers.get('X-Ds-Key-Name');
+          const { factorId } = await request.json();
+
+          if (publicKey && bearerToken && factorId) {
+            return HttpResponse.json({
+              id: 'mfa-challenge-id',
+              expiresAt: 100
+            });
+          }
+
+          return getMockApiErrorResponse();
+        }
+      )
+    );
+
+    server.use(
+      http.post<never, AuthMfaRequestBody, any>(
+        `${mockAuthAuthServiceUrl}/users/mfa/verify`,
+        async ({ request }) => {
+          const bearerToken = request.headers.get('Authorization');
+          const publicKey = request.headers.get('X-Ds-Key-Name');
+          const { factorId, challengeId, code } = await request.json();
+
+          if (publicKey && bearerToken && factorId && challengeId && code) {
+            return HttpResponse.json(mockTokenResponse);
           }
 
           return getMockApiErrorResponse();
@@ -354,6 +418,69 @@ describe('Auth', () => {
           expect.objectContaining(session.user)
         );
         expect(auth.user).toBeNull();
+      });
+    });
+  });
+
+  describe('mfa', () => {
+    describe('enroll', () => {
+      describe('success', () => {
+        it('should enroll a user with mfa', async () => {
+          const authMfaEnrollResponse = await auth.mfa.enroll({ type: 'totp' });
+          expect(authMfaEnrollResponse).toEqual(
+            expect.objectContaining({
+              id: 'mfa-factor-id',
+              type: 'totp',
+              secret: 'mfa-secret',
+              qrCode: 'mfa-qr-code'
+            })
+          );
+          // expect(auth.emit).toHaveBeenCalledWith(
+          //   AuthEvent.SIGN_OUT,
+          //   expect.objectContaining(session.user)
+          // );
+          // expect(auth.user).toBeNull();
+        });
+      });
+    });
+
+    describe('challenge', () => {
+      describe('success', () => {
+        it('should successfully challenge a user with mfa', async () => {
+          const authMfaChallengeResponse = await auth.mfa.challenge({ factorId: 'mfa-factor-id' });
+          expect(authMfaChallengeResponse).toEqual(
+            expect.objectContaining({
+              id: 'mfa-challenge-id',
+              expiresAt: expect.any(Number)
+            })
+          );
+          // expect(auth.emit).toHaveBeenCalledWith(
+          //   AuthEvent.SIGN_OUT,
+          //   expect.objectContaining(session.user)
+          // );
+          // expect(auth.user).toBeNull();
+        });
+      });
+    });
+
+    describe('verify', () => {
+      describe('success', () => {
+        it('should successfully verify a user with mfa', async () => {
+          await auth.mfa.verify({
+            factorId: 'mfa-factor-id',
+            challengeId: 'mfa-challenge-id',
+            code: '123456'
+          });
+          expect(auth.tokenResponse).toEqual(expect.objectContaining({ token: 'auth-token' }));
+          expect(auth.refreshToken).toEqual('refresh-token');
+          expect(auth.user).toEqual(mockUserData);
+          expect(setItem).toHaveBeenCalledWith(
+            REFRESH_TOKEN_KEY,
+            JSON.stringify({ value: 'refresh-token', expiresAt: 100 }),
+            StorageType.SESSION
+          );
+          expect(auth.emit).toHaveBeenCalledWith(AuthEvent.SIGN_IN, mockTokenResponse);
+        });
       });
     });
   });

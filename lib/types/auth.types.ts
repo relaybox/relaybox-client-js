@@ -1,3 +1,5 @@
+import { ServiceResponseData, TokenResponse } from './request.types';
+
 export interface AuthRequestOptions {
   method?: 'GET' | 'POST';
   mode?: 'cors' | 'navigate' | 'no-cors' | 'same-origin' | null;
@@ -41,15 +43,26 @@ export interface AuthUserIdentity {
   verifiedAt: Date;
 }
 
+export enum AuthMfaFactorType {
+  TOTP = 'totp'
+}
+
+export interface AuthUserMfaFactor {
+  id: string;
+  type: AuthMfaFactorType;
+  verifiedAt: Date;
+}
+
 export interface AuthUser {
   id: string;
   orgId: string;
   clientId: string;
-  username?: string;
-  email?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  username: string;
+  email: string;
+  createdAt: string;
+  updatedAt: string;
   identities: AuthUserIdentity[];
+  factors: AuthUserMfaFactor[];
 }
 
 export enum AuthEvent {
@@ -74,6 +87,12 @@ export type AuthEventAllowedValues =
   | 'RESEND_VERIFICATION';
 
 export type AuthEventHandler = (...args: any[]) => void;
+
+export interface AuthMfaApi {
+  enroll: (options: AuthMfaEnrollOptions) => Promise<AuthMfaEnrollResponse>;
+  challenge: (options: AuthMfaChallengeOptions) => Promise<AuthMfaChallengeResponse>;
+  verify: (options: AuthMfaVerifyOptions) => Promise<TokenResponse>;
+}
 
 export interface AuthLoginOptions {
   email: string;
@@ -113,4 +132,30 @@ export interface AuthSignInWithProviderOptions {
 
 export interface AuthSessionOptions {
   verify?: boolean;
+}
+
+export interface AuthMfaEnrollOptions {
+  type: 'totp' | 'sms';
+}
+
+export interface AuthMfaChallengeOptions {
+  factorId: string;
+}
+
+export interface AuthMfaVerifyOptions {
+  factorId: string;
+  challengeId: string;
+  code: string;
+}
+
+export interface AuthMfaEnrollResponse {
+  id: string;
+  type: string;
+  secret: string;
+  qrCodeUri: string;
+}
+
+export interface AuthMfaChallengeResponse {
+  id: string;
+  expiresAt: number;
 }

@@ -9,6 +9,12 @@ import {
   AuthEventAllowedValues,
   AuthEventHandler,
   AuthLoginOptions,
+  AuthMfaApi,
+  AuthMfaChallengeOptions,
+  AuthMfaChallengeResponse,
+  AuthMfaEnrollOptions,
+  AuthMfaEnrollResponse,
+  AuthMfaVerifyOptions,
   AuthPasswordConfirmOptions,
   AuthPasswordResetOptions,
   AuthResendVerificationOptions,
@@ -34,7 +40,10 @@ enum AuthEndpoint {
   SESSION = '/session',
   PASSWORD_RESET = '/password-reset',
   PASSWORD_CONFIRM = '/password-confirm',
-  GENERATE_VERIFICATION_CODE = '/generate-verification-code'
+  GENERATE_VERIFICATION_CODE = '/generate-verification-code',
+  MFA_ENROLL = '/mfa/enroll',
+  MFA_CHALLENGE = '/mfa/challenge',
+  MFA_VERIFY = '/mfa/verify'
 }
 
 export class Auth extends EventEmitter {
@@ -42,12 +51,19 @@ export class Auth extends EventEmitter {
   private readonly authServiceUrl: string;
   private readonly authServiceHost: string;
   #session: TokenResponse | null = null;
+  mfa: AuthMfaApi;
 
   constructor(publicKey: string, authServiceUrl: string, authServiceHost: string) {
     super();
     this.publicKey = publicKey;
     this.authServiceUrl = authServiceUrl;
     this.authServiceHost = authServiceHost;
+
+    this.mfa = {
+      enroll: this.mfaEnroll.bind(this),
+      challenge: this.mfaChallenge.bind(this),
+      verify: this.mfaVerify.bind(this)
+    };
   }
 
   get tokenResponse(): TokenResponse | null {
@@ -382,5 +398,94 @@ export class Auth extends EventEmitter {
     this.emit(AuthEvent.SIGN_IN, tokenResponse);
 
     window.removeEventListener(AUTH_POPUP_MESSAGE_EVENT, this.handleAuthMessage);
+  }
+
+  private async mfaEnroll({ type }: AuthMfaEnrollOptions): Promise<AuthMfaEnrollResponse> {
+    logger.logInfo(`Enrolling mfa type: ${type}`);
+
+    try {
+      const requestBody = {
+        type
+      };
+
+      const response = await this.authServiceRequest<AuthMfaEnrollResponse>(
+        AuthEndpoint.MFA_ENROLL,
+        {
+          method: HttpMethod.POST,
+          body: JSON.stringify(requestBody),
+          headers: {
+            Authorization: `Bearer ${this.token}`
+          }
+        }
+      );
+
+      // this.emit(AuthEvent.PASSWORD_RESET, response);
+
+      return response;
+    } catch (err: any) {
+      logger.logError(err.message, err);
+      throw err;
+    }
+  }
+
+  private async mfaChallenge({
+    factorId
+  }: AuthMfaChallengeOptions): Promise<AuthMfaChallengeResponse> {
+    logger.logInfo(`Challenging mfa factor: ${factorId}`);
+
+    try {
+      const requestBody = {
+        factorId
+      };
+
+      const response = await this.authServiceRequest<AuthMfaChallengeResponse>(
+        AuthEndpoint.MFA_CHALLENGE,
+        {
+          method: HttpMethod.POST,
+          body: JSON.stringify(requestBody),
+          headers: {
+            Authorization: `Bearer ${this.token}`
+          }
+        }
+      );
+
+      // this.emit(AuthEvent.PASSWORD_RESET, response);
+
+      return response;
+    } catch (err: any) {
+      logger.logError(err.message, err);
+      throw err;
+    }
+  }
+
+  private async mfaVerify({
+    factorId,
+    challengeId,
+    code
+  }: AuthMfaVerifyOptions): Promise<TokenResponse> {
+    logger.logInfo(`Verifying mfa challenge`);
+
+    try {
+      const requestBody = {
+        factorId,
+        challengeId,
+        code
+      };
+
+      const response = await this.authServiceRequest<TokenResponse>(AuthEndpoint.MFA_VERIFY, {
+        method: HttpMethod.POST,
+        body: JSON.stringify(requestBody),
+        headers: {
+          Authorization: `Bearer ${this.token}`
+        }
+      });
+
+      this.emit(AuthEvent.SIGN_IN, response);
+
+      return this.handleTokenResponse(response);
+    } catch (err: any) {
+      logger.logError(err.message, err);
+      throw err;
+    }
   }
 }

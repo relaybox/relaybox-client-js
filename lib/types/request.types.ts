@@ -5,9 +5,15 @@ export interface ApiData {
   message?: string;
 }
 
-export interface ServiceResponseData {
+export interface ServiceResponseDataBase {
   message?: string;
 }
+
+// export interface ServiceResponseData {
+//   message?: string;
+// }
+
+export type ServiceResponseData<T = {}> = ServiceResponseDataBase & T;
 
 export interface FormattedResponse<T = any> {
   status: number;
