@@ -18,9 +18,11 @@ import {
   AuthPasswordConfirmOptions,
   AuthPasswordResetOptions,
   AuthResendVerificationOptions,
+  AuthSession,
   AuthSessionOptions,
   AuthSignInWithProviderOptions,
   AuthUser,
+  AuthUserSession,
   AuthVerifyOptions,
   HttpMethod,
   ServiceResponseData,
@@ -50,7 +52,8 @@ export class Auth extends EventEmitter {
   private readonly publicKey: string;
   private readonly authServiceUrl: string;
   private readonly authServiceHost: string;
-  #session: TokenResponse | null = null;
+  // #session: AuthSession | null = null;
+  #authUserSession: AuthUserSession | null = null;
   mfa: AuthMfaApi;
 
   constructor(publicKey: string, authServiceUrl: string, authServiceHost: string) {
@@ -67,27 +70,29 @@ export class Auth extends EventEmitter {
   }
 
   get tokenResponse(): TokenResponse | null {
-    if (!this.#session) {
+    if (!this.#authUserSession?.session) {
       return null;
     }
 
+    const { token, expiresAt, expiresIn } = this.#authUserSession.session;
+
     return {
-      token: this.#session?.token,
-      expiresAt: this.#session?.expiresAt,
-      expiresIn: this.#session?.expiresIn
+      token,
+      expiresAt,
+      expiresIn
     };
   }
 
   get token(): string | null {
-    return this.#session?.token || null;
+    return this.#authUserSession?.session?.token || null;
   }
 
   get refreshToken(): string | null {
-    return this.#session?.refreshToken || null;
+    return this.#authUserSession?.session?.refreshToken || null;
   }
 
   get user(): AuthUser | null {
-    return this.#session?.user || null;
+    return this.#authUserSession?.user || null;
   }
 
   private setRefreshToken(value: string, expiresAt?: number, storageType?: StorageType): void {
@@ -114,20 +119,32 @@ export class Auth extends EventEmitter {
   }
 
   private removeRefreshToken(): void {
-    removeItem(REFRESH_TOKEN_KEY, this.#session?.authStorageType);
+    removeItem(REFRESH_TOKEN_KEY, this.#authUserSession?.session?.authStorageType);
   }
 
-  private handleTokenResponse(tokenResponseData: TokenResponse): TokenResponse {
-    const { refreshToken, user, destroyAt, authStorageType, ...tokenResponse } = tokenResponseData;
+  // private handleTokenResponse(tokenResponseData: TokenResponse): TokenResponse {
+  //   const { refreshToken, user, destroyAt, authStorageType, ...tokenResponse } = tokenResponseData;
 
-    if (!refreshToken || !user || !tokenResponse) {
-      throw new TokenError('Auth token response is invalid');
+  //   if (!refreshToken || !user || !tokenResponse) {
+  //     throw new TokenError('Auth token response is invalid');
+  //   }
+
+  //   this.setRefreshToken(refreshToken, destroyAt, authStorageType);
+  //   this.#session = tokenResponseData;
+
+  //   return tokenResponseData;
+  // }
+
+  private handleAuthUserSessionResponse(authUserSessionData: AuthUserSession): AuthUserSession {
+    if (authUserSessionData.session) {
+      const { refreshToken, destroyAt, authStorageType } = authUserSessionData.session;
+
+      this.setRefreshToken(refreshToken, destroyAt, authStorageType);
     }
 
-    this.setRefreshToken(refreshToken, destroyAt, authStorageType);
-    this.#session = tokenResponseData;
+    this.#authUserSession = authUserSessionData;
 
-    return tokenResponseData;
+    return authUserSessionData;
   }
 
   private async authServiceRequest<T>(
@@ -225,7 +242,7 @@ export class Auth extends EventEmitter {
     }
   }
 
-  public async signIn({ email, password }: AuthLoginOptions): Promise<TokenResponse | AuthUser> {
+  public async signIn({ email, password }: AuthLoginOptions): Promise<AuthUserSession> {
     logger.logInfo(`Logging in with email: ${email}`);
 
     try {
@@ -234,7 +251,7 @@ export class Auth extends EventEmitter {
         password
       };
 
-      const response = await this.authServiceRequest<TokenResponse>(AuthEndpoint.LOGIN, {
+      const response = await this.authServiceRequest<AuthUserSession>(AuthEndpoint.LOGIN, {
         method: HttpMethod.POST,
         body: JSON.stringify(requestBody)
       });
@@ -247,7 +264,7 @@ export class Auth extends EventEmitter {
 
       this.emit(AuthEvent.SIGN_IN, response);
 
-      return this.handleTokenResponse(response);
+      return this.handleAuthUserSessionResponse(response);
     } catch (err: any) {
       logger.logError(err.message, err);
       throw err;
@@ -258,11 +275,15 @@ export class Auth extends EventEmitter {
     this.removeRefreshToken();
 
     this.emit(AuthEvent.SIGN_OUT, this.user);
-    this.#session = null;
+    this.#authUserSession = null;
   }
 
   public async tokenRefresh(): Promise<TokenResponse> {
     logger.logInfo(`Refreshing auth token`);
+
+    if (!this.#authUserSession?.session) {
+      throw new TokenError('Auth user session is not available');
+    }
 
     try {
       const response = await this.authServiceRequest<TokenResponse>(AuthEndpoint.TOKEN_REFRESH, {
@@ -272,10 +293,12 @@ export class Auth extends EventEmitter {
         }
       });
 
-      this.#session = {
-        ...this.#session,
+      const refreshedAuthSession = {
+        ...this.#authUserSession.session,
         ...response
       };
+
+      this.#authUserSession.session = refreshedAuthSession;
 
       this.emit(AuthEvent.TOKEN_REFRESH, response);
 
@@ -288,11 +311,11 @@ export class Auth extends EventEmitter {
 
   public async getSession({
     verify = false
-  }: AuthSessionOptions = {}): Promise<TokenResponse | null> {
+  }: AuthSessionOptions = {}): Promise<AuthUserSession | null> {
     logger.logInfo(`Getting auth session`);
 
-    if (this.#session && !verify) {
-      return this.#session;
+    if (this.#authUserSession && !verify) {
+      return this.#authUserSession;
     }
 
     try {
@@ -302,14 +325,14 @@ export class Auth extends EventEmitter {
         return null;
       }
 
-      const response = await this.authServiceRequest<TokenResponse>(AuthEndpoint.SESSION, {
+      const response = await this.authServiceRequest<AuthUserSession>(AuthEndpoint.SESSION, {
         method: HttpMethod.GET,
         headers: {
           Authorization: `Bearer ${currentRefreshToken}`
         }
       });
 
-      return this.handleTokenResponse(response);
+      return this.handleAuthUserSessionResponse(response);
     } catch (err: any) {
       logger.logError(err.message, err);
       throw err;
@@ -391,19 +414,19 @@ export class Auth extends EventEmitter {
       `width=${width},height=${height},left=${left},top=${top}`
     );
 
-    window.addEventListener(AUTH_POPUP_MESSAGE_EVENT, this.handleAuthMessage.bind(this));
+    window.addEventListener(AUTH_POPUP_MESSAGE_EVENT, this.handleOAuthMessageEvent.bind(this));
   }
 
-  private handleAuthMessage(event: MessageEvent): void {
+  private handleOAuthMessageEvent(event: MessageEvent): void {
     if (event.origin !== this.authServiceHost) {
       return;
     }
 
-    const { data: tokenResponse } = event;
-    this.handleTokenResponse(tokenResponse);
-    this.emit(AuthEvent.SIGN_IN, tokenResponse);
+    const { data: authUserSession } = event;
+    this.handleAuthUserSessionResponse(authUserSession);
+    this.emit(AuthEvent.SIGN_IN, authUserSession);
 
-    window.removeEventListener(AUTH_POPUP_MESSAGE_EVENT, this.handleAuthMessage);
+    window.removeEventListener(AUTH_POPUP_MESSAGE_EVENT, this.handleOAuthMessageEvent);
   }
 
   private async mfaEnroll({ type }: AuthMfaEnrollOptions): Promise<AuthMfaEnrollResponse> {
@@ -469,7 +492,7 @@ export class Auth extends EventEmitter {
     challengeId,
     code,
     autoChallenge = false
-  }: AuthMfaVerifyOptions): Promise<TokenResponse> {
+  }: AuthMfaVerifyOptions): Promise<AuthUserSession> {
     logger.logInfo(`Verifying mfa challenge`);
 
     try {
@@ -480,7 +503,7 @@ export class Auth extends EventEmitter {
         autoChallenge
       };
 
-      const response = await this.authServiceRequest<TokenResponse>(AuthEndpoint.MFA_VERIFY, {
+      const response = await this.authServiceRequest<AuthUserSession>(AuthEndpoint.MFA_VERIFY, {
         method: HttpMethod.POST,
         body: JSON.stringify(requestBody),
         headers: {
@@ -490,7 +513,7 @@ export class Auth extends EventEmitter {
 
       this.emit(AuthEvent.SIGN_IN, response);
 
-      return this.handleTokenResponse(response);
+      return this.handleAuthUserSessionResponse(response);
     } catch (err: any) {
       logger.logError(err.message, err);
       throw err;

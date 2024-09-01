@@ -2,7 +2,7 @@ import { Auth, REFRESH_TOKEN_KEY } from '../lib/auth';
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
 import { setupServer } from 'msw/node';
 import { HttpResponse, http } from 'msw';
-import { mockTokenRefreshResponse, mockTokenResponse, mockUserData } from './mock/auth.mock';
+import { getMockAuthUserSession, mockTokenRefreshResponse } from './mock/auth.mock';
 import { setItem, getItem } from '../lib/storage';
 import { StorageType } from '../lib/types/storage.types';
 import { AuthEvent } from '../lib/types';
@@ -13,6 +13,7 @@ const mockAuthAuthServiceUrl = 'http://localhost:4005/dev';
 const mockAuthEmail = '1@1.com';
 const mockAuthPassword = 'password';
 const mockAuthCode = '123456';
+const mockAuthUserSession = getMockAuthUserSession();
 
 const server = setupServer();
 
@@ -61,7 +62,7 @@ describe('Auth', () => {
           const { email, password } = await request.json();
 
           if (publicKey && email === mockAuthEmail && password === mockAuthPassword) {
-            return HttpResponse.json(mockTokenResponse);
+            return HttpResponse.json(mockAuthUserSession);
           }
 
           return getMockApiErrorResponse();
@@ -166,7 +167,7 @@ describe('Auth', () => {
           const authorization = request.headers.get('Authorization');
 
           if (publicKey && authorization) {
-            return HttpResponse.json(mockTokenResponse);
+            return HttpResponse.json(mockAuthUserSession);
           }
 
           return getMockApiErrorResponse();
@@ -242,7 +243,7 @@ describe('Auth', () => {
           const { factorId, challengeId, code, autoChallenge } = await request.json();
 
           if (publicKey && bearerToken && factorId && code && (challengeId || autoChallenge)) {
-            return HttpResponse.json(mockTokenResponse);
+            return HttpResponse.json(mockAuthUserSession);
           }
 
           return getMockApiErrorResponse();
@@ -300,16 +301,16 @@ describe('Auth', () => {
       it('should successfully fetch auth token from the auth service', async () => {
         const sessionData = await auth.signIn({ email: mockAuthEmail, password: mockAuthPassword });
 
-        expect(sessionData).toEqual(expect.objectContaining(mockTokenResponse));
+        expect(sessionData).toEqual(expect.objectContaining(mockAuthUserSession));
         expect(auth.tokenResponse).toEqual(expect.objectContaining({ token: 'auth-token' }));
         expect(auth.refreshToken).toEqual('refresh-token');
-        expect(auth.user).toEqual(mockUserData);
+        expect(auth.user).toEqual(mockAuthUserSession.user);
         expect(setItem).toHaveBeenCalledWith(
           REFRESH_TOKEN_KEY,
           JSON.stringify({ value: 'refresh-token', expiresAt: 100 }),
           StorageType.SESSION
         );
-        expect(auth.emit).toHaveBeenCalledWith(AuthEvent.SIGN_IN, mockTokenResponse);
+        expect(auth.emit).toHaveBeenCalledWith(AuthEvent.SIGN_IN, mockAuthUserSession);
       });
     });
   });
@@ -322,10 +323,10 @@ describe('Auth', () => {
 
         const sessionData = await auth.getSession();
 
-        expect(sessionData).toEqual(expect.objectContaining(mockTokenResponse));
+        expect(sessionData).toEqual(expect.objectContaining(mockAuthUserSession));
         expect(auth.tokenResponse).toEqual(expect.objectContaining({ token: 'auth-token' }));
         expect(auth.refreshToken).toEqual('refresh-token');
-        expect(auth.user).toEqual(mockUserData);
+        expect(auth.user).toEqual(mockAuthUserSession.user);
         expect(setItem).toHaveBeenCalledWith(
           REFRESH_TOKEN_KEY,
           JSON.stringify({ value: 'refresh-token', expiresAt: 100 }),
@@ -474,13 +475,13 @@ describe('Auth', () => {
           });
           expect(auth.tokenResponse).toEqual(expect.objectContaining({ token: 'auth-token' }));
           expect(auth.refreshToken).toEqual('refresh-token');
-          expect(auth.user).toEqual(mockUserData);
+          expect(auth.user).toEqual(mockAuthUserSession.user);
           expect(setItem).toHaveBeenCalledWith(
             REFRESH_TOKEN_KEY,
             JSON.stringify({ value: 'refresh-token', expiresAt: 100 }),
             StorageType.SESSION
           );
-          expect(auth.emit).toHaveBeenCalledWith(AuthEvent.SIGN_IN, mockTokenResponse);
+          expect(auth.emit).toHaveBeenCalledWith(AuthEvent.SIGN_IN, mockAuthUserSession);
         });
 
         it('should successfully verify a user with auto challenge mfa', async () => {
@@ -491,13 +492,13 @@ describe('Auth', () => {
           });
           expect(auth.tokenResponse).toEqual(expect.objectContaining({ token: 'auth-token' }));
           expect(auth.refreshToken).toEqual('refresh-token');
-          expect(auth.user).toEqual(mockUserData);
+          expect(auth.user).toEqual(mockAuthUserSession.user);
           expect(setItem).toHaveBeenCalledWith(
             REFRESH_TOKEN_KEY,
             JSON.stringify({ value: 'refresh-token', expiresAt: 100 }),
             StorageType.SESSION
           );
-          expect(auth.emit).toHaveBeenCalledWith(AuthEvent.SIGN_IN, mockTokenResponse);
+          expect(auth.emit).toHaveBeenCalledWith(AuthEvent.SIGN_IN, mockAuthUserSession);
         });
       });
     });

@@ -1,4 +1,6 @@
+import { Auth } from '../auth';
 import { ServiceResponseData, TokenResponse } from './request.types';
+import { StorageType } from './storage.types';
 
 export interface AuthRequestOptions {
   method?: 'GET' | 'POST';
@@ -61,9 +63,24 @@ export interface AuthUser {
   email: string;
   createdAt: string;
   updatedAt: string;
+  verifiedAt: string;
+  authMfaEnabled: boolean;
   identities: AuthUserIdentity[];
   factors: AuthUserMfaFactor[];
-  authMfaEnabled: boolean;
+}
+
+export interface AuthSession {
+  token: string;
+  expiresAt: number;
+  expiresIn: number;
+  destroyAt: number;
+  refreshToken: string;
+  authStorageType: StorageType;
+}
+
+export interface AuthUserSession {
+  user: AuthUser;
+  session: AuthSession | null;
 }
 
 export enum AuthEvent {
@@ -93,7 +110,7 @@ export type AuthEventHandler = (...args: any[]) => void;
 export interface AuthMfaApi {
   enroll: (options: AuthMfaEnrollOptions) => Promise<AuthMfaEnrollResponse>;
   challenge: (options: AuthMfaChallengeOptions) => Promise<AuthMfaChallengeResponse>;
-  verify: (options: AuthMfaVerifyOptions) => Promise<TokenResponse>;
+  verify: (options: AuthMfaVerifyOptions) => Promise<AuthUserSession>;
 }
 
 export interface AuthLoginOptions {

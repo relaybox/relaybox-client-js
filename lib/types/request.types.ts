@@ -24,11 +24,7 @@ export interface FormattedResponse<T = any> {
 export interface TokenResponse {
   token: string;
   expiresIn: number;
-  refreshToken?: string;
   expiresAt?: number;
-  destroyAt?: number;
-  user?: AuthUser;
-  authStorageType?: StorageType;
 }
 
 export interface KeyData {

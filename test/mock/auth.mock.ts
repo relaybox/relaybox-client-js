@@ -1,25 +1,40 @@
+import { AuthSession, AuthUser, AuthUserSession } from '../../lib/types/auth.types';
 import { StorageType } from '../../lib/types/storage.types';
 
-export const mockUserData = {
+export const defaultMockUser = {
   id: 'user-id',
+  orgId: 'org-id',
   clientId: 'client-id',
   username: 'username',
   email: 'email@example.com',
   createdAt: '2023-01-01T00:00:00.000Z',
   updatedAt: '2023-01-01T00:00:00.000Z',
-  provider: 'email',
-  providerId: 'provider-id'
+  verifiedAt: '2023-01-01T00:00:00.000Z',
+  identities: [],
+  factors: []
 };
 
-export const mockTokenResponse = {
+export const defaultMockSession: AuthSession = {
   token: 'auth-token',
   refreshToken: 'refresh-token',
   expiresIn: 30,
   expiresAt: 100,
   destroyAt: 100,
-  authStorageType: StorageType.SESSION,
-  user: mockUserData
+  authStorageType: StorageType.SESSION
 };
+
+export function getMockAuthUserSession(
+  authMfaEnabled: boolean = false,
+  withSession: boolean = true
+): AuthUserSession {
+  return {
+    session: withSession ? defaultMockSession : null,
+    user: {
+      ...defaultMockUser,
+      authMfaEnabled: authMfaEnabled
+    }
+  };
+}
 
 export const mockTokenRefreshResponse = {
   token: 'auth-token-refresh',
