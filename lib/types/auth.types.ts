@@ -63,6 +63,7 @@ export interface AuthUser {
   updatedAt: string;
   identities: AuthUserIdentity[];
   factors: AuthUserMfaFactor[];
+  authMfaEnabled: boolean;
 }
 
 export enum AuthEvent {
@@ -73,7 +74,8 @@ export enum AuthEvent {
   PASSWORD_RESET = 'PASSWORD_RESET',
   PASSWORD_CONFIRM = 'PASSWORD_CONFIRM',
   VERIFY = 'VERIFY',
-  RESEND_VERIFICATION = 'RESEND_VERIFICATION'
+  RESEND_VERIFICATION = 'RESEND_VERIFICATION',
+  MFA_REQUIRED = 'MFA_REQUIRED'
 }
 
 export type AuthEventAllowedValues =

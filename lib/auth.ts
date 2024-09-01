@@ -225,7 +225,7 @@ export class Auth extends EventEmitter {
     }
   }
 
-  public async signIn({ email, password }: AuthLoginOptions): Promise<TokenResponse> {
+  public async signIn({ email, password }: AuthLoginOptions): Promise<TokenResponse | AuthUser> {
     logger.logInfo(`Logging in with email: ${email}`);
 
     try {
@@ -238,6 +238,12 @@ export class Auth extends EventEmitter {
         method: HttpMethod.POST,
         body: JSON.stringify(requestBody)
       });
+
+      // if (response.user?.authMfaEnabled) {
+      //   this.emit(AuthEvent.MFA_REQUIRED, response);
+
+      //   return response.user
+      // }
 
       this.emit(AuthEvent.SIGN_IN, response);
 
