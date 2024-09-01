@@ -461,7 +461,8 @@ export class Auth extends EventEmitter {
   private async mfaVerify({
     factorId,
     challengeId,
-    code
+    code,
+    autoChallenge = false
   }: AuthMfaVerifyOptions): Promise<TokenResponse> {
     logger.logInfo(`Verifying mfa challenge`);
 
@@ -469,7 +470,8 @@ export class Auth extends EventEmitter {
       const requestBody = {
         factorId,
         challengeId,
-        code
+        code,
+        autoChallenge
       };
 
       const response = await this.authServiceRequest<TokenResponse>(AuthEndpoint.MFA_VERIFY, {

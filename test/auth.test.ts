@@ -26,6 +26,7 @@ interface AuthMfaRequestBody {
   factorId?: string;
   challengeId?: string;
   code?: string;
+  autoChallenge?: boolean;
 }
 
 function getMockApiErrorResponse() {
@@ -238,9 +239,9 @@ describe('Auth', () => {
         async ({ request }) => {
           const bearerToken = request.headers.get('Authorization');
           const publicKey = request.headers.get('X-Ds-Key-Name');
-          const { factorId, challengeId, code } = await request.json();
+          const { factorId, challengeId, code, autoChallenge } = await request.json();
 
-          if (publicKey && bearerToken && factorId && challengeId && code) {
+          if (publicKey && bearerToken && factorId && code && (challengeId || autoChallenge)) {
             return HttpResponse.json(mockTokenResponse);
           }
 
@@ -465,11 +466,28 @@ describe('Auth', () => {
 
     describe('verify', () => {
       describe('success', () => {
-        it('should successfully verify a user with mfa', async () => {
+        it('should successfully verify a user passing challenge with mfa', async () => {
           await auth.mfa.verify({
             factorId: 'mfa-factor-id',
             challengeId: 'mfa-challenge-id',
             code: '123456'
+          });
+          expect(auth.tokenResponse).toEqual(expect.objectContaining({ token: 'auth-token' }));
+          expect(auth.refreshToken).toEqual('refresh-token');
+          expect(auth.user).toEqual(mockUserData);
+          expect(setItem).toHaveBeenCalledWith(
+            REFRESH_TOKEN_KEY,
+            JSON.stringify({ value: 'refresh-token', expiresAt: 100 }),
+            StorageType.SESSION
+          );
+          expect(auth.emit).toHaveBeenCalledWith(AuthEvent.SIGN_IN, mockTokenResponse);
+        });
+
+        it('should successfully verify a user with auto challenge mfa', async () => {
+          await auth.mfa.verify({
+            factorId: 'mfa-factor-id',
+            code: '123456',
+            autoChallenge: true
           });
           expect(auth.tokenResponse).toEqual(expect.objectContaining({ token: 'auth-token' }));
           expect(auth.refreshToken).toEqual('refresh-token');

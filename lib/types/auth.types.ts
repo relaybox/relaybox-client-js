@@ -144,8 +144,9 @@ export interface AuthMfaChallengeOptions {
 
 export interface AuthMfaVerifyOptions {
   factorId: string;
-  challengeId: string;
+  challengeId?: string;
   code: string;
+  autoChallenge?: boolean;
 }
 
 export interface AuthMfaEnrollResponse {
