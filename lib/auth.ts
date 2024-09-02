@@ -34,6 +34,10 @@ const AUTH_SERVICE_PATHNAME = '/users';
 export const REFRESH_TOKEN_KEY = 'rb:token:refresh';
 const AUTH_POPUP_MESSAGE_EVENT = 'message';
 
+const AUTH_TOKEN_REFRESH_BUFFER_SECONDS = 20;
+const AUTH_TOKEN_REFRESH_RETRY_MS = 10000;
+const AUTH_TOKEN_REFRESH_JITTER_RANGE_MS = 2000;
+
 enum AuthEndpoint {
   CREATE = `/create`,
   LOGIN = `/authenticate`,
@@ -53,6 +57,7 @@ export class Auth extends EventEmitter {
   private readonly authServiceUrl: string;
   private readonly authServiceHost: string;
   private tmpToken: string | null = null;
+  private refreshTimeout: NodeJS.Timeout | number | null = null;
   #authUserSession: AuthUserSession | null = null;
   mfa: AuthMfaApi;
 
@@ -128,9 +133,10 @@ export class Auth extends EventEmitter {
 
   private handleAuthUserSessionResponse(authUserSessionData: AuthUserSession): AuthUserSession {
     if (authUserSessionData.session) {
-      const { refreshToken, destroyAt, authStorageType } = authUserSessionData.session;
+      const { refreshToken, destroyAt, authStorageType, expiresIn } = authUserSessionData.session;
 
       this.setRefreshToken(refreshToken, destroyAt, authStorageType);
+      this.setTokenRefreshTimeout(expiresIn);
     }
 
     const { tmpToken, ...appUserSessionData } = authUserSessionData;
@@ -142,6 +148,27 @@ export class Auth extends EventEmitter {
     this.#authUserSession = appUserSessionData;
 
     return authUserSessionData;
+  }
+
+  private setTokenRefreshTimeout(expiresIn: number, retryMs?: number): void {
+    const refreshBufferSeconds = AUTH_TOKEN_REFRESH_BUFFER_SECONDS;
+    const timeout = retryMs || (expiresIn - refreshBufferSeconds) * 1000;
+
+    clearTimeout(this.refreshTimeout as number);
+
+    this.refreshTimeout = setTimeout(async () => {
+      try {
+        await this.tokenRefresh();
+      } catch (err) {
+        const jitter =
+          Math.floor(Math.random() * AUTH_TOKEN_REFRESH_JITTER_RANGE_MS) +
+          AUTH_TOKEN_REFRESH_RETRY_MS;
+
+        logger.logError(`Failed to refresh token...retrying in ${jitter}ms`, err);
+
+        this.setTokenRefreshTimeout(0, jitter);
+      }
+    }, timeout);
   }
 
   private async authServiceRequest<T>(
@@ -296,6 +323,8 @@ export class Auth extends EventEmitter {
       };
 
       this.#authUserSession.session = refreshedAuthSession;
+
+      this.handleAuthUserSessionResponse(this.#authUserSession);
 
       this.emit(AuthEvent.TOKEN_REFRESH, response);
 
