@@ -420,8 +420,13 @@ export class Auth extends EventEmitter {
     }
 
     const { data: authUserSession } = event;
-    this.handleAuthUserSessionResponse(authUserSession);
-    this.emit(AuthEvent.SIGN_IN, authUserSession);
+    const authUserSessionData = this.handleAuthUserSessionResponse(authUserSession);
+
+    if (!authUserSessionData.session && authUserSessionData.user?.authMfaEnabled) {
+      this.emit(AuthEvent.MFA_REQUIRED, authUserSessionData);
+    } else {
+      this.emit(AuthEvent.SIGN_IN, authUserSessionData);
+    }
 
     window.removeEventListener(AUTH_POPUP_MESSAGE_EVENT, this.handleOAuthMessageEvent);
   }
@@ -446,8 +451,6 @@ export class Auth extends EventEmitter {
       );
 
       this.tmpToken = response.tmpToken;
-
-      // this.emit(AuthEvent.PASSWORD_RESET, response);
 
       return response;
     } catch (err: any) {
@@ -476,8 +479,6 @@ export class Auth extends EventEmitter {
           }
         }
       );
-
-      // this.emit(AuthEvent.PASSWORD_RESET, response);
 
       return response;
     } catch (err: any) {
