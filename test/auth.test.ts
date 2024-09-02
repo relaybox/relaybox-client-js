@@ -2,7 +2,11 @@ import { Auth, REFRESH_TOKEN_KEY } from '../lib/auth';
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
 import { setupServer } from 'msw/node';
 import { HttpResponse, http } from 'msw';
-import { getMockAuthUserSession, mockTokenRefreshResponse } from './mock/auth.mock';
+import {
+  getMockAuthUserSession,
+  mockAuthMfaEnrollResponse,
+  mockTokenRefreshResponse
+} from './mock/auth.mock';
 import { setItem, getItem } from '../lib/storage';
 import { StorageType } from '../lib/types/storage.types';
 import { AuthEvent } from '../lib/types';
@@ -201,12 +205,7 @@ describe('Auth', () => {
           const publicKey = request.headers.get('X-Ds-Key-Name');
 
           if (publicKey && bearerToken) {
-            return HttpResponse.json({
-              id: 'mfa-factor-id',
-              type: 'totp',
-              secret: 'mfa-secret',
-              qrCode: 'mfa-qr-code'
-            });
+            return HttpResponse.json(mockAuthMfaEnrollResponse);
           }
 
           return getMockApiErrorResponse();
@@ -429,19 +428,7 @@ describe('Auth', () => {
       describe('success', () => {
         it('should enroll a user with mfa', async () => {
           const authMfaEnrollResponse = await auth.mfa.enroll({ type: 'totp' });
-          expect(authMfaEnrollResponse).toEqual(
-            expect.objectContaining({
-              id: 'mfa-factor-id',
-              type: 'totp',
-              secret: 'mfa-secret',
-              qrCode: 'mfa-qr-code'
-            })
-          );
-          // expect(auth.emit).toHaveBeenCalledWith(
-          //   AuthEvent.SIGN_OUT,
-          //   expect.objectContaining(session.user)
-          // );
-          // expect(auth.user).toBeNull();
+          expect(authMfaEnrollResponse).toEqual(expect.objectContaining(mockAuthMfaEnrollResponse));
         });
       });
     });
@@ -456,11 +443,6 @@ describe('Auth', () => {
               expiresAt: expect.any(Number)
             })
           );
-          // expect(auth.emit).toHaveBeenCalledWith(
-          //   AuthEvent.SIGN_OUT,
-          //   expect.objectContaining(session.user)
-          // );
-          // expect(auth.user).toBeNull();
         });
       });
     });
@@ -474,11 +456,14 @@ describe('Auth', () => {
             code: '123456'
           });
           expect(auth.tokenResponse).toEqual(expect.objectContaining({ token: 'auth-token' }));
-          expect(auth.refreshToken).toEqual('refresh-token');
+          expect(auth.refreshToken).toEqual(mockAuthUserSession.session?.refreshToken);
           expect(auth.user).toEqual(mockAuthUserSession.user);
           expect(setItem).toHaveBeenCalledWith(
             REFRESH_TOKEN_KEY,
-            JSON.stringify({ value: 'refresh-token', expiresAt: 100 }),
+            JSON.stringify({
+              value: mockAuthUserSession.session?.refreshToken,
+              expiresAt: mockAuthUserSession.session?.expiresAt
+            }),
             StorageType.SESSION
           );
           expect(auth.emit).toHaveBeenCalledWith(AuthEvent.SIGN_IN, mockAuthUserSession);
@@ -495,7 +480,10 @@ describe('Auth', () => {
           expect(auth.user).toEqual(mockAuthUserSession.user);
           expect(setItem).toHaveBeenCalledWith(
             REFRESH_TOKEN_KEY,
-            JSON.stringify({ value: 'refresh-token', expiresAt: 100 }),
+            JSON.stringify({
+              value: mockAuthUserSession.session?.refreshToken,
+              expiresAt: mockAuthUserSession.session?.expiresAt
+            }),
             StorageType.SESSION
           );
           expect(auth.emit).toHaveBeenCalledWith(AuthEvent.SIGN_IN, mockAuthUserSession);

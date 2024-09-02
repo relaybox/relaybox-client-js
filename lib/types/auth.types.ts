@@ -81,6 +81,7 @@ export interface AuthSession {
 export interface AuthUserSession {
   user: AuthUser;
   session: AuthSession | null;
+  tmpToken?: string;
 }
 
 export enum AuthEvent {
@@ -103,7 +104,8 @@ export type AuthEventAllowedValues =
   | 'PASSWORD_RESET'
   | 'PASSWORD_CONFIRM'
   | 'VERIFY'
-  | 'RESEND_VERIFICATION';
+  | 'RESEND_VERIFICATION'
+  | 'MFA_REQUIRED';
 
 export type AuthEventHandler = (...args: any[]) => void;
 
@@ -173,6 +175,7 @@ export interface AuthMfaEnrollResponse {
   type: string;
   secret: string;
   qrCodeUri: string;
+  tmpToken: string;
 }
 
 export interface AuthMfaChallengeResponse {

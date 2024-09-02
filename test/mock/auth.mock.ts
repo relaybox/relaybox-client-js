@@ -41,3 +41,11 @@ export const mockTokenRefreshResponse = {
   expiresIn: 30,
   expiresAt: 100
 };
+
+export const mockAuthMfaEnrollResponse = {
+  id: 'mfa-factor-id',
+  type: 'totp',
+  secret: 'mfa-secret',
+  qrCode: 'mfa-qr-code',
+  tmpToken: 'mfa-tmp-token'
+};

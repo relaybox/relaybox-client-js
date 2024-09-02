@@ -52,7 +52,7 @@ export class Auth extends EventEmitter {
   private readonly publicKey: string;
   private readonly authServiceUrl: string;
   private readonly authServiceHost: string;
-  // #session: AuthSession | null = null;
+  private tmpToken: string | null = null;
   #authUserSession: AuthUserSession | null = null;
   mfa: AuthMfaApi;
 
@@ -95,6 +95,10 @@ export class Auth extends EventEmitter {
     return this.#authUserSession?.user || null;
   }
 
+  get session(): AuthSession | null {
+    return this.#authUserSession?.session || null;
+  }
+
   private setRefreshToken(value: string, expiresAt?: number, storageType?: StorageType): void {
     const refreshTokenData = {
       value,
@@ -122,19 +126,6 @@ export class Auth extends EventEmitter {
     removeItem(REFRESH_TOKEN_KEY, this.#authUserSession?.session?.authStorageType);
   }
 
-  // private handleTokenResponse(tokenResponseData: TokenResponse): TokenResponse {
-  //   const { refreshToken, user, destroyAt, authStorageType, ...tokenResponse } = tokenResponseData;
-
-  //   if (!refreshToken || !user || !tokenResponse) {
-  //     throw new TokenError('Auth token response is invalid');
-  //   }
-
-  //   this.setRefreshToken(refreshToken, destroyAt, authStorageType);
-  //   this.#session = tokenResponseData;
-
-  //   return tokenResponseData;
-  // }
-
   private handleAuthUserSessionResponse(authUserSessionData: AuthUserSession): AuthUserSession {
     if (authUserSessionData.session) {
       const { refreshToken, destroyAt, authStorageType } = authUserSessionData.session;
@@ -142,7 +133,13 @@ export class Auth extends EventEmitter {
       this.setRefreshToken(refreshToken, destroyAt, authStorageType);
     }
 
-    this.#authUserSession = authUserSessionData;
+    const { tmpToken, ...sessionData } = authUserSessionData;
+
+    if (tmpToken) {
+      this.tmpToken = tmpToken;
+    }
+
+    this.#authUserSession = sessionData;
 
     return authUserSessionData;
   }
@@ -256,15 +253,15 @@ export class Auth extends EventEmitter {
         body: JSON.stringify(requestBody)
       });
 
-      // if (response.user?.authMfaEnabled) {
-      //   this.emit(AuthEvent.MFA_REQUIRED, response);
+      const responseData = this.handleAuthUserSessionResponse(response);
 
-      //   return response.user
-      // }
+      if (!response.session && response.user?.authMfaEnabled) {
+        this.emit(AuthEvent.MFA_REQUIRED, response);
+      } else {
+        this.emit(AuthEvent.SIGN_IN, response);
+      }
 
-      this.emit(AuthEvent.SIGN_IN, response);
-
-      return this.handleAuthUserSessionResponse(response);
+      return responseData;
     } catch (err: any) {
       logger.logError(err.message, err);
       throw err;
@@ -448,6 +445,8 @@ export class Auth extends EventEmitter {
         }
       );
 
+      this.tmpToken = response.tmpToken;
+
       // this.emit(AuthEvent.PASSWORD_RESET, response);
 
       return response;
@@ -473,7 +472,7 @@ export class Auth extends EventEmitter {
           method: HttpMethod.POST,
           body: JSON.stringify(requestBody),
           headers: {
-            Authorization: `Bearer ${this.token}`
+            Authorization: `Bearer ${this.tmpToken}`
           }
         }
       );
@@ -507,13 +506,15 @@ export class Auth extends EventEmitter {
         method: HttpMethod.POST,
         body: JSON.stringify(requestBody),
         headers: {
-          Authorization: `Bearer ${this.token}`
+          Authorization: `Bearer ${this.tmpToken}`
         }
       });
 
+      const responseData = this.handleAuthUserSessionResponse(response);
+
       this.emit(AuthEvent.SIGN_IN, response);
 
-      return this.handleAuthUserSessionResponse(response);
+      return responseData;
     } catch (err: any) {
       logger.logError(err.message, err);
       throw err;
