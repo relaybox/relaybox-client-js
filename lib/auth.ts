@@ -53,7 +53,7 @@ enum AuthEndpoint {
 }
 
 export class Auth extends EventEmitter {
-  private readonly publicKey: string;
+  private readonly publicKey: string | null;
   private readonly authServiceUrl: string;
   private readonly authServiceHost: string;
   private tmpToken: string | null = null;
@@ -61,7 +61,7 @@ export class Auth extends EventEmitter {
   #authUserSession: AuthUserSession | null = null;
   mfa: AuthMfaApi;
 
-  constructor(publicKey: string, authServiceUrl: string, authServiceHost: string) {
+  constructor(publicKey: string | null, authServiceUrl: string, authServiceHost: string) {
     super();
     this.publicKey = publicKey;
     this.authServiceUrl = authServiceUrl;
@@ -102,6 +102,32 @@ export class Auth extends EventEmitter {
 
   get session(): AuthSession | null {
     return this.#authUserSession?.session || null;
+  }
+
+  private async authServiceRequest<T>(
+    endpoint: AuthEndpoint,
+    params: RequestInit = {}
+  ): Promise<T> {
+    if (!this.publicKey) {
+      throw new Error('Public key is required for auth');
+    }
+
+    const requestUrl = `${this.authServiceUrl}${AUTH_SERVICE_PATHNAME}${endpoint}`;
+
+    const defaultHeaders = {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      'X-Ds-Key-Name': this.publicKey
+    };
+
+    params.headers = {
+      ...defaultHeaders,
+      ...(params?.headers || {})
+    };
+
+    const response = await serviceRequest<T>(requestUrl, params);
+
+    return response;
   }
 
   private setRefreshToken(value: string, expiresAt?: number, storageType?: StorageType): void {
@@ -169,28 +195,6 @@ export class Auth extends EventEmitter {
         this.setTokenRefreshTimeout(0, jitter);
       }
     }, timeout);
-  }
-
-  private async authServiceRequest<T>(
-    endpoint: AuthEndpoint,
-    params: RequestInit = {}
-  ): Promise<T> {
-    const requestUrl = `${this.authServiceUrl}${AUTH_SERVICE_PATHNAME}${endpoint}`;
-
-    const defaultHeaders = {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      'X-Ds-Key-Name': this.publicKey
-    };
-
-    params.headers = {
-      ...defaultHeaders,
-      ...(params?.headers || {})
-    };
-
-    const response = await serviceRequest<T>(requestUrl, params);
-
-    return response;
   }
 
   public async signUp({ email, password }: AuthCreateOptions): Promise<ServiceResponseData> {
@@ -323,9 +327,7 @@ export class Auth extends EventEmitter {
       };
 
       this.#authUserSession.session = refreshedAuthSession;
-
       this.handleAuthUserSessionResponse(this.#authUserSession);
-
       this.emit(AuthEvent.TOKEN_REFRESH, response);
 
       return response;

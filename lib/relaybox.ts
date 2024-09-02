@@ -76,7 +76,7 @@ export class RelayBox {
   public readonly connection: EventEmitter;
   public clientId?: string | number;
   public connectionId: string | null = null;
-  public auth: Auth | null = null;
+  public auth: Auth;
 
   /**
    * Creates an instance of RelayBox.
@@ -106,19 +106,17 @@ export class RelayBox {
     this.authRequestOptions = opts.authRequestOptions;
     this.authTokenLifeCycle = opts.authTokenLifeCycle;
 
-    if (this.publicKey) {
-      this.auth = this.createAuthInstance(
-        this.publicKey,
-        this.authServiceUrl,
-        this.authServiceHost
-      );
-    }
+    this.auth = this.createAuthInstance(
+      this.publicKey || null,
+      this.authServiceUrl,
+      this.authServiceHost
+    );
 
     this.registerSocketManagerListeners();
   }
 
   private createAuthInstance(
-    publicKey: string,
+    publicKey: string | null,
     authServiceUrl: string,
     authServiceHost: string
   ): Auth {
