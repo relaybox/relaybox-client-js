@@ -133,13 +133,13 @@ export class Auth extends EventEmitter {
       this.setRefreshToken(refreshToken, destroyAt, authStorageType);
     }
 
-    const { tmpToken, ...sessionData } = authUserSessionData;
+    const { tmpToken, ...appUserSessionData } = authUserSessionData;
 
     if (tmpToken) {
       this.tmpToken = tmpToken;
     }
 
-    this.#authUserSession = sessionData;
+    this.#authUserSession = appUserSessionData;
 
     return authUserSessionData;
   }
