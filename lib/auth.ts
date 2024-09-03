@@ -317,6 +317,7 @@ export class Auth extends EventEmitter {
 
     this.emit(AuthEvent.SIGN_OUT, this.user);
     this.#authUserSession = null;
+    this.socketManager.disconnectSocket();
   }
 
   public async tokenRefresh(): Promise<TokenResponse> {
