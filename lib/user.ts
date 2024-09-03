@@ -8,6 +8,8 @@ export class User extends SubscriptionManager {
   public readonly createdAt: string;
   public readonly updatedAt: string;
   public readonly orgId: string;
+  public readonly isOnline: boolean;
+  public readonly lastOnline: string;
 
   constructor(
     socketManager: SocketManager,
@@ -16,7 +18,9 @@ export class User extends SubscriptionManager {
     username: string,
     createdAt: string,
     updatedAt: string,
-    orgId: string
+    orgId: string,
+    isOnline: boolean,
+    lastOnline: string
   ) {
     super(socketManager);
 
@@ -26,5 +30,7 @@ export class User extends SubscriptionManager {
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
     this.orgId = orgId;
+    this.isOnline = isOnline;
+    this.lastOnline = lastOnline;
   }
 }

@@ -23,6 +23,7 @@ import {
   AuthSessionOptions,
   AuthSignInWithProviderOptions,
   AuthUser,
+  AuthUserPublic,
   AuthUserSession,
   AuthVerifyOptions,
   HttpMethod,
@@ -571,7 +572,7 @@ export class Auth extends EventEmitter {
     try {
       const endpoint = `/${clientId}`;
 
-      const response = await this.authServiceRequest<AuthUser>(endpoint, {
+      const user = await this.authServiceRequest<AuthUserPublic>(endpoint, {
         method: HttpMethod.GET,
         headers: {
           Authorization: `Bearer ${this.token}`
@@ -580,12 +581,14 @@ export class Auth extends EventEmitter {
 
       return new User(
         this.socketManager,
-        response.id,
-        response.clientId,
-        response.username,
-        response.createdAt,
-        response.updatedAt,
-        response.orgId
+        user.id,
+        user.clientId,
+        user.username,
+        user.createdAt,
+        user.updatedAt,
+        user.orgId,
+        user.isOnline,
+        user.lastOnline
       );
     } catch (err: any) {
       logger.logError(err.message, err);

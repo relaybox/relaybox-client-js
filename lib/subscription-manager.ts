@@ -3,12 +3,12 @@ import { SocketManager } from './socket-manager';
 import { EventRegistry } from './event-registry';
 
 export class SubscriptionManager extends EventEmitter {
-  private readonly socketManager: SocketManager;
-  private readonly eventRegistry = new EventRegistry();
+  readonly #socketManager: SocketManager;
+  readonly #eventRegistry = new EventRegistry();
 
   constructor(socketManager: SocketManager) {
     super();
-    this.socketManager = socketManager;
+    this.#socketManager = socketManager;
   }
 
   async subscribe(): Promise<void> {
