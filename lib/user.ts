@@ -1,7 +1,13 @@
 import { SocketManager } from './socket-manager';
 import { SubscriptionManager } from './subscription-manager';
+import { ClientEvent } from './types/event.types';
 
-export class User extends SubscriptionManager {
+const SUBSCRIPTION_NAMESPACE = 'users';
+const PLATFORM_RESERVED_NAMESPACE = '$';
+
+type UserEvents = 'online' | 'offline' | 'update' | 'all';
+
+export class User extends SubscriptionManager<UserEvents> {
   public readonly id: string;
   public readonly clientId: string;
   public readonly username: string;
@@ -10,6 +16,10 @@ export class User extends SubscriptionManager {
   public readonly orgId: string;
   public readonly isOnline: boolean;
   public readonly lastOnline: string;
+
+  protected get subscriptionId(): string {
+    return this.clientId;
+  }
 
   constructor(
     socketManager: SocketManager,
@@ -32,5 +42,17 @@ export class User extends SubscriptionManager {
     this.orgId = orgId;
     this.isOnline = isOnline;
     this.lastOnline = lastOnline;
+  }
+
+  protected getSubscriptionName(event: string): string {
+    return `${this.clientId}:${PLATFORM_RESERVED_NAMESPACE}:${SUBSCRIPTION_NAMESPACE}:${event}`;
+  }
+
+  protected get subscribeClientEventType(): ClientEvent {
+    return ClientEvent.AUTH_USER_SUBSCRIBE;
+  }
+
+  protected get unsubscribeClientEventType(): ClientEvent {
+    return ClientEvent.AUTH_USER_UNSUBSCRIBE;
   }
 }
