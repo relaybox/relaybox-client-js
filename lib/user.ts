@@ -1,5 +1,6 @@
 import { SocketManager } from './socket-manager';
 import { SubscriptionManager } from './subscription-manager';
+import { AuthUserPublic } from './types';
 import { ClientEvent } from './types/event.types';
 
 const SUBSCRIPTION_NAMESPACE = 'users';
@@ -21,27 +22,17 @@ export class User extends SubscriptionManager<UserEvents> {
     return this.clientId;
   }
 
-  constructor(
-    socketManager: SocketManager,
-    id: string,
-    clientId: string,
-    username: string,
-    createdAt: string,
-    updatedAt: string,
-    orgId: string,
-    isOnline: boolean,
-    lastOnline: string
-  ) {
+  constructor(socketManager: SocketManager, user: AuthUserPublic) {
     super(socketManager);
 
-    this.id = id;
-    this.clientId = clientId;
-    this.username = username;
-    this.createdAt = createdAt;
-    this.updatedAt = updatedAt;
-    this.orgId = orgId;
-    this.isOnline = isOnline;
-    this.lastOnline = lastOnline;
+    this.id = user.id;
+    this.clientId = user.clientId;
+    this.username = user.username;
+    this.createdAt = user.createdAt;
+    this.updatedAt = user.updatedAt;
+    this.orgId = user.orgId;
+    this.isOnline = user.isOnline;
+    this.lastOnline = user.lastOnline;
   }
 
   protected getSubscriptionName(event: string): string {

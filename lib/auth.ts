@@ -580,17 +580,7 @@ export class Auth extends EventEmitter {
         }
       });
 
-      return new User(
-        this.socketManager,
-        user.id,
-        user.clientId,
-        user.username,
-        user.createdAt,
-        user.updatedAt,
-        user.orgId,
-        user.isOnline,
-        user.lastOnline
-      );
+      return new User(this.socketManager, user);
     } catch (err: any) {
       logger.logError(err.message, err);
       throw err;
