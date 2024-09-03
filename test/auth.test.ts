@@ -5,11 +5,14 @@ import { HttpResponse, http } from 'msw';
 import {
   getMockAuthUserSession,
   mockAuthMfaEnrollResponse,
+  mockAuthUserPublic,
   mockTokenRefreshResponse
 } from './mock/auth.mock';
 import { setItem, getItem } from '../lib/storage';
 import { StorageType } from '../lib/types/storage.types';
 import { AuthEvent } from '../lib/types';
+import { SocketManager } from '../lib/socket-manager';
+import { User } from '../lib/user';
 
 const mockPublicKey = 'appId.keyId';
 const mockAuthAuthServiceHost = 'http://localhost:4005';
@@ -250,6 +253,22 @@ describe('Auth', () => {
       )
     );
 
+    server.use(
+      http.get<never, AuthMfaRequestBody, any>(
+        `${mockAuthAuthServiceUrl}/users/${mockAuthUserPublic.clientId}`,
+        async ({ request }) => {
+          const bearerToken = request.headers.get('Authorization');
+          const publicKey = request.headers.get('X-Ds-Key-Name');
+
+          if (publicKey && bearerToken) {
+            return HttpResponse.json(mockAuthUserPublic);
+          }
+
+          return getMockApiErrorResponse();
+        }
+      )
+    );
+
     server.listen();
   });
 
@@ -259,7 +278,8 @@ describe('Auth', () => {
 
   beforeEach(() => {
     // server.resetHandlers();
-    auth = new Auth(mockPublicKey, mockAuthAuthServiceUrl, mockAuthAuthServiceHost);
+    const socketManager = vi.mocked(new SocketManager());
+    auth = new Auth(socketManager, mockPublicKey, mockAuthAuthServiceUrl, mockAuthAuthServiceHost);
     vi.spyOn(auth, 'emit').mockImplementation(() => true);
   });
 
@@ -419,6 +439,16 @@ describe('Auth', () => {
           expect.objectContaining(session.user)
         );
         expect(auth.user).toBeNull();
+      });
+    });
+  });
+
+  describe('getUser', () => {
+    describe('success', () => {
+      it('should successfully get public user details', async () => {
+        const user = await auth.getUser({ clientId: mockAuthUserPublic.clientId });
+        expect(user).toBeInstanceOf(User);
+        expect(user.clientId).toEqual(mockAuthUserPublic.clientId);
       });
     });
   });

@@ -55,6 +55,15 @@ export interface AuthUserMfaFactor {
   verifiedAt: Date;
 }
 
+export interface AuthUserPublic {
+  id: string;
+  clientId: string;
+  orgId: string;
+  username: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface AuthUser {
   id: string;
   orgId: string;
@@ -153,6 +162,10 @@ export interface AuthSignInWithProviderOptions {
 
 export interface AuthSessionOptions {
   verify?: boolean;
+}
+
+export interface AuthGetUserOptions {
+  clientId: string;
 }
 
 export interface AuthMfaEnrollOptions {

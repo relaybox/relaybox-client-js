@@ -8,6 +8,7 @@ import {
   AuthEvent,
   AuthEventAllowedValues,
   AuthEventHandler,
+  AuthGetUserOptions,
   AuthLoginOptions,
   AuthMfaApi,
   AuthMfaChallengeOptions,
@@ -30,6 +31,8 @@ import {
 } from './types';
 import { StorageType } from './types/storage.types';
 import { EventRegistry } from './event-registry';
+import { User } from './user';
+import { SocketManager } from './socket-manager';
 
 const AUTH_SERVICE_PATHNAME = '/users';
 export const REFRESH_TOKEN_KEY = 'rb:token:refresh';
@@ -50,7 +53,8 @@ enum AuthEndpoint {
   GENERATE_VERIFICATION_CODE = '/generate-verification-code',
   MFA_ENROLL = '/mfa/enroll',
   MFA_CHALLENGE = '/mfa/challenge',
-  MFA_VERIFY = '/mfa/verify'
+  MFA_VERIFY = '/mfa/verify',
+  USER = '/'
 }
 
 export class Auth extends EventEmitter {
@@ -58,16 +62,23 @@ export class Auth extends EventEmitter {
   private readonly authServiceUrl: string;
   private readonly authServiceHost: string;
   private readonly eventRegistry = new EventRegistry();
+  private readonly socketManager: SocketManager;
   private tmpToken: string | null = null;
   private refreshTimeout: NodeJS.Timeout | number | null = null;
   #authUserSession: AuthUserSession | null = null;
   mfa: AuthMfaApi;
 
-  constructor(publicKey: string | null, authServiceUrl: string, authServiceHost: string) {
+  constructor(
+    socketManager: SocketManager,
+    publicKey: string | null,
+    authServiceUrl: string,
+    authServiceHost: string
+  ) {
     super();
     this.publicKey = publicKey;
     this.authServiceUrl = authServiceUrl;
     this.authServiceHost = authServiceHost;
+    this.socketManager = socketManager;
 
     this.mfa = {
       enroll: this.mfaEnroll.bind(this),
@@ -107,7 +118,7 @@ export class Auth extends EventEmitter {
   }
 
   private async authServiceRequest<T>(
-    endpoint: AuthEndpoint,
+    endpoint: AuthEndpoint | string,
     params: RequestInit = {}
   ): Promise<T> {
     if (!this.publicKey) {
@@ -550,6 +561,32 @@ export class Auth extends EventEmitter {
       this.emit(AuthEvent.SIGN_IN, response);
 
       return responseData;
+    } catch (err: any) {
+      logger.logError(err.message, err);
+      throw err;
+    }
+  }
+
+  async getUser({ clientId }: AuthGetUserOptions): Promise<User> {
+    try {
+      const endpoint = `/${clientId}`;
+
+      const response = await this.authServiceRequest<AuthUser>(endpoint, {
+        method: HttpMethod.GET,
+        headers: {
+          Authorization: `Bearer ${this.token}`
+        }
+      });
+
+      return new User(
+        this.socketManager,
+        response.id,
+        response.clientId,
+        response.username,
+        response.createdAt,
+        response.updatedAt,
+        response.orgId
+      );
     } catch (err: any) {
       logger.logError(err.message, err);
       throw err;

@@ -107,6 +107,7 @@ export class RelayBox {
     this.authTokenLifeCycle = opts.authTokenLifeCycle;
 
     this.auth = this.createAuthInstance(
+      this.socketManager,
       this.publicKey || null,
       this.authServiceUrl,
       this.authServiceHost
@@ -116,11 +117,12 @@ export class RelayBox {
   }
 
   private createAuthInstance(
+    socketManager: SocketManager,
     publicKey: string | null,
     authServiceUrl: string,
     authServiceHost: string
   ): Auth {
-    return new Auth(publicKey, authServiceUrl, authServiceHost);
+    return new Auth(socketManager, publicKey, authServiceUrl, authServiceHost);
   }
 
   /**
