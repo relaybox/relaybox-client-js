@@ -26,17 +26,23 @@ export abstract class SubscriptionManager<
   async subscribe(
     eventOrHandler: AllowedEvents | SocketEventHandler,
     handler?: SocketEventHandler
-  ): Promise<void> {
+  ): Promise<SubscriptionManager> {
     const { event, eventHandler } = this.prepareSubscription(eventOrHandler, handler);
     await this.execSubscription(event, eventHandler);
+    return this;
   }
 
-  async unsubscribe(event?: AllowedEvents, handler?: SocketEventHandler): Promise<void> {
+  async unsubscribe(
+    event?: AllowedEvents,
+    handler?: SocketEventHandler
+  ): Promise<SubscriptionManager> {
     if (event) {
-      return this.unsubscribeEvent(event, handler);
+      await this.unsubscribeEvent(event, handler);
+    } else {
+      await this.unsubscribeAllEvents();
     }
 
-    return this.unsubscribeAllEvents();
+    return this;
   }
 
   private prepareSubscription(
@@ -56,7 +62,6 @@ export abstract class SubscriptionManager<
   private async execSubscription(event: string, handler: SocketEventHandler): Promise<void> {
     try {
       await this.subscribeEvent(event, handler);
-      handler();
     } catch (err: any) {
       const message = `Error subscribing to event: "${event}"`;
       logger.logError(message, err);
