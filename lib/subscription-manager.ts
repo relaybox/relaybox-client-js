@@ -13,6 +13,7 @@ export abstract class SubscriptionManager<
   protected abstract get subscriptionId(): string;
   protected abstract get subscribeClientEventType(): ClientEvent;
   protected abstract get unsubscribeClientEventType(): ClientEvent;
+  protected abstract get unsubscribeAllClientEventType(): ClientEvent;
 
   readonly #socketManager: SocketManager;
   readonly #eventRegistry = new EventRegistry();
@@ -26,8 +27,8 @@ export abstract class SubscriptionManager<
     eventOrHandler: AllowedEvents | SocketEventHandler,
     handler?: SocketEventHandler
   ): Promise<void> {
-    const { events, eventHandler } = this.prepareSubscription(eventOrHandler, handler);
-    await this.execSubscription(events, eventHandler);
+    const { event, eventHandler } = this.prepareSubscription(eventOrHandler, handler);
+    await this.execSubscription(event, eventHandler);
   }
 
   async unsubscribe(event?: AllowedEvents, handler?: SocketEventHandler): Promise<void> {
@@ -41,20 +42,23 @@ export abstract class SubscriptionManager<
   private prepareSubscription(
     eventOrHandler: string | SocketEventHandler,
     handler?: SocketEventHandler
-  ): { events: string[]; eventHandler: SocketEventHandler } {
-    const events = typeof eventOrHandler === 'function' ? ['all'] : [eventOrHandler];
+  ): { event: string; eventHandler: SocketEventHandler } {
+    const event = typeof eventOrHandler === 'function' ? 'all' : eventOrHandler;
 
     const eventHandler = handler || <SocketEventHandler>eventOrHandler;
 
-    return { events, eventHandler };
+    return {
+      event,
+      eventHandler
+    };
   }
 
-  private async execSubscription(events: string[], handler: SocketEventHandler): Promise<void> {
+  private async execSubscription(event: string, handler: SocketEventHandler): Promise<void> {
     try {
-      await Promise.all(events.map((event) => this.subscribeEvent(event, handler)));
+      await this.subscribeEvent(event, handler);
       handler();
     } catch (err: any) {
-      const message = `Error subscribing to presence events: "${events}"`;
+      const message = `Error subscribing to event: "${event}"`;
       logger.logError(message, err);
       throw new Error(message);
     }
@@ -70,7 +74,10 @@ export abstract class SubscriptionManager<
     if (!eventState) {
       logger.logInfo(`Syncing event:${event}"`);
 
-      const data = { subscriptionId: this.subscriptionId, event };
+      const data = {
+        subscriptionId: this.subscriptionId,
+        event
+      };
 
       try {
         await this.#socketManager.emitWithAck(this.subscribeClientEventType, data);
@@ -98,7 +105,10 @@ export abstract class SubscriptionManager<
     if (!handler || !existingHandler.size) {
       logger.logInfo(`All handers unbound, syncing ${event}`);
 
-      const data = { subscriptionId: this.subscriptionId, event };
+      const data = {
+        subscriptionId: this.subscriptionId,
+        event
+      };
 
       try {
         await this.#socketManager.emitWithAck(this.unsubscribeClientEventType, data);
@@ -125,16 +135,18 @@ export abstract class SubscriptionManager<
       return;
     }
 
-    const data = { subscriptionId: this.subscriptionId };
+    const data = {
+      subscriptionId: this.subscriptionId
+    };
 
     try {
-      await this.#socketManager.emitWithAck(ClientEvent.ROOM_PRESENCE_UNSUBSCRIBE_ALL, data);
+      await this.#socketManager.emitWithAck(this.unsubscribeAllClientEventType, data);
 
       this.clearEventHandlers();
 
-      logger.logInfo(`Successfully removed all presence subscriptions`);
+      logger.logInfo(`Successfully removed all subscriptions`);
     } catch (err: any) {
-      const message = `Error unsubscribing from all presence events`;
+      const message = `Error unsubscribing from all events`;
       logger.logError(message, err);
       throw new Error(message);
     }

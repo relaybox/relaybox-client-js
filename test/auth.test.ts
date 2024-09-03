@@ -274,6 +274,7 @@ describe('Auth', () => {
 
   afterAll(() => {
     server.close();
+    vi.restoreAllMocks();
   });
 
   beforeEach(() => {
@@ -284,7 +285,7 @@ describe('Auth', () => {
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    vi.resetAllMocks();
   });
 
   describe('signUp', () => {

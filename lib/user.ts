@@ -46,4 +46,8 @@ export class User extends SubscriptionManager<UserEvents> {
   protected get unsubscribeClientEventType(): ClientEvent {
     return ClientEvent.AUTH_USER_UNSUBSCRIBE;
   }
+
+  protected get unsubscribeAllClientEventType(): ClientEvent {
+    return ClientEvent.AUTH_USER_UNSUBSCRIBE_ALL;
+  }
 }
