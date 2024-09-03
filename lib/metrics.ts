@@ -37,7 +37,7 @@ export class Metrics {
    * @returns {Promise<void>}
    * @throws Will throw an error if the subscription fails.
    */
-  async subscribe(handler: SocketEventHandler) {
+  async subscribe(handler: SocketEventHandler): Promise<void> {
     this.incrementHandlerRefCount(handler);
 
     if (this.subscription) {
@@ -73,7 +73,7 @@ export class Metrics {
    * @returns {Promise<void>}
    * @throws Will throw an error if the unsubscription fails.
    */
-  async unsubscribe(handler?: SocketEventHandler) {
+  async unsubscribe(handler?: SocketEventHandler): Promise<void> {
     const data = { roomId: this.roomId, event: MetricsEventAllowedValue.ALL };
 
     try {

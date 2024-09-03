@@ -436,13 +436,19 @@ describe('Auth', () => {
     describe('challenge', () => {
       describe('success', () => {
         it('should successfully challenge a user with mfa', async () => {
-          const authMfaChallengeResponse = await auth.mfa.challenge({ factorId: 'mfa-factor-id' });
-          expect(authMfaChallengeResponse).toEqual(
-            expect.objectContaining({
-              id: 'mfa-challenge-id',
-              expiresAt: expect.any(Number)
-            })
-          );
+          const authChallenge = await auth.mfa.challenge({ factorId: 'mfa-factor-id' });
+          expect(authChallenge).toEqual({ verify: expect.any(Function) });
+        });
+
+        it('should successfully create an mfa challenge and accept the verification', async () => {
+          (auth as any).mfaVerify = vi.fn().mockResolvedValueOnce(mockAuthUserSession);
+          const authChallenge = await auth.mfa.challenge({ factorId: 'mfa-factor-id' });
+          authChallenge.verify({ code: '123456' });
+          expect((auth as any).mfaVerify).toHaveBeenCalledWith({
+            factorId: 'mfa-factor-id',
+            challengeId: 'mfa-challenge-id',
+            code: '123456'
+          });
         });
       });
     });

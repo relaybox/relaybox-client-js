@@ -111,7 +111,7 @@ export type AuthEventHandler = (...args: any[]) => void;
 
 export interface AuthMfaApi {
   enroll: (options: AuthMfaEnrollOptions) => Promise<AuthMfaEnrollResponse>;
-  challenge: (options: AuthMfaChallengeOptions) => Promise<AuthMfaChallengeResponse>;
+  challenge: (options: AuthMfaChallengeOptions) => Promise<{ verify: Function }>;
   verify: (options: AuthMfaVerifyOptions) => Promise<AuthUserSession>;
 }
 

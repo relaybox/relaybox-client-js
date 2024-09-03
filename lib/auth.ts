@@ -1,5 +1,5 @@
 import EventEmitter from 'eventemitter3';
-import { TokenError } from './errors';
+import { TokenError, ValidationError } from './errors';
 import { logger } from './logger';
 import { serviceRequest } from './request';
 import { getItem, removeItem, setItem } from './storage';
@@ -29,6 +29,7 @@ import {
   TokenResponse
 } from './types';
 import { StorageType } from './types/storage.types';
+import { EventRegistry } from './event-registry';
 
 const AUTH_SERVICE_PATHNAME = '/users';
 export const REFRESH_TOKEN_KEY = 'rb:token:refresh';
@@ -56,6 +57,7 @@ export class Auth extends EventEmitter {
   private readonly publicKey: string | null;
   private readonly authServiceUrl: string;
   private readonly authServiceHost: string;
+  private readonly eventRegistry = new EventRegistry();
   private tmpToken: string | null = null;
   private refreshTimeout: NodeJS.Timeout | number | null = null;
   #authUserSession: AuthUserSession | null = null;
@@ -177,8 +179,7 @@ export class Auth extends EventEmitter {
   }
 
   private setTokenRefreshTimeout(expiresIn: number, retryMs?: number): void {
-    const refreshBufferSeconds = AUTH_TOKEN_REFRESH_BUFFER_SECONDS;
-    const timeout = retryMs || (expiresIn - refreshBufferSeconds) * 1000;
+    const timeout = retryMs || (expiresIn - AUTH_TOKEN_REFRESH_BUFFER_SECONDS) * 1000;
 
     clearTimeout(this.refreshTimeout as number);
 
@@ -490,9 +491,7 @@ export class Auth extends EventEmitter {
     }
   }
 
-  private async mfaChallenge({
-    factorId
-  }: AuthMfaChallengeOptions): Promise<AuthMfaChallengeResponse> {
+  private async mfaChallenge({ factorId }: AuthMfaChallengeOptions): Promise<{ verify: Function }> {
     logger.logInfo(`Challenging mfa factor: ${factorId}`);
 
     try {
@@ -500,7 +499,7 @@ export class Auth extends EventEmitter {
         factorId
       };
 
-      const response = await this.authServiceRequest<AuthMfaChallengeResponse>(
+      const challenge = await this.authServiceRequest<AuthMfaChallengeResponse>(
         AuthEndpoint.MFA_CHALLENGE,
         {
           method: HttpMethod.POST,
@@ -511,7 +510,11 @@ export class Auth extends EventEmitter {
         }
       );
 
-      return response;
+      return {
+        verify: async ({ code }: AuthMfaVerifyOptions) => {
+          return this.mfaVerify({ factorId, challengeId: challenge.id, code });
+        }
+      };
     } catch (err: any) {
       logger.logError(err.message, err);
       throw err;
