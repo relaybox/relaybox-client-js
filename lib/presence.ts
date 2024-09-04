@@ -1,3 +1,4 @@
+import EventEmitter from 'eventemitter3';
 import { ClientEvent } from './types/event.types';
 import { SocketEventHandler } from './types/socket.types';
 import { logger } from './logger';
@@ -19,7 +20,7 @@ const PLATFORM_RESERVED_NAMESPACE = '$';
  * The Presence class manages presence-related events such as joining, leaving, and updating
  * user presence in a specific room.
  */
-export class Presence {
+export class Presence extends EventEmitter {
   private readonly socketManager: SocketManager;
   private readonly roomId: string;
   private readonly nspRoomId: string;
@@ -32,6 +33,8 @@ export class Presence {
    * @param {string} nspRoomId - The namespaced room ID used for event subscriptions.
    */
   constructor(socketManager: SocketManager, roomId: string, nspRoomId: string) {
+    super();
+
     this.socketManager = socketManager;
     this.roomId = roomId;
     this.nspRoomId = nspRoomId;
@@ -340,7 +343,15 @@ export class Presence {
     logger.logInfo(`Pushing event handler to ${subscription}`);
 
     this.eventRegistry.attachHandler(event, handler);
-    this.socketManager?.on(subscription, handler);
+
+    this.socketManager?.on(subscription, (data: any) => {
+      this.emit(`user:${data.user.clientId}:${event}`, data);
+      return handler(data);
+    });
+  }
+
+  filter(event: string, handler: SocketEventHandler): void {
+    this.on(event, handler);
   }
 
   /**
