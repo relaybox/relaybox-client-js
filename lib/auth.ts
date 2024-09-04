@@ -60,6 +60,13 @@ enum AuthEndpoint {
   USER = '/'
 }
 
+/**
+ * The `Auth` class handles user authentication, session management, and multi-factor authentication (MFA).
+ * It provides methods for signing up, logging in, refreshing tokens, and managing user sessions.
+ * The class also supports OAuth provider login and event-driven interactions using the `EventEmitter` API.
+ *
+ * @extends EventEmitter
+ */
 export class Auth extends EventEmitter {
   private readonly publicKey: string | null;
   private readonly authServiceUrl: string;
@@ -70,6 +77,16 @@ export class Auth extends EventEmitter {
   private refreshTimeout: NodeJS.Timeout | number | null = null;
   #authUserSession: AuthUserSession | null = null;
   mfa: AuthMfaApi;
+
+  /**
+   * Initializes a new instance of the `Auth` class.
+   * Sets up multi-factor authentication (MFA) API methods and configures the authentication service.
+   *
+   * @param {SocketManager} socketManager - An instance of `SocketManager` for handling socket connections.
+   * @param {string | null} publicKey - The public key for authenticating API requests. Required for authorization.
+   * @param {string} authServiceUrl - The base URL for the authentication service (e.g., API server).
+   * @param {string} authServiceHost - The host name of the authentication service.
+   */
 
   constructor(
     socketManager: SocketManager,
@@ -90,6 +107,13 @@ export class Auth extends EventEmitter {
     };
   }
 
+  /**
+   * Retrieves the current token response if an authenticated session exists.
+   * Provides details such as the token, expiration time, and remaining duration.
+   *
+   * @returns {TokenResponse | null} The current token response or null if the session is not authenticated.
+   */
+
   get tokenResponse(): TokenResponse | null {
     if (!this.#authUserSession?.session) {
       return null;
@@ -104,21 +128,52 @@ export class Auth extends EventEmitter {
     };
   }
 
+  /**
+   * Retrieves the current authentication token from the session, if available.
+   *
+   * @returns {string | null} The authentication token or null if not authenticated.
+   */
   get token(): string | null {
     return this.#authUserSession?.session?.token || null;
   }
 
+  /**
+   * Retrieves the current refresh token, allowing the user session to be refreshed.
+   *
+   * @returns {string | null} The refresh token or null if the session is not authenticated.
+   */
   get refreshToken(): string | null {
     return this.#authUserSession?.session?.refreshToken || null;
   }
 
+  /**
+   * Retrieves the authenticated user's information from the current session.
+   *
+   * @returns {AuthUser | null} The authenticated user object or null if not authenticated.
+   */
   get user(): AuthUser | null {
     return this.#authUserSession?.user || null;
   }
 
+  /**
+   * Retrieves the current authentication session details, such as tokens and expiration times.
+   *
+   * @returns {AuthSession | null} The current session object or null if no active session exists.
+   */
   get session(): AuthSession | null {
     return this.#authUserSession?.session || null;
   }
+
+  /**
+   * Makes a request to the authentication service using a specified endpoint and request parameters.
+   * Automatically includes the necessary authorization headers if the public key is provided.
+   *
+   * @template T
+   * @param {AuthEndpoint | string} endpoint - The authentication service endpoint to target.
+   * @param {RequestInit} [params={}] - The request options, such as method, headers, and body content.
+   * @returns {Promise<T>} A promise that resolves with the service's response.
+   * @throws Will throw an error if the public key is missing or the request fails.
+   */
 
   private async authServiceRequest<T>(
     endpoint: AuthEndpoint | string,
@@ -146,6 +201,14 @@ export class Auth extends EventEmitter {
     return response;
   }
 
+  /**
+   * Stores the refresh token in the specified storage type (e.g., session storage or persistent storage).
+   * Optionally, the token expiration time can be provided for session management.
+   *
+   * @param {string} value - The refresh token to be stored.
+   * @param {number} [expiresAt] - The expiration timestamp of the refresh token (optional).
+   * @param {StorageType} [storageType] - The storage type where the token should be saved.
+   */
   private setRefreshToken(value: string, expiresAt?: number, storageType?: StorageType): void {
     const refreshTokenData = {
       value,
@@ -155,6 +218,12 @@ export class Auth extends EventEmitter {
     setItem(REFRESH_TOKEN_KEY, JSON.stringify(refreshTokenData), storageType);
   }
 
+  /**
+   * Retrieves the refresh token from storage. If no token is found in session storage,
+   * it attempts to retrieve it from persistent storage.
+   *
+   * @returns {string | null} The stored refresh token or null if no token is found.
+   */
   private getRefreshToken(): string | null {
     let refreshTokenData = this.refreshToken;
 
@@ -169,10 +238,20 @@ export class Auth extends EventEmitter {
     return refreshTokenData;
   }
 
+  /**
+   * Removes the stored refresh token, effectively signing the user out and invalidating the session.
+   */
   private removeRefreshToken(): void {
     removeItem(REFRESH_TOKEN_KEY, this.#authUserSession?.session?.authStorageType);
   }
 
+  /**
+   * Handles and processes the response from the authentication service that contains the user's session data.
+   * Stores the session, refresh token, and sets a timeout for token refresh based on expiration time.
+   *
+   * @param {AuthUserSession} authUserSessionData - The session data returned by the authentication service.
+   * @returns {AuthUserSession} The processed session data.
+   */
   private handleAuthUserSessionResponse(authUserSessionData: AuthUserSession): AuthUserSession {
     if (authUserSessionData.session) {
       const { refreshToken, destroyAt, authStorageType, expiresIn } = authUserSessionData.session;
@@ -192,6 +271,13 @@ export class Auth extends EventEmitter {
     return authUserSessionData;
   }
 
+  /**
+   * Sets a timeout for refreshing the authentication token before it expires.
+   * The method ensures that the token is refreshed within a safe buffer period.
+   *
+   * @param {number} expiresIn - The number of seconds before the token expires.
+   * @param {number} [retryMs] - Optional retry delay (in milliseconds) in case the token refresh fails.
+   */
   private setTokenRefreshTimeout(expiresIn: number, retryMs?: number): void {
     const timeout = retryMs || (expiresIn - AUTH_TOKEN_REFRESH_BUFFER_SECONDS) * 1000;
 
@@ -212,6 +298,14 @@ export class Auth extends EventEmitter {
     }, timeout);
   }
 
+  /**
+   * Registers a new user by signing them up with an email and password.
+   * Emits the `SIGN_UP` event upon successful user creation.
+   *
+   * @param {AuthCreateOptions} options - The user signup options containing the email and password.
+   * @returns {Promise<ServiceResponseData>} The service's response data after user creation.
+   * @throws Will throw an error if the signup process fails.
+   */
   public async signUp({ email, password }: AuthCreateOptions): Promise<ServiceResponseData> {
     logger.logInfo(`Creating user with email: ${email}`);
 
@@ -235,6 +329,15 @@ export class Auth extends EventEmitter {
     }
   }
 
+  /**
+   * Verifies a user's email by sending a verification code.
+   * The method is typically called after user signup.
+   * Emits the `VERIFY` event upon successful verification.
+   *
+   * @param {AuthVerifyOptions} options - The verification options, including the user's email and verification code.
+   * @returns {Promise<ServiceResponseData>} The service response after successful verification.
+   * @throws Will throw an error if the verification process fails.
+   */
   public async verify({ email, code }: AuthVerifyOptions): Promise<ServiceResponseData> {
     logger.logInfo(`Verifying email: ${email}`);
 
@@ -258,6 +361,14 @@ export class Auth extends EventEmitter {
     }
   }
 
+  /**
+   * Resends the verification email to the user if they haven't completed the initial email verification.
+   * Emits the `RESEND_VERIFICATION` event upon successfully resending the email.
+   *
+   * @param {AuthResendVerificationOptions} options - The resend options, which include the user's email.
+   * @returns {Promise<ServiceResponseData>} The service response after resending the verification email.
+   * @throws Will throw an error if the resend process fails.
+   */
   public async resendVerification({
     email
   }: AuthResendVerificationOptions): Promise<ServiceResponseData> {
@@ -285,6 +396,14 @@ export class Auth extends EventEmitter {
     }
   }
 
+  /**
+   * Authenticates a user by logging them in with their email and password.
+   * Processes the session and emits events depending on the outcome (e.g., `SIGN_IN`, `MFA_REQUIRED`).
+   *
+   * @param {AuthLoginOptions} options - The login options, including email and password.
+   * @returns {Promise<AuthUserSession>} The authenticated user's session data.
+   * @throws Will throw an error if the login process fails.
+   */
   public async signIn({ email, password }: AuthLoginOptions): Promise<AuthUserSession> {
     logger.logInfo(`Logging in with email: ${email}`);
 
@@ -314,6 +433,10 @@ export class Auth extends EventEmitter {
     }
   }
 
+  /**
+   * Signs the user out by removing the refresh token, clearing the session, and disconnecting the socket.
+   * Emits the `SIGN_OUT` event when the user is successfully signed out.
+   */
   public signOut(): void {
     this.removeRefreshToken();
     this.emit(AuthEvent.SIGN_OUT, this.user);
@@ -321,6 +444,13 @@ export class Auth extends EventEmitter {
     this.socketManager.disconnectSocket();
   }
 
+  /**
+   * Refreshes the authentication token using the stored refresh token.
+   * Emits the `TOKEN_REFRESH` event when the token is successfully refreshed.
+   *
+   * @returns {Promise<TokenResponse>} The new token response with updated expiration details.
+   * @throws Will throw an error if the refresh token is invalid or the refresh request fails.
+   */
   public async tokenRefresh(): Promise<TokenResponse> {
     logger.logInfo(`Refreshing auth token`);
 
@@ -352,6 +482,15 @@ export class Auth extends EventEmitter {
     }
   }
 
+  /**
+   * Retrieves the current session for the authenticated user.
+   * If the `verify` option is set, it verifies the session with the authentication service.
+   * Emits session-related events upon success.
+   *
+   * @param {AuthSessionOptions} [options={}] - Optional session retrieval and verification parameters.
+   * @returns {Promise<AuthUserSession | null>} The current session data or null if no active session exists.
+   * @throws Will throw an error if the session cannot be retrieved.
+   */
   public async getSession({
     verify = false
   }: AuthSessionOptions = {}): Promise<AuthUserSession | null> {
@@ -382,6 +521,14 @@ export class Auth extends EventEmitter {
     }
   }
 
+  /**
+   * Initiates a password reset process by sending a password reset email to the specified address.
+   * Emits the `PASSWORD_RESET` event upon successfully sending the reset email.
+   *
+   * @param {AuthPasswordResetOptions} options - The password reset options, including the user's email.
+   * @returns {Promise<ServiceResponseData>} The service response after initiating the password reset.
+   * @throws Will throw an error if the password reset request fails.
+   */
   public async passwordReset({ email }: AuthPasswordResetOptions): Promise<ServiceResponseData> {
     logger.logInfo(`Password reset request for email: ${email}`);
 
@@ -407,6 +554,14 @@ export class Auth extends EventEmitter {
     }
   }
 
+  /**
+   * Confirms a password reset by verifying the reset code and updating the user's password.
+   * Emits the `PASSWORD_CONFIRM` event upon successfully resetting the password.
+   *
+   * @param {AuthPasswordConfirmOptions} options - The password confirm options, including email, password, and code.
+   * @returns {Promise<ServiceResponseData>} The service response after successfully resetting the password.
+   * @throws Will throw an error if the confirmation fails.
+   */
   public async passwordConfirm({
     email,
     password,
@@ -438,10 +593,23 @@ export class Auth extends EventEmitter {
     }
   }
 
+  /**
+   * Registers an event handler for a specific authentication event.
+   *
+   * @param {AuthEventAllowedValues} event - The name of the authentication event to listen for.
+   * @param {AuthEventHandler} handler - The callback function to handle the event.
+   */
   public onAuthEvent(event: AuthEventAllowedValues, handler: AuthEventHandler): void {
     this.on(event, handler);
   }
 
+  /**
+   * Initiates a sign-in process using an OAuth provider (e.g., Google, Facebook).
+   * Opens a popup window for the user to complete the OAuth flow and listens for authentication events.
+   *
+   * @param {AuthSignInWithProviderOptions} options - The OAuth provider options, including provider name, window size, etc.
+   * @returns {Promise<void>} Resolves when the OAuth sign-in process is complete.
+   */
   public async signInWithOauth({
     provider,
     popup = true,
@@ -460,6 +628,12 @@ export class Auth extends EventEmitter {
     window.addEventListener(AUTH_POPUP_MESSAGE_EVENT, this.handleOAuthMessageEvent.bind(this));
   }
 
+  /**
+   * Handles the OAuth message event after a successful OAuth sign-in.
+   * Processes the received user session data and emits appropriate events.
+   *
+   * @param {MessageEvent} event - The OAuth message event containing the user's session data.
+   */
   private handleOAuthMessageEvent(event: MessageEvent): void {
     if (event.origin !== this.authServiceHost) {
       return;
@@ -477,6 +651,14 @@ export class Auth extends EventEmitter {
     window.removeEventListener(AUTH_POPUP_MESSAGE_EVENT, this.handleOAuthMessageEvent);
   }
 
+  /**
+   * Enrolls the user in multi-factor authentication (MFA) using the specified type (e.g., SMS, email).
+   * Returns a temporary token required for completing the MFA process.
+   *
+   * @param {AuthMfaEnrollOptions} options - The MFA enrollment options, including the type of MFA.
+   * @returns {Promise<AuthMfaEnrollResponse>} The MFA enrollment response, including a temporary token.
+   * @throws Will throw an error if the MFA enrollment fails.
+   */
   private async mfaEnroll({ type }: AuthMfaEnrollOptions): Promise<AuthMfaEnrollResponse> {
     logger.logInfo(`Enrolling mfa type: ${type}`);
 
@@ -505,6 +687,14 @@ export class Auth extends EventEmitter {
     }
   }
 
+  /**
+   * Initiates an MFA challenge by sending a challenge request for a specific factor (e.g., SMS code).
+   * Returns a verification function that can be used to complete the MFA challenge.
+   *
+   * @param {AuthMfaChallengeOptions} options - The MFA challenge options, including the factor ID.
+   * @returns {Promise<{ verify: Function }>} An object containing the `verify` function to complete the MFA process.
+   * @throws Will throw an error if the MFA challenge request fails.
+   */
   private async mfaChallenge({ factorId }: AuthMfaChallengeOptions): Promise<{ verify: Function }> {
     logger.logInfo(`Challenging mfa factor: ${factorId}`);
 
@@ -535,6 +725,14 @@ export class Auth extends EventEmitter {
     }
   }
 
+  /**
+   * Verifies the MFA challenge by submitting the user's verification code and completing the authentication process.
+   * Emits the `SIGN_IN` event if the MFA verification is successful.
+   *
+   * @param {AuthMfaVerifyOptions} options - The MFA verification options, including factor ID, challenge ID, and code.
+   * @returns {Promise<AuthUserSession>} The updated user session after successful MFA verification.
+   * @throws Will throw an error if the MFA verification fails.
+   */
   private async mfaVerify({
     factorId,
     challengeId,
@@ -570,6 +768,14 @@ export class Auth extends EventEmitter {
     }
   }
 
+  /**
+   * Retrieves public information about a specific user by client ID.
+   * Requires authentication to access user data.
+   *
+   * @param {AuthGetUserOptions} options - The options for retrieving the user, including the client ID.
+   * @returns {Promise<User>} The user information wrapped in a `User` object.
+   * @throws Will throw an error if the request fails or the user cannot be found.
+   */
   async getUser({ clientId }: AuthGetUserOptions): Promise<User> {
     try {
       const endpoint = `/${clientId}`;
@@ -588,12 +794,25 @@ export class Auth extends EventEmitter {
     }
   }
 
-  async updateStatus({ status }: AuthUpdateStatusOptions): Promise<void> {
+  /**
+   * Updates the authenticated user's status (e.g., online, offline) and emits a socket event to notify other clients.
+   *
+   * @param {AuthUpdateStatusOptions} options - The status update options, including the new status.
+   * @returns {Promise<unknown>} Resolves when the status update is successful.
+   * @throws Will throw an error if the status update fails.
+   */
+  async updateStatus({ status }: AuthUpdateStatusOptions): Promise<unknown> {
     try {
-      const res = this.socketManager.emitWithAck(ClientEvent.AUTH_USER_STATUS_UPDATE, {
+      if (!status) {
+        throw new ValidationError('No status provided');
+      }
+
+      const res = await this.socketManager.emitWithAck(ClientEvent.AUTH_USER_STATUS_UPDATE, {
         status,
         event: 'user:status:update'
       });
+
+      return res;
     } catch (err: any) {
       logger.logError(err.message, err);
       throw err;
