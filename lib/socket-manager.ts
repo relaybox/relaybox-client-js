@@ -86,10 +86,16 @@ export class SocketManager {
   }
 
   private handleSocketCloseEvent(event: CloseEvent) {
-    this.socket.connected = false;
-    this.setSocketState(SocketState.DISCONNECTED);
+    if (this.socket) {
+      this.socket.connected = false;
+      this.setSocketState(SocketState.DISCONNECTED);
+    }
+
     this.eventEmitter.emit(SocketEvent.DISCONNECT);
-    this.handleReconnection();
+
+    if (this.socketAuth) {
+      this.handleReconnection();
+    }
 
     logger.logWarning(`Socket disconnected`, event);
   }
@@ -281,6 +287,7 @@ export class SocketManager {
     if (this.socket) {
       // this.eventEmitter.removeAllListeners();
       this.connection?.close();
+      // this.socketAuth = null;
       // this.socket = null;
 
       logger.logInfo('Socket disconnected');

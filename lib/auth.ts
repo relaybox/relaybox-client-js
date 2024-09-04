@@ -314,7 +314,6 @@ export class Auth extends EventEmitter {
 
   public signOut(): void {
     this.removeRefreshToken();
-
     this.emit(AuthEvent.SIGN_OUT, this.user);
     this.#authUserSession = null;
     this.socketManager.disconnectSocket();

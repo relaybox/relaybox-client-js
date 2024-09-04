@@ -1,4 +1,4 @@
-import { vi, describe, it, expect, afterAll, beforeEach } from 'vitest';
+import { vi, describe, it, expect, afterAll, beforeEach, afterEach } from 'vitest';
 import { SocketManager } from '../lib/socket-manager';
 import { User } from '../lib/user';
 import { getMockAuthUserPublic } from './mock/user.mock';
@@ -35,7 +35,7 @@ describe('User', () => {
     user = new User(socketManager, mockAuthUserPublic);
   });
 
-  afterAll(() => {
+  afterEach(() => {
     vi.restoreAllMocks();
   });
 
@@ -44,11 +44,11 @@ describe('User', () => {
       it('should successfully subscribe to specific user events', async () => {
         const handler = vi.fn();
 
-        user.subscribe('online', handler);
+        user.subscribe('user:connection:status', handler);
 
         expect(socketManagerEmitWithAck).toHaveBeenCalledWith(ClientEvent.AUTH_USER_SUBSCRIBE, {
           subscriptionId: user.clientId,
-          event: 'online'
+          event: 'user:connection:status'
         });
       });
 
@@ -59,7 +59,71 @@ describe('User', () => {
 
         expect(socketManagerEmitWithAck).toHaveBeenCalledWith(ClientEvent.AUTH_USER_SUBSCRIBE, {
           subscriptionId: user.clientId,
-          event: 'all'
+          event: '$:subscribe:all'
+        });
+      });
+
+      it('should successfully subscribe to and unsubscribe from all user events', async () => {
+        const handler = vi.fn();
+
+        user.subscribe(handler);
+        user.unsubscribe();
+
+        expect(socketManagerEmitWithAck).toHaveBeenCalledWith(ClientEvent.AUTH_USER_SUBSCRIBE, {
+          subscriptionId: user.clientId,
+          event: '$:subscribe:all'
+        });
+
+        expect(socketManagerEmitWithAck).toHaveBeenCalledWith(
+          ClientEvent.AUTH_USER_UNSUBSCRIBE_ALL,
+          {
+            subscriptionId: user.clientId
+          }
+        );
+      });
+    });
+  });
+
+  describe('onConnectionEvent', () => {
+    describe('success', () => {
+      it('should successfully subscribe to specific user events', async () => {
+        const handler = vi.fn();
+
+        user.onConnectionEvent(handler);
+
+        expect(socketManagerEmitWithAck).toHaveBeenCalledWith(ClientEvent.AUTH_USER_SUBSCRIBE, {
+          subscriptionId: user.clientId,
+          event: 'user:connection:status'
+        });
+      });
+    });
+  });
+
+  describe('onConnect', () => {
+    describe('success', () => {
+      it('should successfully subscribe to specific user events', async () => {
+        const handler = vi.fn();
+
+        user.onConnect(handler);
+
+        expect(socketManagerEmitWithAck).toHaveBeenCalledWith(ClientEvent.AUTH_USER_SUBSCRIBE, {
+          subscriptionId: user.clientId,
+          event: 'user:connect'
+        });
+      });
+    });
+  });
+
+  describe('onDisconnect', () => {
+    describe('success', () => {
+      it('should successfully subscribe to specific user events', async () => {
+        const handler = vi.fn();
+
+        user.onDisconnect(handler);
+
+        expect(socketManagerEmitWithAck).toHaveBeenCalledWith(ClientEvent.AUTH_USER_SUBSCRIBE, {
+          subscriptionId: user.clientId,
+          event: 'user:disconnect'
         });
       });
     });

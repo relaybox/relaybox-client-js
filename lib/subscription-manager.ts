@@ -49,7 +49,7 @@ export abstract class SubscriptionManager<
     eventOrHandler: string | SocketEventHandler,
     handler?: SocketEventHandler
   ): { event: string; eventHandler: SocketEventHandler } {
-    const event = typeof eventOrHandler === 'function' ? 'all' : eventOrHandler;
+    const event = typeof eventOrHandler === 'function' ? '$:subscribe:all' : eventOrHandler;
 
     const eventHandler = handler || <SocketEventHandler>eventOrHandler;
 

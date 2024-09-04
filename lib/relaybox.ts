@@ -204,8 +204,10 @@ export class RelayBox {
         await this.handleAuthActionConnect();
       } else if (this.auth?.token) {
         await this.handleAuthServiceConnect(forceNewConnection);
-      } else {
+      } else if (this.authEndpoint) {
         await this.handleAuthTokenConnect();
+      } else {
+        throw new Error('No authentication method provided');
       }
 
       await this.waitForStableConnection();
