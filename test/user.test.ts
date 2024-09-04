@@ -41,7 +41,7 @@ describe('User', () => {
 
   describe('subscribe', () => {
     describe('success', () => {
-      it('should successfully subscribe to specific user events', async () => {
+      it('should successfully subscribe to a specific user event', async () => {
         const handler = vi.fn();
 
         user.subscribe('user:connection:status', handler);
@@ -125,6 +125,40 @@ describe('User', () => {
           subscriptionId: user.clientId,
           event: 'user:disconnect'
         });
+      });
+    });
+  });
+
+  describe('unsubscribe', () => {
+    describe('success', () => {
+      it('should successfully unsubscribe from a specific user event', async () => {
+        const handler = vi.fn();
+
+        const event = 'user:disconnect';
+
+        user.subscribe(event, handler);
+        user.unsubscribe(event);
+
+        expect(socketManagerEmitWithAck).toHaveBeenCalledWith(ClientEvent.AUTH_USER_UNSUBSCRIBE, {
+          subscriptionId: user.clientId,
+          event
+        });
+      });
+
+      it('should successfully unsubscribe from all events', async () => {
+        const handler = vi.fn();
+
+        const event = 'user:disconnect';
+
+        user.subscribe(event, handler);
+        user.unsubscribe();
+
+        expect(socketManagerEmitWithAck).toHaveBeenCalledWith(
+          ClientEvent.AUTH_USER_UNSUBSCRIBE_ALL,
+          {
+            subscriptionId: user.clientId
+          }
+        );
       });
     });
   });

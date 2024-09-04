@@ -6,7 +6,11 @@ import { ClientEvent } from './types/event.types';
 const SUBSCRIPTION_NAMESPACE = 'users';
 const PLATFORM_RESERVED_NAMESPACE = '$';
 
-type UserEvents = 'user:connection:status' | 'user:connect' | 'user:disconnect' | 'update';
+type UserEvents =
+  | 'user:connection:status'
+  | 'user:connect'
+  | 'user:disconnect'
+  | 'user:status:update';
 
 export class User extends SubscriptionManager<UserEvents> {
   public readonly id: string;

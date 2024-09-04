@@ -6,6 +6,8 @@ import { logger } from './logger';
 import { ClientEvent } from './types';
 import { ValidationError } from './errors';
 
+const PLATFORM_SUBSCRIBE_ALL_EVENT = '$:subscribe:all';
+
 export abstract class SubscriptionManager<
   AllowedEvents extends string = string
 > extends EventEmitter {
@@ -49,7 +51,8 @@ export abstract class SubscriptionManager<
     eventOrHandler: string | SocketEventHandler,
     handler?: SocketEventHandler
   ): { event: string; eventHandler: SocketEventHandler } {
-    const event = typeof eventOrHandler === 'function' ? '$:subscribe:all' : eventOrHandler;
+    const event =
+      typeof eventOrHandler === 'function' ? PLATFORM_SUBSCRIBE_ALL_EVENT : eventOrHandler;
 
     const eventHandler = handler || <SocketEventHandler>eventOrHandler;
 
