@@ -22,10 +22,12 @@ import {
   AuthSession,
   AuthSessionOptions,
   AuthSignInWithProviderOptions,
+  AuthUpdateStatusOptions,
   AuthUser,
   AuthUserPublic,
   AuthUserSession,
   AuthVerifyOptions,
+  ClientEvent,
   HttpMethod,
   ServiceResponseData,
   TokenResponse
@@ -580,6 +582,18 @@ export class Auth extends EventEmitter {
       });
 
       return new User(this.socketManager, user);
+    } catch (err: any) {
+      logger.logError(err.message, err);
+      throw err;
+    }
+  }
+
+  async updateStatus({ status }: AuthUpdateStatusOptions): Promise<void> {
+    try {
+      const res = this.socketManager.emitWithAck(ClientEvent.AUTH_USER_STATUS_UPDATE, {
+        status,
+        event: 'user:status:update'
+      });
     } catch (err: any) {
       logger.logError(err.message, err);
       throw err;

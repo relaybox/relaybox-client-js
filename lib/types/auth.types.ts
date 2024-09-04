@@ -197,3 +197,7 @@ export interface AuthMfaChallengeResponse {
   id: string;
   expiresAt: number;
 }
+
+export interface AuthUpdateStatusOptions {
+  status: any;
+}

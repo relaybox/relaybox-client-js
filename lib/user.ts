@@ -66,4 +66,8 @@ export class User extends SubscriptionManager<UserEvents> {
   onDisconnect(handler: SocketEventHandler): Promise<SubscriptionManager> {
     return this.subscribe('user:disconnect', handler);
   }
+
+  onStatusUpdate(handler: SocketEventHandler): Promise<SubscriptionManager> {
+    return this.subscribe('user:status:update', handler);
+  }
 }
