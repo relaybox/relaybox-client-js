@@ -285,10 +285,10 @@ export class SocketManager {
 
   disconnectSocket(): void {
     if (this.socket) {
-      // this.eventEmitter.removeAllListeners();
+      this.eventEmitter.removeAllListeners();
       this.connection?.close();
-      // this.socketAuth = null;
-      // this.socket = null;
+      this.socketAuth = null;
+      this.socket = null;
 
       logger.logInfo('Socket disconnected');
     }

@@ -33,7 +33,6 @@ import {
   TokenResponse
 } from './types';
 import { StorageType } from './types/storage.types';
-import { EventRegistry } from './event-registry';
 import { User } from './user';
 import { SocketManager } from './socket-manager';
 
@@ -71,7 +70,6 @@ export class Auth extends EventEmitter {
   private readonly publicKey: string | null;
   private readonly authServiceUrl: string;
   private readonly authServiceHost: string;
-  private readonly eventRegistry = new EventRegistry();
   private readonly socketManager: SocketManager;
   private tmpToken: string | null = null;
   private refreshTimeout: NodeJS.Timeout | number | null = null;

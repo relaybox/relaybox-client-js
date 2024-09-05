@@ -343,11 +343,7 @@ export class Presence extends EventEmitter {
     logger.logInfo(`Pushing event handler to ${subscription}`);
 
     this.eventRegistry.attachHandler(event, handler);
-
-    this.socketManager?.on(subscription, (data: any) => {
-      this.emit(`user:${data.user.clientId}:${event}`, data);
-      return handler(data);
-    });
+    this.socketManager?.on(subscription, handler);
   }
 
   filter(event: string, handler: SocketEventHandler): void {
