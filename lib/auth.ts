@@ -248,14 +248,21 @@ export class Auth extends EventEmitter {
    * Stores the session, refresh token, and sets a timeout for token refresh based on expiration time.
    *
    * @param {AuthUserSession} authUserSessionData - The session data returned by the authentication service.
+   * @param {boolean} [resetSession=false] - Whether to set the refresh token, essentially resetting the session.
    * @returns {AuthUserSession} The processed session data.
    */
-  private handleAuthUserSessionResponse(authUserSessionData: AuthUserSession): AuthUserSession {
+  private handleAuthUserSessionResponse(
+    authUserSessionData: AuthUserSession,
+    resetSession: boolean = false
+  ): AuthUserSession {
     if (authUserSessionData.session) {
       const { refreshToken, destroyAt, authStorageType, expiresIn } = authUserSessionData.session;
 
-      this.setRefreshToken(refreshToken, destroyAt, authStorageType);
       this.setTokenRefreshTimeout(expiresIn);
+
+      if (resetSession) {
+        this.setRefreshToken(refreshToken, destroyAt, authStorageType);
+      }
     }
 
     const { tmpToken, ...appUserSessionData } = authUserSessionData;
@@ -416,7 +423,7 @@ export class Auth extends EventEmitter {
         body: JSON.stringify(requestBody)
       });
 
-      const responseData = this.handleAuthUserSessionResponse(response);
+      const responseData = this.handleAuthUserSessionResponse(response, true);
 
       if (!response.session && response.user?.authMfaEnabled) {
         this.emit(AuthEvent.MFA_REQUIRED, response);
@@ -646,7 +653,7 @@ export class Auth extends EventEmitter {
     }
 
     const { data: authUserSession } = event;
-    const authUserSessionData = this.handleAuthUserSessionResponse(authUserSession);
+    const authUserSessionData = this.handleAuthUserSessionResponse(authUserSession, true);
 
     if (!authUserSessionData.session && authUserSessionData.user?.authMfaEnabled) {
       this.emit(AuthEvent.MFA_REQUIRED, authUserSessionData);
@@ -763,7 +770,7 @@ export class Auth extends EventEmitter {
         }
       });
 
-      const responseData = this.handleAuthUserSessionResponse(response);
+      const responseData = this.handleAuthUserSessionResponse(response, true);
 
       this.emit(AuthEvent.SIGN_IN, response);
 
