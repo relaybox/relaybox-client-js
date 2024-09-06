@@ -436,6 +436,7 @@ export class Auth extends EventEmitter {
    * Emits the `SIGN_OUT` event when the user is successfully signed out.
    */
   public signOut(): void {
+    clearTimeout(this.refreshTimeout as number);
     this.removeRefreshToken();
     this.emit(AuthEvent.SIGN_OUT, this.user);
     this.#authUserSession = null;
@@ -449,7 +450,7 @@ export class Auth extends EventEmitter {
    * @returns {Promise<TokenResponse>} The new token response with updated expiration details.
    * @throws Will throw an error if the refresh token is invalid or the refresh request fails.
    */
-  public async tokenRefresh(): Promise<TokenResponse> {
+  public async tokenRefresh(): Promise<TokenResponse | undefined> {
     logger.logInfo(`Refreshing auth token`);
 
     if (!this.#authUserSession?.session) {
@@ -476,6 +477,13 @@ export class Auth extends EventEmitter {
       return response;
     } catch (err: any) {
       logger.logError(err.message, err);
+
+      if (err.name === 'TokenExpiredError') {
+        this.emit(AuthEvent.SESSION_EXPIRED, err);
+        this.signOut();
+        return;
+      }
+
       throw err;
     }
   }
