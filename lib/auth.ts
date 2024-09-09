@@ -311,13 +311,22 @@ export class Auth extends EventEmitter {
    * @returns {Promise<ServiceResponseData>} The service's response data after user creation.
    * @throws Will throw an error if the signup process fails.
    */
-  public async signUp({ email, password }: AuthCreateOptions): Promise<ServiceResponseData> {
+  public async signUp({
+    email,
+    password,
+    username,
+    firstName,
+    lastName
+  }: AuthCreateOptions): Promise<ServiceResponseData> {
     logger.logInfo(`Creating user with email: ${email}`);
 
     try {
       const requestBody = {
         email,
-        password
+        password,
+        username,
+        firstName,
+        lastName
       };
 
       const response = await this.authServiceRequest<ServiceResponseData>(AuthEndpoint.CREATE, {

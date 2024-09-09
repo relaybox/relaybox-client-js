@@ -135,6 +135,9 @@ export interface AuthLoginOptions {
 export interface AuthCreateOptions {
   email: string;
   password: string;
+  username?: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 export interface AuthVerifyOptions {

@@ -347,11 +347,7 @@ describe('Auth', () => {
         expect(auth.tokenResponse).toEqual(expect.objectContaining({ token: 'auth-token' }));
         expect(auth.refreshToken).toEqual('refresh-token');
         expect(auth.user).toEqual(mockAuthUserSession.user);
-        expect(setItem).toHaveBeenCalledWith(
-          REFRESH_TOKEN_KEY,
-          JSON.stringify({ value: 'refresh-token', expiresAt: 100 }),
-          StorageType.SESSION
-        );
+        expect(setItem).not.toHaveBeenCalled();
       });
     });
 
