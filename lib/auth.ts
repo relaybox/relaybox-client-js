@@ -536,6 +536,8 @@ export class Auth extends EventEmitter {
         }
       });
 
+      this.emit(AuthEvent.GET_SESSION, response);
+
       return this.handleAuthUserSessionResponse(response);
     } catch (err: any) {
       logger.logError(err.message, err);
@@ -702,6 +704,8 @@ export class Auth extends EventEmitter {
 
       this.tmpToken = response.tmpToken;
 
+      this.emit(AuthEvent.MFA_ENROLL, response);
+
       return response;
     } catch (err: any) {
       logger.logError(err.message, err);
@@ -717,7 +721,9 @@ export class Auth extends EventEmitter {
    * @returns {Promise<{ verify: Function }>} An object containing the `verify` function to complete the MFA process.
    * @throws Will throw an error if the MFA challenge request fails.
    */
-  private async mfaChallenge({ factorId }: AuthMfaChallengeOptions): Promise<{ verify: Function }> {
+  private async mfaChallenge({
+    factorId
+  }: AuthMfaChallengeOptions): Promise<{ id: string; verify: Function }> {
     logger.logInfo(`Challenging mfa factor: ${factorId}`);
 
     try {
@@ -736,7 +742,10 @@ export class Auth extends EventEmitter {
         }
       );
 
+      this.emit(AuthEvent.MFA_CHALLENGE, challenge);
+
       return {
+        id: challenge.id,
         verify: async ({ code }: AuthMfaVerifyOptions) => {
           return this.mfaVerify({ factorId, challengeId: challenge.id, code });
         }
