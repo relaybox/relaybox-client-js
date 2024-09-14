@@ -464,7 +464,10 @@ describe('Auth', () => {
       describe('success', () => {
         it('should successfully challenge a user with mfa', async () => {
           const authChallenge = await auth.mfa.challenge({ factorId: 'mfa-factor-id' });
-          expect(authChallenge).toEqual({ verify: expect.any(Function) });
+          expect(authChallenge).toEqual({
+            id: 'mfa-challenge-id',
+            verify: expect.any(Function)
+          });
         });
 
         it('should successfully create an mfa challenge and accept the verification', async () => {
