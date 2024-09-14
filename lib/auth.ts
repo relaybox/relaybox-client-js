@@ -186,7 +186,7 @@ export class Auth extends EventEmitter {
     const defaultHeaders = {
       Accept: 'application/json',
       'Content-Type': 'application/json',
-      'X-Ds-Key-Name': this.publicKey
+      'X-Ds-Public-Key': this.publicKey
     };
 
     params.headers = {
@@ -644,7 +644,7 @@ export class Auth extends EventEmitter {
     const top = window.screen.height / 2 - height / 2;
 
     window.open(
-      `${this.authServiceUrl}/users/idp/${provider}/authorize?keyName=${this.publicKey}`,
+      `${this.authServiceUrl}/users/idp/${provider}/authorize?publicKey=${this.publicKey}`,
       'popup',
       `width=${width},height=${height},left=${left},top=${top}`
     );

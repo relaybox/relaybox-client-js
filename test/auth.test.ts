@@ -65,7 +65,7 @@ describe('Auth', () => {
       http.post<never, AuthRequestBody, any>(
         `${mockAuthAuthServiceUrl}/users/authenticate`,
         async ({ request }) => {
-          const publicKey = request.headers.get('X-Ds-Key-Name');
+          const publicKey = request.headers.get('X-Ds-Public-Key');
           const { email, password } = await request.json();
 
           if (publicKey && email === mockAuthEmail && password === mockAuthPassword) {
@@ -81,7 +81,7 @@ describe('Auth', () => {
       http.post<never, AuthRequestBody, any>(
         `${mockAuthAuthServiceUrl}/users/create`,
         async ({ request }) => {
-          const publicKey = request.headers.get('X-Ds-Key-Name');
+          const publicKey = request.headers.get('X-Ds-Public-Key');
           const { email, password } = await request.json();
 
           if (publicKey && email === mockAuthEmail && password === mockAuthPassword) {
@@ -100,7 +100,7 @@ describe('Auth', () => {
       http.post<never, AuthRequestBody, any>(
         `${mockAuthAuthServiceUrl}/users/verify`,
         async ({ request }) => {
-          const publicKey = request.headers.get('X-Ds-Key-Name');
+          const publicKey = request.headers.get('X-Ds-Public-Key');
           const { email, code } = await request.json();
 
           if (publicKey && email === mockAuthEmail && code === mockAuthCode) {
@@ -118,7 +118,7 @@ describe('Auth', () => {
       http.post<never, AuthRequestBody, any>(
         `${mockAuthAuthServiceUrl}/users/password-reset`,
         async ({ request }) => {
-          const publicKey = request.headers.get('X-Ds-Key-Name');
+          const publicKey = request.headers.get('X-Ds-Public-Key');
           const { email } = await request.json();
 
           if (publicKey && email === mockAuthEmail) {
@@ -136,7 +136,7 @@ describe('Auth', () => {
       http.post<never, AuthRequestBody, any>(
         `${mockAuthAuthServiceUrl}/users/password-confirm`,
         async ({ request }) => {
-          const publicKey = request.headers.get('X-Ds-Key-Name');
+          const publicKey = request.headers.get('X-Ds-Public-Key');
           const { code, password } = await request.json();
 
           if (publicKey && code === mockAuthCode && password === mockAuthPassword) {
@@ -154,7 +154,7 @@ describe('Auth', () => {
       http.get<never, AuthRequestBody, any>(
         `${mockAuthAuthServiceUrl}/users/token/refresh`,
         async ({ request }) => {
-          const publicKey = request.headers.get('X-Ds-Key-Name');
+          const publicKey = request.headers.get('X-Ds-Public-Key');
           const authorization = request.headers.get('Authorization');
 
           if (publicKey && authorization) {
@@ -170,7 +170,7 @@ describe('Auth', () => {
       http.get<never, AuthRequestBody, any>(
         `${mockAuthAuthServiceUrl}/users/session`,
         async ({ request }) => {
-          const publicKey = request.headers.get('X-Ds-Key-Name');
+          const publicKey = request.headers.get('X-Ds-Public-Key');
           const authorization = request.headers.get('Authorization');
 
           if (publicKey && authorization) {
@@ -186,7 +186,7 @@ describe('Auth', () => {
       http.post<never, AuthRequestBody, any>(
         `${mockAuthAuthServiceUrl}/users/generate-verification-code`,
         async ({ request }) => {
-          const publicKey = request.headers.get('X-Ds-Key-Name');
+          const publicKey = request.headers.get('X-Ds-Public-Key');
           const { email } = await request.json();
 
           if (publicKey && email === mockAuthEmail) {
@@ -205,7 +205,7 @@ describe('Auth', () => {
         `${mockAuthAuthServiceUrl}/users/mfa/enroll`,
         async ({ request }) => {
           const bearerToken = request.headers.get('Authorization');
-          const publicKey = request.headers.get('X-Ds-Key-Name');
+          const publicKey = request.headers.get('X-Ds-Public-Key');
 
           if (publicKey && bearerToken) {
             return HttpResponse.json(mockAuthMfaEnrollResponse);
@@ -221,7 +221,7 @@ describe('Auth', () => {
         `${mockAuthAuthServiceUrl}/users/mfa/challenge`,
         async ({ request }) => {
           const bearerToken = request.headers.get('Authorization');
-          const publicKey = request.headers.get('X-Ds-Key-Name');
+          const publicKey = request.headers.get('X-Ds-Public-Key');
           const { factorId } = await request.json();
 
           if (publicKey && bearerToken && factorId) {
@@ -241,7 +241,7 @@ describe('Auth', () => {
         `${mockAuthAuthServiceUrl}/users/mfa/verify`,
         async ({ request }) => {
           const bearerToken = request.headers.get('Authorization');
-          const publicKey = request.headers.get('X-Ds-Key-Name');
+          const publicKey = request.headers.get('X-Ds-Public-Key');
           const { factorId, challengeId, code, autoChallenge } = await request.json();
 
           if (publicKey && bearerToken && factorId && code && (challengeId || autoChallenge)) {
@@ -258,7 +258,7 @@ describe('Auth', () => {
         `${mockAuthAuthServiceUrl}/users/${mockAuthUserPublic.clientId}`,
         async ({ request }) => {
           const bearerToken = request.headers.get('Authorization');
-          const publicKey = request.headers.get('X-Ds-Key-Name');
+          const publicKey = request.headers.get('X-Ds-Public-Key');
 
           if (publicKey && bearerToken) {
             return HttpResponse.json(mockAuthUserPublic);
