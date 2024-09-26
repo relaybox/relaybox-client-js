@@ -1,5 +1,7 @@
 import { createContext } from 'react';
 
+// CONTEXT EXAMPLE
+
 interface ConnectionContextState {
   isConnected: boolean;
   connect: () => Promise<void>;
