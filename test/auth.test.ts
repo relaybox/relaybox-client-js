@@ -15,8 +15,8 @@ import { SocketManager } from '../lib/socket-manager';
 import { User } from '../lib/user';
 
 const mockPublicKey = 'appId.keyId';
-const mockAuthAuthServiceHost = 'http://localhost:4005';
-const mockAuthAuthServiceUrl = 'http://localhost:4005/dev';
+const mockAuthAuthServiceHost = 'http://localhost:9090';
+const mockAuthAuthServiceUrl = 'http://localhost:9090/auth/dev';
 const mockAuthEmail = '1@1.com';
 const mockAuthPassword = 'password';
 const mockAuthCode = '123456';
@@ -280,7 +280,7 @@ describe('Auth', () => {
   beforeEach(() => {
     // server.resetHandlers();
     const socketManager = vi.mocked(new SocketManager());
-    auth = new Auth(socketManager, mockPublicKey, mockAuthAuthServiceUrl, mockAuthAuthServiceHost);
+    auth = new Auth(socketManager, mockPublicKey, mockAuthAuthServiceUrl);
     vi.spyOn(auth, 'emit').mockImplementation(() => true);
   });
 
@@ -525,6 +525,36 @@ describe('Auth', () => {
           expect(auth.emit).toHaveBeenCalledWith(AuthEvent.SIGN_IN, mockAuthUserSession);
         });
       });
+    });
+  });
+
+  describe('handleOAuthMessageEvent', () => {
+    it('should handle the OAuth message event and emit the appropriate events', async () => {
+      vi.spyOn(window, 'removeEventListener');
+
+      const mockEvent = {
+        origin: mockAuthAuthServiceHost,
+        data: mockAuthUserSession
+      } as MessageEvent;
+
+      auth['handleOAuthMessageEvent'](mockEvent);
+
+      expect(window.removeEventListener).toHaveBeenCalledWith('message', expect.any(Function));
+      expect(auth.emit).toHaveBeenCalledWith(AuthEvent.SIGN_IN, mockAuthUserSession);
+    });
+
+    it('should ignore events that dont match the auth service origin', async () => {
+      vi.spyOn(window, 'removeEventListener');
+
+      const mockEvent = {
+        origin: 'https://example.com',
+        data: mockAuthUserSession
+      } as MessageEvent;
+
+      auth['handleOAuthMessageEvent'](mockEvent);
+
+      expect(window.removeEventListener).not.toHaveBeenCalled();
+      expect(auth.emit).not.toHaveBeenCalled();
     });
   });
 });

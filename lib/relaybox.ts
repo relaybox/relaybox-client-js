@@ -41,7 +41,6 @@ import { TokenResponse } from './types/request.types';
 import { Auth } from './auth';
 
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || '';
-const AUTH_SERVICE_HOST = process.env.AUTH_SERVICE_HOST || '';
 const SOCKET_CONNECTION_ACK_TIMEOUT_MS = 2000;
 const AUTH_TOKEN_REFRESH_BUFFER_SECONDS = 20;
 const AUTH_TOKEN_REFRESH_RETRY_MS = 10000;
@@ -67,7 +66,6 @@ export class RelayBox {
   private readonly publicKey?: string;
   private readonly authTokenLifeCycle?: AuthTokenLifeCycle = AUTH_TOKEN_LIFECYCLE_SESSION;
   private readonly authServiceUrl: string = AUTH_SERVICE_URL;
-  private readonly authServiceHost: string = AUTH_SERVICE_HOST;
   private socketManagerListeners: SocketManagerListener[] = [];
   private refreshTimeout: NodeJS.Timeout | number | null = null;
 
@@ -107,8 +105,7 @@ export class RelayBox {
     this.auth = this.createAuthInstance(
       this.socketManager,
       this.publicKey || null,
-      this.authServiceUrl,
-      this.authServiceHost
+      this.authServiceUrl
     );
 
     this.registerSocketManagerListeners();
@@ -117,10 +114,9 @@ export class RelayBox {
   private createAuthInstance(
     socketManager: SocketManager,
     publicKey: string | null,
-    authServiceUrl: string,
-    authServiceHost: string
+    authServiceUrl: string
   ): Auth {
-    return new Auth(socketManager, publicKey, authServiceUrl, authServiceHost);
+    return new Auth(socketManager, publicKey, authServiceUrl);
   }
 
   /**

@@ -58,6 +58,7 @@
     "@types/node": "^20.14.10",
     "@types/node-fetch": "^2.6.11",
     "dotenv": "^16.4.5",
+    "jsdom": "^25.0.1",
     "msw": "^2.3.4",
     "rollup": "^4.19.2",
     "typescript": "^5.5.3",
