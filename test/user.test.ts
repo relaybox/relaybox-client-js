@@ -3,7 +3,9 @@ import { SocketManager } from '../lib/socket-manager';
 import { User } from '../lib/user';
 import { getMockAuthUserPublic } from './mock/user.mock';
 import { ClientEvent } from '../lib/types';
+import { mock } from 'node:test';
 
+const mockUwsServiceUrl = process.env.UWS_SERVICE_URL || '';
 const mockAuthUserPublic = getMockAuthUserPublic();
 
 const socketManagerOn = vi.fn();
@@ -31,7 +33,7 @@ describe('User', () => {
   let socketManager: SocketManager;
 
   beforeEach(() => {
-    socketManager = new SocketManager();
+    socketManager = new SocketManager(mockUwsServiceUrl);
     user = new User(socketManager, mockAuthUserPublic);
   });
 

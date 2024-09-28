@@ -11,7 +11,6 @@ import { logger } from './logger';
 import { ClientEvent, ServerEvent } from './types/event.types';
 import { KeyData, TokenResponse } from './types/request.types';
 
-const UWS_SERVER_HOST = process.env.UWS_SERVER_HOST;
 const MAX_RECONNECT_ATTEMPTS = 10;
 const INITIAL_RECONNECT_DELAY_MS = 500;
 const MAX_RECONNECT_DELAY_MS = 10000;
@@ -26,12 +25,14 @@ export class SocketManager {
   private reconnectionTimeout: NodeJS.Timeout | number | null = null;
   private pendingAcknowledgements: Map<string, SocketEventHandler> = new Map();
   private tokenExpiryUnix: number | null = null;
+  private uwsServiceUrl: string;
 
   public id?: string;
   public eventEmitter: EventEmitter;
 
-  constructor() {
+  constructor(uwsServiceUrl: string) {
     this.eventEmitter = new EventEmitter();
+    this.uwsServiceUrl = uwsServiceUrl;
   }
 
   private initializeSocket(auth: TokenResponse | KeyData): void {
@@ -43,7 +44,7 @@ export class SocketManager {
     const searchParams = new URLSearchParams(this.socketAuth as unknown as Record<string, string>);
     const queryString = searchParams.toString();
 
-    return `${UWS_SERVER_HOST}?${queryString}`;
+    return `${this.uwsServiceUrl}?${queryString}`;
   }
 
   connectSocket(): void {

@@ -15,8 +15,9 @@ import { SocketManager } from '../lib/socket-manager';
 import { User } from '../lib/user';
 
 const mockPublicKey = 'appId.keyId';
-const mockAuthAuthServiceHost = 'http://localhost:9090';
+const mockUwsServiceUrl = process.env.UWS_SERVICE_URL || '';
 const mockAuthAuthServiceUrl = process.env.AUTH_SERVICE_URL || '';
+const mockAuthAuthServiceHost = 'http://localhost:9090';
 const mockAuthEmail = '1@1.com';
 const mockAuthPassword = 'password';
 const mockAuthCode = '123456';
@@ -279,7 +280,7 @@ describe('Auth', () => {
 
   beforeEach(() => {
     // server.resetHandlers();
-    const socketManager = vi.mocked(new SocketManager());
+    const socketManager = vi.mocked(new SocketManager(mockUwsServiceUrl));
     auth = new Auth(socketManager, mockPublicKey, mockAuthAuthServiceUrl);
     vi.spyOn(auth, 'emit').mockImplementation(() => true);
   });

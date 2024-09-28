@@ -40,6 +40,7 @@ import { AuthKeyData, AuthRequestOptions, AuthTokenLifeCycle } from './types/aut
 import { TokenResponse } from './types/request.types';
 import { Auth } from './auth';
 
+const UWS_SERVICE_URL = process.env.UWS_SERVICE_URL || '';
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || '';
 const SOCKET_CONNECTION_ACK_TIMEOUT_MS = 2000;
 const AUTH_TOKEN_REFRESH_BUFFER_SECONDS = 20;
@@ -66,6 +67,7 @@ export class RelayBox {
   private readonly publicKey?: string;
   private readonly authTokenLifeCycle?: AuthTokenLifeCycle = AUTH_TOKEN_LIFECYCLE_SESSION;
   private readonly authServiceUrl: string;
+  private readonly uwsServiceUrl: string;
   private socketManagerListeners: SocketManagerListener[] = [];
   private refreshTimeout: NodeJS.Timeout | number | null = null;
 
@@ -91,7 +93,9 @@ export class RelayBox {
     this.clientId = opts.clientId;
     this.authEndpoint = opts.authEndpoint;
     this.authAction = opts.authAction;
-    this.socketManager = new SocketManager();
+    this.authServiceUrl = opts.authServiceUrl || AUTH_SERVICE_URL;
+    this.uwsServiceUrl = opts.uwsServiceUrl || UWS_SERVICE_URL;
+    this.socketManager = new SocketManager(this.uwsServiceUrl);
     this.presenceFactory = new PresenceFactory();
     this.metricsFactory = new MetricsFactory();
     this.historyFactory = new HistoryFactory();
@@ -101,7 +105,6 @@ export class RelayBox {
     this.authParams = typeof opts.authParams === 'function' ? opts.authParams() : opts.authParams;
     this.authRequestOptions = opts.authRequestOptions;
     this.authTokenLifeCycle = opts.authTokenLifeCycle;
-    this.authServiceUrl = opts.authServiceUrl || AUTH_SERVICE_URL;
 
     this.auth = this.createAuthInstance(
       this.socketManager,
