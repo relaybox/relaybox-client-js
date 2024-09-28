@@ -1,11 +1,8 @@
 import { logger } from './logger';
-import { request } from './request';
-import { FormattedResponse, HttpMethod, HttpMode } from './types/request.types';
 import {
   HistoryClientResponse,
   HistoryGetOptions,
   HistoryOrder,
-  HistoryQueryParam,
   HistoryResponse
 } from './types/history.types';
 import { ValidationError } from './errors';
@@ -19,7 +16,6 @@ const HISTORY_MAX_REQUEST_LIMIT = 100;
  */
 export class History {
   private readonly nspRoomId: string;
-  private readonly uwsHttpHost: string;
   private readonly socketManager: SocketManager;
   private start?: number;
   private end?: number;
@@ -37,9 +33,8 @@ export class History {
    * @param {string} uwsHttpHost - The base URL of the WebSocket HTTP server.
    * @param {string} nspRoomId - The ID of the room for which metrics are being managed.
    */
-  constructor(socketManager: SocketManager, uwsHttpHost: string, nspRoomId: string) {
+  constructor(socketManager: SocketManager, nspRoomId: string) {
     this.socketManager = socketManager;
-    this.uwsHttpHost = uwsHttpHost;
     this.nspRoomId = nspRoomId;
   }
 
@@ -61,9 +56,7 @@ export class History {
     this.https = https;
     this.iterationInProgress = true;
 
-    return https
-      ? this.getHistoryHttps(start, end, seconds, limit, items, order, nextPageToken)
-      : this.getHistoryWs(start, end, seconds, limit, items, order, nextPageToken);
+    return this.getHistoryWs(start, end, seconds, limit, items, order, nextPageToken);
   }
 
   /**
@@ -103,51 +96,6 @@ export class History {
       );
 
       return this.handleHistoryResponse(historyResponseData);
-    } catch (err: any) {
-      const message = `Error getting message history for "${this.nspRoomId}"`;
-      logger.logError(message, err);
-      throw new Error(message);
-    }
-  }
-
-  /**
-   * Fetches message history using HTTPS communication.
-   * @param {number} [seconds] - The number of seconds of history to retrieve.
-   * @param {number} [limit] - The maximum number of messages to retrieve.
-   * @param {string} [nextPageToken] - The token for fetching the next page of results, if available.
-   * @returns {Promise<HistoryClientResponse>} - A promise that resolves to a list of items with associated iterator method.
-   * @throws {Error} - Throws an error if the request fails.
-   */
-  private async getHistoryHttps(
-    start?: number,
-    end?: number,
-    seconds?: number,
-    limit?: number,
-    items?: number,
-    order?: HistoryOrder,
-    nextPageToken?: string
-  ): Promise<HistoryClientResponse> {
-    logger.logInfo(`Fetching message history for room "${this.nspRoomId}" (https)`);
-
-    const historyRequestUrl = this.getHistoryRequestUrl(
-      start,
-      end,
-      seconds,
-      limit,
-      items,
-      order,
-      nextPageToken
-    );
-
-    const historyRequestParams = this.getHistoryRequestParams();
-
-    try {
-      const { data: historyResponseData } = await request<FormattedResponse<HistoryResponse>>(
-        historyRequestUrl,
-        historyRequestParams
-      );
-
-      return this.handleHistoryResponse(historyResponseData?.data);
     } catch (err: any) {
       const message = `Error getting message history for "${this.nspRoomId}"`;
       logger.logError(message, err);
@@ -216,71 +164,5 @@ export class History {
     }
 
     return historyClientResponse;
-  }
-
-  /**
-   * Constructs the URL for fetching message history.
-   * @param {number} [seconds] - The number of seconds of history to retrieve.
-   * @param {number} [limit] - The maximum number of messages to retrieve.
-   * @param {string} [nextPageToken] - The token for fetching the next page of results, if available.
-   * @returns {URL} - The constructed URL for the history request.
-   */
-  private getHistoryRequestUrl(
-    start?: number,
-    end?: number,
-    seconds?: number,
-    limit?: number,
-    items?: number,
-    order?: HistoryOrder,
-    nextPageToken?: string
-  ): URL {
-    const pathname = `/rooms/${this.nspRoomId}/messages`;
-
-    const url = new URL(pathname, this.uwsHttpHost);
-
-    if (seconds) {
-      url.searchParams.set(HistoryQueryParam.SECONDS, seconds.toString());
-    }
-
-    if (limit) {
-      url.searchParams.set(HistoryQueryParam.LIMIT, limit.toString());
-    }
-
-    if (items) {
-      url.searchParams.set(HistoryQueryParam.ITEMS, items.toString());
-    }
-
-    if (start) {
-      url.searchParams.set(HistoryQueryParam.START, start.toString());
-    }
-
-    if (end) {
-      url.searchParams.set(HistoryQueryParam.END, end.toString());
-    }
-
-    if (order) {
-      url.searchParams.set(HistoryQueryParam.ORDER, order.toString());
-    }
-
-    if (nextPageToken) {
-      url.searchParams.set(HistoryQueryParam.NEXT_PAGE_TOKEN, nextPageToken);
-    }
-
-    return url;
-  }
-
-  /**
-   * Constructs the parameters for the history request.
-   * @returns {RequestInit} - The parameters for the fetch request, including method, mode, and headers.
-   */
-  private getHistoryRequestParams(): RequestInit {
-    return {
-      method: HttpMethod.GET,
-      mode: HttpMode.CORS as RequestMode,
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json'
-      }
-    };
   }
 }
