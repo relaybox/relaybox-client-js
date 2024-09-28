@@ -16,7 +16,7 @@ import { User } from '../lib/user';
 
 const mockPublicKey = 'appId.keyId';
 const mockAuthAuthServiceHost = 'http://localhost:9090';
-const mockAuthAuthServiceUrl = 'http://localhost:9090/auth/dev';
+const mockAuthAuthServiceUrl = process.env.AUTH_SERVICE_URL || '';
 const mockAuthEmail = '1@1.com';
 const mockAuthPassword = 'password';
 const mockAuthCode = '123456';

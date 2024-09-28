@@ -65,7 +65,7 @@ export class RelayBox {
   private readonly apiKey?: string;
   private readonly publicKey?: string;
   private readonly authTokenLifeCycle?: AuthTokenLifeCycle = AUTH_TOKEN_LIFECYCLE_SESSION;
-  private readonly authServiceUrl: string = AUTH_SERVICE_URL;
+  private readonly authServiceUrl: string;
   private socketManagerListeners: SocketManagerListener[] = [];
   private refreshTimeout: NodeJS.Timeout | number | null = null;
 
@@ -101,6 +101,7 @@ export class RelayBox {
     this.authParams = typeof opts.authParams === 'function' ? opts.authParams() : opts.authParams;
     this.authRequestOptions = opts.authRequestOptions;
     this.authTokenLifeCycle = opts.authTokenLifeCycle;
+    this.authServiceUrl = opts.authServiceUrl || AUTH_SERVICE_URL;
 
     this.auth = this.createAuthInstance(
       this.socketManager,
