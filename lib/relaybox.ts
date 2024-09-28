@@ -40,7 +40,6 @@ import { AuthKeyData, AuthRequestOptions, AuthTokenLifeCycle } from './types/aut
 import { TokenResponse } from './types/request.types';
 import { Auth } from './auth';
 
-const UWS_HTTP_HOST = process.env.UWS_HTTP_HOST || '';
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || '';
 const AUTH_SERVICE_HOST = process.env.AUTH_SERVICE_HOST || '';
 const SOCKET_CONNECTION_ACK_TIMEOUT_MS = 2000;
@@ -67,7 +66,6 @@ export class RelayBox {
   private readonly apiKey?: string;
   private readonly publicKey?: string;
   private readonly authTokenLifeCycle?: AuthTokenLifeCycle = AUTH_TOKEN_LIFECYCLE_SESSION;
-  private readonly uwsHttpHost: string = UWS_HTTP_HOST;
   private readonly authServiceUrl: string = AUTH_SERVICE_URL;
   private readonly authServiceHost: string = AUTH_SERVICE_HOST;
   private socketManagerListeners: SocketManagerListener[] = [];
@@ -442,8 +440,7 @@ export class RelayBox {
       this.socketManager,
       this.presenceFactory,
       this.metricsFactory,
-      this.historyFactory,
-      this.uwsHttpHost
+      this.historyFactory
     );
 
     try {
