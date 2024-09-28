@@ -40,7 +40,6 @@ import { AuthKeyData, AuthRequestOptions, AuthTokenLifeCycle } from './types/aut
 import { TokenResponse } from './types/request.types';
 import { Auth } from './auth';
 
-// const UWS_HTTP_HOST = process.env.UWS_HTTP_HOST || '';
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || '';
 const AUTH_SERVICE_HOST = process.env.AUTH_SERVICE_HOST || '';
 const SOCKET_CONNECTION_ACK_TIMEOUT_MS = 2000;
