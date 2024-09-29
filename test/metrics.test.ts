@@ -3,6 +3,7 @@ import { SocketManager } from '../lib/socket-manager';
 import { MetricsEventAllowedValue, Metrics } from '../lib/metrics';
 import { ClientEvent } from '../lib/types/event.types';
 
+const mockUwsServiceUrl = process.env.UWS_SERVICE_URL || '';
 const mockRoomid = 'room123';
 
 const socketManagerOn = vi.fn();
@@ -30,7 +31,7 @@ describe('Metrics', () => {
   let socketManager: SocketManager;
 
   beforeEach(() => {
-    socketManager = new SocketManager();
+    socketManager = new SocketManager(mockUwsServiceUrl);
     metrics = new Metrics(socketManager, mockRoomid);
   });
 

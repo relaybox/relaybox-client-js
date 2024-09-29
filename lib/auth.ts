@@ -69,7 +69,6 @@ enum AuthEndpoint {
 export class Auth extends EventEmitter {
   private readonly publicKey: string | null;
   private readonly authServiceUrl: string;
-  private readonly authServiceHost: string;
   private readonly socketManager: SocketManager;
   private tmpToken: string | null = null;
   private refreshTimeout: NodeJS.Timeout | number | null = null;
@@ -86,16 +85,10 @@ export class Auth extends EventEmitter {
    * @param {string} authServiceHost - The host name of the authentication service.
    */
 
-  constructor(
-    socketManager: SocketManager,
-    publicKey: string | null,
-    authServiceUrl: string,
-    authServiceHost: string
-  ) {
+  constructor(socketManager: SocketManager, publicKey: string | null, authServiceUrl: string) {
     super();
     this.publicKey = publicKey;
     this.authServiceUrl = authServiceUrl;
-    this.authServiceHost = authServiceHost;
     this.socketManager = socketManager;
 
     this.mfa = {
@@ -659,7 +652,7 @@ export class Auth extends EventEmitter {
    * @param {MessageEvent} event - The OAuth message event containing the user's session data.
    */
   private handleOAuthMessageEvent(event: MessageEvent): void {
-    if (event.origin !== this.authServiceHost) {
+    if (event.origin !== this.getOrigin(this.authServiceUrl)) {
       return;
     }
 
@@ -673,6 +666,11 @@ export class Auth extends EventEmitter {
     }
 
     window.removeEventListener(AUTH_POPUP_MESSAGE_EVENT, this.handleOAuthMessageEvent);
+  }
+
+  private getOrigin(path: string): string {
+    const url = new URL(path);
+    return url.origin;
   }
 
   /**

@@ -4,7 +4,9 @@ import { SocketManager } from '../lib/socket-manager';
 import { HistoryFactory, PresenceFactory } from '../lib/factory';
 import { MetricsFactory } from '../lib/factory';
 import { ClientEvent } from '../lib/types/event.types';
+import { mock } from 'node:test';
 
+const mockUwsServiceUrl = process.env.UWS_SERVICE_URL || '';
 const mockRoomId = 'roomId123';
 const mockEvent = 'mock:event';
 const mockUwsHttpHost = 'https://example.com';
@@ -54,19 +56,12 @@ describe('Room', () => {
   let historyFactory: HistoryFactory;
 
   beforeEach(async () => {
-    socketManager = new SocketManager();
+    socketManager = new SocketManager(mockUwsServiceUrl);
     presenceFactory = new PresenceFactory();
     metricsFactory = new MetricsFactory();
     historyFactory = new HistoryFactory();
 
-    room = new Room(
-      mockRoomId,
-      socketManager,
-      presenceFactory,
-      metricsFactory,
-      historyFactory,
-      mockUwsHttpHost
-    );
+    room = new Room(mockRoomId, socketManager, presenceFactory, metricsFactory, historyFactory);
   });
 
   afterEach(() => {
