@@ -50,7 +50,7 @@ jobs:
         uses: ./.github/actions/extract-version
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run build
         run: npm run build
