@@ -1,9 +1,6 @@
 name: Publish npm package
 
 on:
-  push:
-    branches:
-      - main
   release:
     types:
       - published
@@ -12,8 +9,6 @@ jobs:
   build:
     name: Build / Test
     runs-on: ubuntu-latest
-    # environment:
-    #   name: production
 
     steps:
       - uses: actions/checkout@v4
@@ -28,6 +23,9 @@ jobs:
 
       - name: Run tests
         run: npm run test
+
+      - name: Run build
+        run: npm run build
 
       - name: Dry Run
         run: npm pack --dry-run
@@ -57,17 +55,17 @@ jobs:
           npm version 3.0.0 --no-git-tag-version
 
       - name: Publish to npm
-        # run: npm publish --access public
-        run: echo "publishing to npm"
+        run: npm publish --access public
+        # run: echo "publishing to npm"
         env:
           UWS_SERVICE_URL: ${{ secrets.UWS_SERVICE_URL }}
           AUTH_SERVICE_URL: ${{ secrets.AUTH_SERVICE_URL }}
           NODE_ENV: ${{ secrets.NODE_ENV }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      # - name: Commit changes
-      #   uses: stefanzweifel/git-auto-commit-action@v5
-      #   with:
-      #     commit_message: 'chore: update package version [skip ci]'
-      #     commit_author: GitHub Actions <actions@github.com>
-      #     branch: main
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'chore: update package version [skip ci]'
+          commit_author: GitHub Actions <actions@github.com>
+          branch: main
