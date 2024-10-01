@@ -24,9 +24,6 @@ jobs:
       - name: Run tests
         run: npm run test
 
-      - name: Run build
-        run: npm run build
-
       - name: Dry Run
         run: npm pack --dry-run
 
@@ -59,13 +56,17 @@ jobs:
         run: |
           npm version ${{ steps.extract-version.outputs.version }} --no-git-tag-version
 
+      - name: Create env file
+        run: |
+          touch .env
+          echo "UWS_SERVICE_URL=${{ vars.UWS_SERVICE_URL }}" >> .env
+          echo "AUTH_SERVICE_URL=${{ vars.AUTH_SERVICE_URL }}" >> .env
+          echo "NODE_ENV=${{ vars.NODE_ENV }}" >> .env
+          cat .env
+
       - name: Publish to npm
         run: npm publish --access public
-        # run: echo "publishing to npm"
         env:
-          UWS_SERVICE_URL: ${{ secrets.UWS_SERVICE_URL }}
-          AUTH_SERVICE_URL: ${{ secrets.AUTH_SERVICE_URL }}
-          NODE_ENV: ${{ secrets.NODE_ENV }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Commit changes
