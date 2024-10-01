@@ -53,6 +53,9 @@ jobs:
         run: |
           npm version ${{ steps.extract-version.outputs.version }} --no-git-tag-version
 
+      - name: Run build
+        run: npm run build
+
       - name: Publish to npm
         run: npm publish --access public
         # run: echo "publishing to npm"
