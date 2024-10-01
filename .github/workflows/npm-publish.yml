@@ -49,12 +49,15 @@ jobs:
         id: extract-version
         uses: ./.github/actions/extract-version
 
-      - name: Update package version
-        run: |
-          npm version ${{ steps.extract-version.outputs.version }} --no-git-tag-version
+      - name: Install dependencies
+        run: npm install
 
       - name: Run build
         run: npm run build
+
+      - name: Update package version
+        run: |
+          npm version ${{ steps.extract-version.outputs.version }} --no-git-tag-version
 
       - name: Publish to npm
         run: npm publish --access public
