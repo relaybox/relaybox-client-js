@@ -89,20 +89,6 @@ export interface RelayBoxOptions {
   // /**
   //  * https://relaybox.net/docs/api-reference/relaybox-client#relaybox-options
   //  *
-  //  * Specify an override url for the auth service. This is useful for testing or when using relayBox platform emulator.
-  //  * Defaults to wss://auth.prod.relaybox-services.net
-  //  */
-  // authServiceUrl?: string;
-  // /**
-  //  * https://relaybox.net/docs/api-reference/relaybox-client#relaybox-options
-  //  *
-  //  * Specify an override url for the uws service. This is useful for testing or when using relayBox platform emulator.
-  //  * Defaults to wss://gnet.prod.relaybox-services.net
-  //  */
-  // uwsServiceUrl?: string;
-  // /**
-  //  * https://relaybox.net/docs/api-reference/relaybox-client#relaybox-options
-  //  *
   //  * Specify the offline emulator options. This is useful for testing or when using relayBox platform emulator.
   //  */
   offline?: OfflineOptions;

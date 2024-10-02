@@ -128,7 +128,7 @@ export class RelayBox {
     this.registerSocketManagerListeners();
   }
 
-  private getOfflineServiceUrls(offlineOptions?: OfflineOptions): {
+  private getOfflineServiceUrls(offlineOptions: OfflineOptions = {}): {
     authServiceUrl: string | null;
     uwsServiceUrl: string | null;
   } {
@@ -137,19 +137,14 @@ export class RelayBox {
       port = DEFAULT_OFFLINE_PORT,
       authServiceUrl = null,
       uwsServiceUrl = null
-    } = offlineOptions || {};
+    } = offlineOptions;
 
-    if (
-      enabled ||
-      offlineOptions?.port ||
-      offlineOptions?.authServiceUrl ||
-      offlineOptions?.uwsServiceUrl
-    ) {
+    if (enabled || offlineOptions?.port || authServiceUrl || uwsServiceUrl) {
       return {
         authServiceUrl:
-          authServiceUrl || `${DEFAULT_OFFLINE_AUTH_HOST}:${port}/${DEFAULT_OFFLINE_AUTH_PATH}`,
+          authServiceUrl ?? `${DEFAULT_OFFLINE_AUTH_HOST}:${port}/${DEFAULT_OFFLINE_AUTH_PATH}`,
         uwsServiceUrl:
-          uwsServiceUrl || `${DEFAULT_OFFLINE_WS_HOST}:${port}/${DEFAULT_OFFLINE_WS_PATH}`
+          uwsServiceUrl ?? `${DEFAULT_OFFLINE_WS_HOST}:${port}/${DEFAULT_OFFLINE_WS_PATH}`
       };
     }
 
