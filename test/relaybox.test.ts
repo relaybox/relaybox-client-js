@@ -222,7 +222,7 @@ describe('RelayBox', () => {
   describe('when connecting in offline mode', () => {
     const defaultPort = 9000;
 
-    it('should construct correct service urls if "port" is provided', async () => {
+    it('should construct correct service urls if "port" option is provided', async () => {
       const portOverride = 3000;
 
       const relayBox = new RelayBox({
@@ -236,7 +236,7 @@ describe('RelayBox', () => {
       expect(relayBox['uwsServiceUrl']).toEqual(`ws://localhost:${portOverride}/uws`);
     });
 
-    it('should construct correct service urls if "enabled" is true', async () => {
+    it('should construct correct service urls if "enabled" option is true', async () => {
       const relayBox = new RelayBox({
         publicKey: mockPublicKey,
         offline: {
@@ -248,7 +248,7 @@ describe('RelayBox', () => {
       expect(relayBox['uwsServiceUrl']).toEqual(`ws://localhost:${defaultPort}/uws`);
     });
 
-    it('should construct correct service urls based on uws override params', async () => {
+    it('should construct correct service urls if "uwsServiceUrl" option is provided', async () => {
       const uwsOverride = 'ws://uws-override';
 
       const relayBox = new RelayBox({
@@ -262,7 +262,7 @@ describe('RelayBox', () => {
       expect(relayBox['authServiceUrl']).toEqual(`http://localhost:${defaultPort}/auth`);
     });
 
-    it('should construct correct service urls based on auth override params', async () => {
+    it('should construct correct service urls if "authServiceUrl" option is provided', async () => {
       const authOverride = 'http://auth-override';
 
       const relayBox = new RelayBox({
