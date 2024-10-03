@@ -1,6 +1,35 @@
 import { AuthParamsOrHeaders, AuthRequestOptions, AuthTokenLifeCycle } from './auth.types';
 import { TokenResponse } from './request.types';
 
+export interface OfflineOptions {
+  /**
+   * https://relaybox.net/docs/api-reference/relaybox-client#relaybox-options
+   *
+   * Specify the offline emulator port number. Defauls to 9000.
+   */
+  port?: number;
+  /**
+   * https://relaybox.net/docs/api-reference/relaybox-client#relaybox-options
+   *
+   * Enable offline mode with default settings.
+   */
+  enabled?: boolean;
+  /**
+   * https://relaybox.net/docs/api-reference/relaybox-client#relaybox-options
+   *
+   * Specify an override url for the auth service. This is useful for testing or when using relayBox platform emulator.
+   * Defaults to wss://auth.prod.relaybox-services.net
+   */
+  authServiceUrl?: string | null;
+  /**
+   * https://relaybox.net/docs/api-reference/relaybox-client#relaybox-options
+   *
+   * Specify an override url for the uws service. This is useful for testing or when using relayBox platform emulator.
+   * Defaults to wss://gnet.prod.relaybox-services.net
+   */
+  uwsServiceUrl?: string | null;
+}
+
 export interface RelayBoxOptions {
   /**
    * https://relaybox.net/docs/api-reference/relaybox-client#relaybox-options
@@ -57,18 +86,10 @@ export interface RelayBoxOptions {
    * Specify your application's public key, which will be used to identify requests to the live authentication service. A public key is required to use the authentication service.
    */
   publicKey?: string;
-  /**
-   * https://relaybox.net/docs/api-reference/relaybox-client#relaybox-options
-   *
-   * Specify an override url for the auth service. This is useful for testing or when using relayBox platform emulator.
-   * Defaults to wss://auth.prod.relaybox-services.net
-   */
-  authServiceUrl?: string;
-  /**
-   * https://relaybox.net/docs/api-reference/relaybox-client#relaybox-options
-   *
-   * Specify an override url for the uws service. This is useful for testing or when using relayBox platform emulator.
-   * Defaults to wss://gnet.prod.relaybox-services.net
-   */
-  uwsServiceUrl?: string;
+  // /**
+  //  * https://relaybox.net/docs/api-reference/relaybox-client#relaybox-options
+  //  *
+  //  * Specify the offline emulator options. This is useful for testing or when using relayBox platform emulator.
+  //  */
+  offline?: OfflineOptions;
 }

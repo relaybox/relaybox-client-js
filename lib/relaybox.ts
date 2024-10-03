@@ -24,7 +24,7 @@ SOFTWARE.
 import EventEmitter from 'eventemitter3';
 import { getAuthTokenResponse } from './authentication';
 import { ServerEvent } from './types/event.types';
-import { RelayBoxOptions } from './types/relaybox.types';
+import { OfflineOptions, RelayBoxOptions } from './types/relaybox.types';
 import { Room } from './room';
 import {
   SocketEvent,
@@ -48,6 +48,17 @@ const AUTH_TOKEN_REFRESH_RETRY_MS = 10000;
 const AUTH_TOKEN_REFRESH_JITTER_RANGE_MS = 2000;
 const AUTH_TOKEN_LIFECYCLE_SESSION = 'session';
 const AUTH_TOKEN_LIFECYCLE_EXPIRY = 'expiry';
+
+/**
+ * Offline defaults
+ */
+const DEFAULT_OFFLINE_AUTH_HOST = 'http://localhost';
+const DEFAULT_OFFLINE_AUTH_PATH = 'auth';
+
+const DEFAULT_OFFLINE_WS_HOST = 'ws://localhost';
+const DEFAULT_OFFLINE_WS_PATH = 'uws';
+
+const DEFAULT_OFFLINE_PORT = 9000;
 
 /**
  * RelayBox manages the connection and communication with a remote server
@@ -88,13 +99,15 @@ export class RelayBox {
       );
     }
 
+    const { authServiceUrl, uwsServiceUrl } = this.getOfflineServiceUrls(opts.offline);
+
     this.apiKey = opts.apiKey;
     this.publicKey = opts.publicKey;
     this.clientId = opts.clientId;
     this.authEndpoint = opts.authEndpoint;
     this.authAction = opts.authAction;
-    this.authServiceUrl = opts.authServiceUrl || AUTH_SERVICE_URL;
-    this.uwsServiceUrl = opts.uwsServiceUrl || UWS_SERVICE_URL;
+    this.authServiceUrl = authServiceUrl || AUTH_SERVICE_URL;
+    this.uwsServiceUrl = uwsServiceUrl || UWS_SERVICE_URL;
     this.socketManager = new SocketManager(this.uwsServiceUrl);
     this.presenceFactory = new PresenceFactory();
     this.metricsFactory = new MetricsFactory();
@@ -113,6 +126,29 @@ export class RelayBox {
     );
 
     this.registerSocketManagerListeners();
+  }
+
+  private getOfflineServiceUrls({
+    enabled = false,
+    port = 0,
+    authServiceUrl = null,
+    uwsServiceUrl = null
+  }: OfflineOptions = {}): {
+    authServiceUrl: string | null;
+    uwsServiceUrl: string | null;
+  } {
+    if (enabled || port || authServiceUrl || uwsServiceUrl) {
+      port = port || DEFAULT_OFFLINE_PORT;
+
+      return {
+        authServiceUrl:
+          authServiceUrl ?? `${DEFAULT_OFFLINE_AUTH_HOST}:${port}/${DEFAULT_OFFLINE_AUTH_PATH}`,
+        uwsServiceUrl:
+          uwsServiceUrl ?? `${DEFAULT_OFFLINE_WS_HOST}:${port}/${DEFAULT_OFFLINE_WS_PATH}`
+      };
+    }
+
+    return { authServiceUrl, uwsServiceUrl };
   }
 
   private createAuthInstance(

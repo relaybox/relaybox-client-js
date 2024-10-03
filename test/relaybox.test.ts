@@ -204,4 +204,76 @@ describe('RelayBox', () => {
       expect(relayBox.auth).toBeDefined();
     });
   });
+
+  describe('when connecting in cloud mode', () => {
+    it('should construct correct service urls from environment variables', async () => {
+      const uwsServiceUrl = process.env.UWS_SERVICE_URL;
+      const authServiceUrl = process.env.AUTH_SERVICE_URL;
+
+      const relayBox = new RelayBox({
+        publicKey: mockPublicKey
+      });
+
+      expect(relayBox['authServiceUrl']).toEqual(authServiceUrl);
+      expect(relayBox['uwsServiceUrl']).toEqual(uwsServiceUrl);
+    });
+  });
+
+  describe('when connecting in offline mode', () => {
+    const defaultPort = 9000;
+
+    it('should construct correct service urls if "port" option is provided', async () => {
+      const portOverride = 3000;
+
+      const relayBox = new RelayBox({
+        publicKey: mockPublicKey,
+        offline: {
+          port: portOverride
+        }
+      });
+
+      expect(relayBox['authServiceUrl']).toEqual(`http://localhost:${portOverride}/auth`);
+      expect(relayBox['uwsServiceUrl']).toEqual(`ws://localhost:${portOverride}/uws`);
+    });
+
+    it('should construct correct service urls if "enabled" option is true', async () => {
+      const relayBox = new RelayBox({
+        publicKey: mockPublicKey,
+        offline: {
+          enabled: true
+        }
+      });
+
+      expect(relayBox['authServiceUrl']).toEqual(`http://localhost:${defaultPort}/auth`);
+      expect(relayBox['uwsServiceUrl']).toEqual(`ws://localhost:${defaultPort}/uws`);
+    });
+
+    it('should construct correct service urls if "uwsServiceUrl" option is provided', async () => {
+      const uwsOverride = 'ws://uws-override';
+
+      const relayBox = new RelayBox({
+        publicKey: mockPublicKey,
+        offline: {
+          uwsServiceUrl: uwsOverride
+        }
+      });
+
+      expect(relayBox['uwsServiceUrl']).toEqual(uwsOverride);
+      expect(relayBox['authServiceUrl']).toEqual(`http://localhost:${defaultPort}/auth`);
+    });
+
+    it('should construct correct service urls if "authServiceUrl" option is provided', async () => {
+      const authOverride = 'http://auth-override';
+
+      const relayBox = new RelayBox({
+        publicKey: mockPublicKey,
+        offline: {
+          authServiceUrl: authOverride
+        }
+      });
+
+      expect(relayBox['authServiceUrl']).toEqual(authOverride);
+      expect(relayBox['uwsServiceUrl']).toEqual(`ws://localhost:${defaultPort}/uws`);
+    });
+  });
 });
