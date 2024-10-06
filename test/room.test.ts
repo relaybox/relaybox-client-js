@@ -6,10 +6,9 @@ import { MetricsFactory } from '../lib/factory';
 import { ClientEvent } from '../lib/types/event.types';
 import { mock } from 'node:test';
 
-const mockUwsServiceUrl = process.env.UWS_SERVICE_URL || '';
+const mockCoreServiceUrl = process.env.CORE_SERVICE_URL || '';
 const mockRoomId = 'roomId123';
 const mockEvent = 'mock:event';
-const mockUwsHttpHost = 'https://example.com';
 
 const socketManagerOn = vi.fn();
 const socketManagerOff = vi.fn();
@@ -56,7 +55,7 @@ describe('Room', () => {
   let historyFactory: HistoryFactory;
 
   beforeEach(async () => {
-    socketManager = new SocketManager(mockUwsServiceUrl);
+    socketManager = new SocketManager(mockCoreServiceUrl);
     presenceFactory = new PresenceFactory();
     metricsFactory = new MetricsFactory();
     historyFactory = new HistoryFactory();

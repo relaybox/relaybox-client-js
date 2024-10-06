@@ -40,7 +40,7 @@ import { AuthKeyData, AuthRequestOptions, AuthTokenLifeCycle } from './types/aut
 import { TokenResponse } from './types/request.types';
 import { Auth } from './auth';
 
-const UWS_SERVICE_URL = process.env.UWS_SERVICE_URL || '';
+const CORE_SERVICE_URL = process.env.CORE_SERVICE_URL || '';
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || '';
 const SOCKET_CONNECTION_ACK_TIMEOUT_MS = 2000;
 const AUTH_TOKEN_REFRESH_BUFFER_SECONDS = 20;
@@ -55,8 +55,8 @@ const AUTH_TOKEN_LIFECYCLE_EXPIRY = 'expiry';
 const DEFAULT_OFFLINE_AUTH_HOST = 'http://localhost';
 const DEFAULT_OFFLINE_AUTH_PATH = 'auth';
 
-const DEFAULT_OFFLINE_WS_HOST = 'ws://localhost';
-const DEFAULT_OFFLINE_WS_PATH = 'uws';
+const DEFAULT_OFFLINE_CORE_HOST = 'ws://localhost';
+const DEFAULT_OFFLINE_CORE_PATH = 'core';
 
 const DEFAULT_OFFLINE_PORT = 9000;
 
@@ -78,7 +78,7 @@ export class RelayBox {
   private readonly publicKey?: string;
   private readonly authTokenLifeCycle?: AuthTokenLifeCycle = AUTH_TOKEN_LIFECYCLE_SESSION;
   private readonly authServiceUrl: string;
-  private readonly uwsServiceUrl: string;
+  private readonly coreServiceUrl: string;
   private socketManagerListeners: SocketManagerListener[] = [];
   private refreshTimeout: NodeJS.Timeout | number | null = null;
 
@@ -99,7 +99,7 @@ export class RelayBox {
       );
     }
 
-    const { authServiceUrl, uwsServiceUrl } = this.getOfflineServiceUrls(opts.offline);
+    const { authServiceUrl, coreServiceUrl } = this.getOfflineServiceUrls(opts.offline);
 
     this.apiKey = opts.apiKey;
     this.publicKey = opts.publicKey;
@@ -107,8 +107,8 @@ export class RelayBox {
     this.authEndpoint = opts.authEndpoint;
     this.authAction = opts.authAction;
     this.authServiceUrl = authServiceUrl || AUTH_SERVICE_URL;
-    this.uwsServiceUrl = uwsServiceUrl || UWS_SERVICE_URL;
-    this.socketManager = new SocketManager(this.uwsServiceUrl);
+    this.coreServiceUrl = coreServiceUrl || CORE_SERVICE_URL;
+    this.socketManager = new SocketManager(this.coreServiceUrl);
     this.presenceFactory = new PresenceFactory();
     this.metricsFactory = new MetricsFactory();
     this.historyFactory = new HistoryFactory();
@@ -132,23 +132,23 @@ export class RelayBox {
     enabled = false,
     port = 0,
     authServiceUrl = null,
-    uwsServiceUrl = null
+    coreServiceUrl = null
   }: OfflineOptions = {}): {
     authServiceUrl: string | null;
-    uwsServiceUrl: string | null;
+    coreServiceUrl: string | null;
   } {
-    if (enabled || port || authServiceUrl || uwsServiceUrl) {
+    if (enabled || port || authServiceUrl || coreServiceUrl) {
       port = port || DEFAULT_OFFLINE_PORT;
 
       return {
         authServiceUrl:
           authServiceUrl ?? `${DEFAULT_OFFLINE_AUTH_HOST}:${port}/${DEFAULT_OFFLINE_AUTH_PATH}`,
-        uwsServiceUrl:
-          uwsServiceUrl ?? `${DEFAULT_OFFLINE_WS_HOST}:${port}/${DEFAULT_OFFLINE_WS_PATH}`
+        coreServiceUrl:
+          coreServiceUrl ?? `${DEFAULT_OFFLINE_CORE_HOST}:${port}/${DEFAULT_OFFLINE_CORE_PATH}`
       };
     }
 
-    return { authServiceUrl, uwsServiceUrl };
+    return { authServiceUrl, coreServiceUrl };
   }
 
   private createAuthInstance(

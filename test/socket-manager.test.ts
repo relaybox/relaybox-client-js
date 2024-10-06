@@ -4,7 +4,7 @@ import { SocketManager } from '../lib/socket-manager';
 import { SocketEvent } from '../lib/types/socket.types';
 import { ClientEvent, ServerEvent } from '../lib/types/event.types';
 
-const mockUwsServiceUrl = process.env.UWS_SERVICE_URL || '';
+const mockCoreServiceUrl = process.env.CORE_SERVICE_URL || '';
 const mockAuthToken = 'eyJhb.eyJrZXlOYW1lIjoiRz.5hg9z5Gd4YI9jSw1Y66gz6q';
 const mockTokenResponse = {
   token: mockAuthToken,
@@ -23,7 +23,7 @@ describe('SocketManager', () => {
   let socketManager: SocketManager;
 
   beforeEach(() => {
-    socketManager = new SocketManager(mockUwsServiceUrl);
+    socketManager = new SocketManager(mockCoreServiceUrl);
     global.WebSocket = MockWebSocket as any;
     vi.useFakeTimers();
   });

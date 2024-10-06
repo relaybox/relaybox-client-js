@@ -5,7 +5,7 @@ import { SocketManager } from '../lib/socket-manager';
 import { ClientEvent } from '../lib/types/event.types';
 import { mock } from 'node:test';
 
-const mockUwsServiceUrl = process.env.UWS_SERVICE_URL || '';
+const mockCoreServiceUrl = process.env.CORE_SERVICE_URL || '';
 const mockNspRoomid = 'ewRnbOj5f2yR:config';
 
 vi.mock('../lib/logger', () => ({
@@ -28,7 +28,7 @@ describe('History', () => {
   let socketManager: SocketManager;
 
   beforeEach(() => {
-    socketManager = new SocketManager(mockUwsServiceUrl);
+    socketManager = new SocketManager(mockCoreServiceUrl);
     history = new History(socketManager, mockNspRoomid);
   });
 

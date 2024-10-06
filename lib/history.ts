@@ -30,7 +30,6 @@ export class History {
   /**
    * Creates an instance of History.
    * @param {SocketManager} socketManager - The socket manager to handle socket connections.
-   * @param {string} uwsHttpHost - The base URL of the WebSocket HTTP server.
    * @param {string} nspRoomId - The ID of the room for which metrics are being managed.
    */
   constructor(socketManager: SocketManager, nspRoomId: string) {
