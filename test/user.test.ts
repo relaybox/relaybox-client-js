@@ -1,9 +1,8 @@
-import { vi, describe, it, expect, afterAll, beforeEach, afterEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { SocketManager } from '../lib/socket-manager';
 import { User } from '../lib/user';
 import { getMockAuthUserPublic } from './mock/user.mock';
 import { ClientEvent } from '../lib/types';
-import { mock } from 'node:test';
 
 const mockCoreServiceUrl = process.env.CORE_SERVICE_URL || '';
 const mockAuthUserPublic = getMockAuthUserPublic();

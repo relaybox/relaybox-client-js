@@ -9,7 +9,6 @@ import { mock } from 'node:test';
 const mockCoreServiceUrl = process.env.CORE_SERVICE_URL || '';
 const mockRoomId = 'roomId123';
 const mockEvent = 'mock:event';
-const mockCoreHttpHost = 'https://example.com';
 
 const socketManagerOn = vi.fn();
 const socketManagerOff = vi.fn();

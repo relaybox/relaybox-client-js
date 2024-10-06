@@ -3,7 +3,6 @@ import { SocketManager } from '../lib/socket-manager';
 import { Presence } from '../lib/presence';
 import { ClientEvent } from '../lib/types/event.types';
 import { ValidationError } from '../lib/errors';
-import { mock } from 'node:test';
 
 const mockCoreServiceUrl = process.env.CORE_SERVICE_URL || '';
 const mockRoomid = 'room123';
