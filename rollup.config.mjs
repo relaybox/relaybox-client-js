@@ -5,7 +5,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import terser from '@rollup/plugin-terser';
 import replace from '@rollup/plugin-replace';
 
-console.log(`Building with server host: ${process.env.UWS_SERVICE_URL}:${process.env.NODE_ENV}`);
+console.log(`Building with server host: ${process.env.CORE_SERVICE_URL}:${process.env.NODE_ENV}`);
 
 const isProd = process.env.NODE_ENV === 'production';
 
@@ -28,7 +28,7 @@ export default {
     commonjs(),
     babel({ babelHelpers: 'bundled' }),
     replace({
-      'process.env.UWS_SERVICE_URL': JSON.stringify(process.env.UWS_SERVICE_URL),
+      'process.env.CORE_SERVICE_URL': JSON.stringify(process.env.CORE_SERVICE_URL),
       'process.env.AUTH_SERVICE_URL': JSON.stringify(process.env.AUTH_SERVICE_URL),
       preventAssignment: true
     }),

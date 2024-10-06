@@ -5,7 +5,7 @@ import { ClientEvent } from '../lib/types/event.types';
 import { ValidationError } from '../lib/errors';
 import { mock } from 'node:test';
 
-const mockUwsServiceUrl = process.env.UWS_SERVICE_URL || '';
+const mockCoreServiceUrl = process.env.CORE_SERVICE_URL || '';
 const mockRoomid = 'room123';
 const mockNspRoomId = 'abc:room123';
 
@@ -34,7 +34,7 @@ describe('Presence', () => {
   let socketManager: SocketManager;
 
   beforeEach(() => {
-    socketManager = new SocketManager(mockUwsServiceUrl);
+    socketManager = new SocketManager(mockCoreServiceUrl);
     presence = new Presence(socketManager, mockRoomid, mockNspRoomId);
   });
 

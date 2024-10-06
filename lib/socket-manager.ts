@@ -25,14 +25,14 @@ export class SocketManager {
   private reconnectionTimeout: NodeJS.Timeout | number | null = null;
   private pendingAcknowledgements: Map<string, SocketEventHandler> = new Map();
   private tokenExpiryUnix: number | null = null;
-  private uwsServiceUrl: string;
+  private coreServiceUrl: string;
 
   public id?: string;
   public eventEmitter: EventEmitter;
 
-  constructor(uwsServiceUrl: string) {
+  constructor(coreServiceUrl: string) {
     this.eventEmitter = new EventEmitter();
-    this.uwsServiceUrl = uwsServiceUrl;
+    this.coreServiceUrl = coreServiceUrl;
   }
 
   private initializeSocket(auth: TokenResponse | KeyData): void {
@@ -44,7 +44,7 @@ export class SocketManager {
     const searchParams = new URLSearchParams(this.socketAuth as unknown as Record<string, string>);
     const queryString = searchParams.toString();
 
-    return `${this.uwsServiceUrl}?${queryString}`;
+    return `${this.coreServiceUrl}?${queryString}`;
   }
 
   connectSocket(): void {

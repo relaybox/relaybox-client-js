@@ -52,7 +52,7 @@ jobs:
       - name: Create env file
         run: |
           touch .env
-          echo "UWS_SERVICE_URL=${{ vars.UWS_SERVICE_URL }}" >> .env
+          echo "CORE_SERVICE_URL=${{ vars.CORE_SERVICE_URL }}" >> .env
           echo "AUTH_SERVICE_URL=${{ vars.AUTH_SERVICE_URL }}" >> .env
           echo "NODE_ENV=${{ vars.NODE_ENV }}" >> .env
           cat .env

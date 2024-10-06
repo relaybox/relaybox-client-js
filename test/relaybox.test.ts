@@ -207,7 +207,7 @@ describe('RelayBox', () => {
 
   describe('when connecting in cloud mode', () => {
     it('should construct correct service urls from environment variables', async () => {
-      const uwsServiceUrl = process.env.UWS_SERVICE_URL;
+      const coreServiceUrl = process.env.CORE_SERVICE_URL;
       const authServiceUrl = process.env.AUTH_SERVICE_URL;
 
       const relayBox = new RelayBox({
@@ -215,7 +215,7 @@ describe('RelayBox', () => {
       });
 
       expect(relayBox['authServiceUrl']).toEqual(authServiceUrl);
-      expect(relayBox['uwsServiceUrl']).toEqual(uwsServiceUrl);
+      expect(relayBox['coreServiceUrl']).toEqual(coreServiceUrl);
     });
   });
 
@@ -233,7 +233,7 @@ describe('RelayBox', () => {
       });
 
       expect(relayBox['authServiceUrl']).toEqual(`http://localhost:${portOverride}/auth`);
-      expect(relayBox['uwsServiceUrl']).toEqual(`ws://localhost:${portOverride}/uws`);
+      expect(relayBox['coreServiceUrl']).toEqual(`ws://localhost:${portOverride}/core`);
     });
 
     it('should construct correct service urls if "enabled" option is true', async () => {
@@ -245,20 +245,20 @@ describe('RelayBox', () => {
       });
 
       expect(relayBox['authServiceUrl']).toEqual(`http://localhost:${defaultPort}/auth`);
-      expect(relayBox['uwsServiceUrl']).toEqual(`ws://localhost:${defaultPort}/uws`);
+      expect(relayBox['coreServiceUrl']).toEqual(`ws://localhost:${defaultPort}/core`);
     });
 
-    it('should construct correct service urls if "uwsServiceUrl" option is provided', async () => {
-      const uwsOverride = 'ws://uws-override';
+    it('should construct correct service urls if "coreServiceUrl" option is provided', async () => {
+      const coreOverride = 'ws://core-override';
 
       const relayBox = new RelayBox({
         publicKey: mockPublicKey,
         offline: {
-          uwsServiceUrl: uwsOverride
+          coreServiceUrl: coreOverride
         }
       });
 
-      expect(relayBox['uwsServiceUrl']).toEqual(uwsOverride);
+      expect(relayBox['coreServiceUrl']).toEqual(coreOverride);
       expect(relayBox['authServiceUrl']).toEqual(`http://localhost:${defaultPort}/auth`);
     });
 
@@ -273,7 +273,7 @@ describe('RelayBox', () => {
       });
 
       expect(relayBox['authServiceUrl']).toEqual(authOverride);
-      expect(relayBox['uwsServiceUrl']).toEqual(`ws://localhost:${defaultPort}/uws`);
+      expect(relayBox['coreServiceUrl']).toEqual(`ws://localhost:${defaultPort}/core`);
     });
   });
 });

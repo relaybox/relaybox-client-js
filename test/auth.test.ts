@@ -15,9 +15,9 @@ import { SocketManager } from '../lib/socket-manager';
 import { User } from '../lib/user';
 
 const mockPublicKey = 'appId.keyId';
-const mockUwsServiceUrl = process.env.UWS_SERVICE_URL || '';
-const mockAuthAuthServiceUrl = process.env.AUTH_SERVICE_URL || '';
-const mockAuthAuthServiceHost = 'http://localhost:9090';
+const mockCoreServiceUrl = process.env.CORE_SERVICE_URL || '';
+const mockAuthServiceUrl = process.env.AUTH_SERVICE_URL || '';
+const mockAuthServiceHost = 'http://localhost:9090';
 const mockAuthEmail = '1@1.com';
 const mockAuthPassword = 'password';
 const mockAuthCode = '123456';
@@ -64,7 +64,7 @@ describe('Auth', () => {
   beforeAll(() => {
     server.use(
       http.post<never, AuthRequestBody, any>(
-        `${mockAuthAuthServiceUrl}/users/authenticate`,
+        `${mockAuthServiceUrl}/users/authenticate`,
         async ({ request }) => {
           const publicKey = request.headers.get('X-Ds-Public-Key');
           const { email, password } = await request.json();
@@ -80,7 +80,7 @@ describe('Auth', () => {
 
     server.use(
       http.post<never, AuthRequestBody, any>(
-        `${mockAuthAuthServiceUrl}/users/create`,
+        `${mockAuthServiceUrl}/users/create`,
         async ({ request }) => {
           const publicKey = request.headers.get('X-Ds-Public-Key');
           const { email, password } = await request.json();
@@ -99,7 +99,7 @@ describe('Auth', () => {
 
     server.use(
       http.post<never, AuthRequestBody, any>(
-        `${mockAuthAuthServiceUrl}/users/verify`,
+        `${mockAuthServiceUrl}/users/verify`,
         async ({ request }) => {
           const publicKey = request.headers.get('X-Ds-Public-Key');
           const { email, code } = await request.json();
@@ -117,7 +117,7 @@ describe('Auth', () => {
 
     server.use(
       http.post<never, AuthRequestBody, any>(
-        `${mockAuthAuthServiceUrl}/users/password-reset`,
+        `${mockAuthServiceUrl}/users/password-reset`,
         async ({ request }) => {
           const publicKey = request.headers.get('X-Ds-Public-Key');
           const { email } = await request.json();
@@ -135,7 +135,7 @@ describe('Auth', () => {
 
     server.use(
       http.post<never, AuthRequestBody, any>(
-        `${mockAuthAuthServiceUrl}/users/password-confirm`,
+        `${mockAuthServiceUrl}/users/password-confirm`,
         async ({ request }) => {
           const publicKey = request.headers.get('X-Ds-Public-Key');
           const { code, password } = await request.json();
@@ -153,7 +153,7 @@ describe('Auth', () => {
 
     server.use(
       http.get<never, AuthRequestBody, any>(
-        `${mockAuthAuthServiceUrl}/users/token/refresh`,
+        `${mockAuthServiceUrl}/users/token/refresh`,
         async ({ request }) => {
           const publicKey = request.headers.get('X-Ds-Public-Key');
           const authorization = request.headers.get('Authorization');
@@ -169,7 +169,7 @@ describe('Auth', () => {
 
     server.use(
       http.get<never, AuthRequestBody, any>(
-        `${mockAuthAuthServiceUrl}/users/session`,
+        `${mockAuthServiceUrl}/users/session`,
         async ({ request }) => {
           const publicKey = request.headers.get('X-Ds-Public-Key');
           const authorization = request.headers.get('Authorization');
@@ -185,7 +185,7 @@ describe('Auth', () => {
 
     server.use(
       http.post<never, AuthRequestBody, any>(
-        `${mockAuthAuthServiceUrl}/users/generate-verification-code`,
+        `${mockAuthServiceUrl}/users/generate-verification-code`,
         async ({ request }) => {
           const publicKey = request.headers.get('X-Ds-Public-Key');
           const { email } = await request.json();
@@ -203,7 +203,7 @@ describe('Auth', () => {
 
     server.use(
       http.post<never, AuthRequestBody, any>(
-        `${mockAuthAuthServiceUrl}/users/mfa/enroll`,
+        `${mockAuthServiceUrl}/users/mfa/enroll`,
         async ({ request }) => {
           const bearerToken = request.headers.get('Authorization');
           const publicKey = request.headers.get('X-Ds-Public-Key');
@@ -219,7 +219,7 @@ describe('Auth', () => {
 
     server.use(
       http.post<never, AuthMfaRequestBody, any>(
-        `${mockAuthAuthServiceUrl}/users/mfa/challenge`,
+        `${mockAuthServiceUrl}/users/mfa/challenge`,
         async ({ request }) => {
           const bearerToken = request.headers.get('Authorization');
           const publicKey = request.headers.get('X-Ds-Public-Key');
@@ -239,7 +239,7 @@ describe('Auth', () => {
 
     server.use(
       http.post<never, AuthMfaRequestBody, any>(
-        `${mockAuthAuthServiceUrl}/users/mfa/verify`,
+        `${mockAuthServiceUrl}/users/mfa/verify`,
         async ({ request }) => {
           const bearerToken = request.headers.get('Authorization');
           const publicKey = request.headers.get('X-Ds-Public-Key');
@@ -256,7 +256,7 @@ describe('Auth', () => {
 
     server.use(
       http.get<never, AuthMfaRequestBody, any>(
-        `${mockAuthAuthServiceUrl}/users/${mockAuthUserPublic.clientId}`,
+        `${mockAuthServiceUrl}/users/${mockAuthUserPublic.clientId}`,
         async ({ request }) => {
           const bearerToken = request.headers.get('Authorization');
           const publicKey = request.headers.get('X-Ds-Public-Key');
@@ -280,8 +280,8 @@ describe('Auth', () => {
 
   beforeEach(() => {
     // server.resetHandlers();
-    const socketManager = vi.mocked(new SocketManager(mockUwsServiceUrl));
-    auth = new Auth(socketManager, mockPublicKey, mockAuthAuthServiceUrl);
+    const socketManager = vi.mocked(new SocketManager(mockCoreServiceUrl));
+    auth = new Auth(socketManager, mockPublicKey, mockAuthServiceUrl);
     vi.spyOn(auth, 'emit').mockImplementation(() => true);
   });
 
@@ -534,7 +534,7 @@ describe('Auth', () => {
       vi.spyOn(window, 'removeEventListener');
 
       const mockEvent = {
-        origin: mockAuthAuthServiceHost,
+        origin: mockAuthServiceHost,
         data: mockAuthUserSession
       } as MessageEvent;
 

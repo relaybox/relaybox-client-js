@@ -24,10 +24,10 @@ export interface OfflineOptions {
   /**
    * https://relaybox.net/docs/api-reference/relaybox-client#relaybox-options
    *
-   * Specify an override url for the uws service. This is useful for testing or when using relayBox platform emulator.
+   * Specify an override url for the core service. This is useful for testing or when using relayBox platform emulator.
    * Defaults to wss://gnet.prod.relaybox-services.net
    */
-  uwsServiceUrl?: string | null;
+  coreServiceUrl?: string | null;
 }
 
 export interface RelayBoxOptions {
