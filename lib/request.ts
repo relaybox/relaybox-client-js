@@ -2,6 +2,7 @@ import { HTTPRequestError, HTTPServiceError, NetworkError } from './errors';
 import { ApiData, FormattedResponse } from './types/request.types';
 
 const NODE_FETCH_ERR_MESSAGES = ['Failed to fetch'];
+const DEFAULT_REQUEST_TIMEOUT = 10000;
 
 async function formatResponse<T>(response: Response): Promise<FormattedResponse<T & ApiData>> {
   const data = <T & ApiData>await response.json();
@@ -22,7 +23,8 @@ export async function request<T>(
   try {
     response = await fetch(url, {
       ...params,
-      cache: 'no-store'
+      cache: 'no-store',
+      signal: AbortSignal.timeout(1)
     });
 
     if (!response.ok) {
@@ -45,7 +47,8 @@ export async function serviceRequest<T>(url: URL | string, params: RequestInit):
   try {
     const response = await fetch(url, {
       ...params,
-      cache: 'no-store'
+      cache: 'no-store',
+      signal: AbortSignal.timeout(DEFAULT_REQUEST_TIMEOUT)
     });
 
     const data = <T & ApiData>await response.json();
