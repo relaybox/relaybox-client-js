@@ -14,7 +14,7 @@ import { AuthEvent } from '../lib/types';
 import { SocketManager } from '../lib/socket-manager';
 import { User } from '../lib/user';
 
-const mockPublicKey = 'appId.keyId';
+const mockPublicKey = 'appPid.keyId';
 const mockCoreServiceUrl = process.env.CORE_SERVICE_URL || '';
 const mockAuthServiceUrl = process.env.AUTH_SERVICE_URL || '';
 const mockAuthServiceHost = 'http://localhost:9090';
