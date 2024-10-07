@@ -89,7 +89,7 @@ describe('request', () => {
     it('should throw TimeoutError when request times out', async () => {
       vi.useFakeTimers();
 
-      server.use(http.get(mockUrl, () => HttpResponse.json(mockResponse)));
+      server.use(http.get(mockUrl, () => new Promise(() => {})));
 
       const requestParams = {
         method: HttpMethod.GET
@@ -169,7 +169,7 @@ describe('serviceRequest', () => {
     it('should throw TimeoutError when request times out', async () => {
       vi.useFakeTimers();
 
-      server.use(http.get(mockUrl, () => HttpResponse.json(mockResponse)));
+      server.use(http.get(mockUrl, () => new Promise(() => {})));
 
       const requestParams = {
         method: HttpMethod.GET
