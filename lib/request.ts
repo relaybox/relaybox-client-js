@@ -30,6 +30,10 @@ export async function request<T>(
     if (!response.ok) {
       throw new HTTPRequestError(`${response.status} ${response.statusText}`, response.status);
     }
+
+    const formattedResponse = await formatResponse<T>(response);
+
+    return formattedResponse;
   } catch (err: unknown) {
     if (err instanceof TypeError && NODE_FETCH_ERR_MESSAGES.includes(err.message)) {
       throw new NetworkError('Network request failed: Unable to connect to the server', 0);
@@ -39,10 +43,6 @@ export async function request<T>(
 
     throw err;
   }
-
-  const formattedResponse = await formatResponse<T>(response);
-
-  return formattedResponse;
 }
 
 export async function serviceRequest<T>(url: URL | string, params: RequestInit): Promise<T> {
