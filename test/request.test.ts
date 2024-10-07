@@ -95,11 +95,11 @@ describe('request', () => {
         method: HttpMethod.GET
       };
 
-      const promise = serviceRequest(mockUrl, requestParams);
+      const requestPromise = serviceRequest(mockUrl, requestParams);
 
       vi.advanceTimersByTime(10000);
 
-      await expect(promise).rejects.toThrow(TimeoutError);
+      await expect(requestPromise).rejects.toThrow(TimeoutError);
     });
   });
 });
@@ -175,11 +175,11 @@ describe('serviceRequest', () => {
         method: HttpMethod.GET
       };
 
-      const promise = serviceRequest(mockUrl, requestParams);
+      const requestPromise = serviceRequest(mockUrl, requestParams);
 
       vi.advanceTimersByTime(10000);
 
-      await expect(promise).rejects.toThrow(TimeoutError);
+      await expect(requestPromise).rejects.toThrow(TimeoutError);
     });
   });
 });
