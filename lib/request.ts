@@ -35,9 +35,9 @@ export async function request<T>(
       throw new NetworkError('Network request failed: Unable to connect to the server', 0);
     } else if (err instanceof DOMException && err.name === TimeoutError.name) {
       throw new TimeoutError(err.message);
-    } else {
-      throw err;
     }
+
+    throw err;
   }
 
   const formattedResponse = await formatResponse<T>(response);
