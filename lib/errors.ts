@@ -6,7 +6,8 @@ enum ErrorName {
   SIGNATURE_ERROR = 'SignatureError',
   TOKEN_ERROR = 'TokenError',
   SOCKET_CONNECTION_ERROR = 'SocketConnectionError',
-  SOCKET_EMIT_ERROR = 'SocketEmitError'
+  SOCKET_EMIT_ERROR = 'SocketEmitError',
+  TIMEOUT_ERROR = 'TimeoutError'
 }
 
 export class ValidationError extends Error {
@@ -73,5 +74,14 @@ export class SocketEmitError extends Error {
   constructor(message: string, public details?: any) {
     super(message);
     this.name = ErrorName.SOCKET_EMIT_ERROR;
+  }
+}
+
+export class TimeoutError extends Error {
+  static name = 'TimeoutError';
+
+  constructor(message: string, public details?: any) {
+    super(message);
+    this.name = ErrorName.TIMEOUT_ERROR;
   }
 }

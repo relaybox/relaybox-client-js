@@ -54,10 +54,8 @@ const AUTH_TOKEN_LIFECYCLE_EXPIRY = 'expiry';
  */
 const DEFAULT_OFFLINE_AUTH_HOST = 'http://localhost';
 const DEFAULT_OFFLINE_AUTH_PATH = 'auth';
-
 const DEFAULT_OFFLINE_CORE_HOST = 'ws://localhost';
 const DEFAULT_OFFLINE_CORE_PATH = 'core';
-
 const DEFAULT_OFFLINE_PORT = 9000;
 
 /**
