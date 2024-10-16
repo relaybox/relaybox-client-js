@@ -24,7 +24,7 @@ export async function request<T>(
     response = await fetch(url, {
       ...params,
       cache: 'no-store',
-      signal: AbortSignal.timeout(1)
+      signal: AbortSignal.timeout(DEFAULT_REQUEST_TIMEOUT_MS)
     });
 
     if (!response.ok) {
