@@ -1,6 +1,6 @@
-import { describe, it, expect, afterEach, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, afterEach, beforeAll, afterAll, vi } from 'vitest';
 import { request, serviceRequest } from '../lib/request';
-import { HTTPRequestError, NetworkError } from '../lib/errors';
+import { HTTPRequestError, NetworkError, TimeoutError } from '../lib/errors';
 import { setupServer } from 'msw/node';
 import { HttpResponse, http } from 'msw';
 import { HttpMethod } from '../lib/types/request.types';
@@ -85,10 +85,30 @@ describe('request', () => {
 
       await expect(request(mockUrl, requestParams)).rejects.toThrow(NetworkError);
     });
+
+    it('should throw TimeoutError when request times out', async () => {
+      vi.useFakeTimers();
+
+      server.use(http.get(mockUrl, () => new Promise(() => {})));
+
+      const requestParams = {
+        method: HttpMethod.GET
+      };
+
+      const requestPromise = serviceRequest(mockUrl, requestParams);
+
+      vi.advanceTimersByTime(10000);
+
+      await expect(requestPromise).rejects.toThrow(TimeoutError);
+    });
   });
 });
 
 describe('serviceRequest', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   describe('success - 200', () => {
     it('should return json data from service request', async () => {
       const mockResponse = { test: true };
@@ -144,6 +164,22 @@ describe('serviceRequest', () => {
       };
 
       await expect(serviceRequest(mockUrl, requestParams)).rejects.toThrow(NetworkError);
+    });
+
+    it('should throw TimeoutError when request times out', async () => {
+      vi.useFakeTimers();
+
+      server.use(http.get(mockUrl, () => new Promise(() => {})));
+
+      const requestParams = {
+        method: HttpMethod.GET
+      };
+
+      const requestPromise = serviceRequest(mockUrl, requestParams);
+
+      vi.advanceTimersByTime(10000);
+
+      await expect(requestPromise).rejects.toThrow(TimeoutError);
     });
   });
 });
