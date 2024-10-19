@@ -15,12 +15,14 @@ export default {
     {
       file: 'dist/bundle.cjs.js',
       format: 'cjs',
-      sourcemap: !isProd
+      sourcemap: !isProd,
+      exports: 'named'
     },
     {
       file: 'dist/bundle.esm.js',
       format: 'esm',
-      sourcemap: !isProd
+      sourcemap: !isProd,
+      exports: 'auto'
     }
   ],
   plugins: [

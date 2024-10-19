@@ -62,7 +62,7 @@ const DEFAULT_OFFLINE_PORT = 9000;
  * RelayBox manages the connection and communication with a remote server
  * via WebSocket, handling authentication and socket events.
  */
-export class RelayBox {
+export default class RelayBox {
   private readonly socketManager: SocketManager;
   private readonly presenceFactory: PresenceFactory;
   private readonly metricsFactory: MetricsFactory;
