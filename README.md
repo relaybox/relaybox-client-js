@@ -23,7 +23,7 @@ npm install @relaybox/client
 Once the installation is complete, you'll be able to access the service by initializing a new RelayBox instance.
 
 ```typescript
-import { RelayBox } from '@relaybox/client';
+import RelayBox from '@relaybox/client';
 
 const relayBox = new RelayBox({
   apiKey: xxxx.xxxx.xxxxxxxx // Replace with your api key
@@ -67,7 +67,7 @@ const response = await myFirstRoom.publish('message', { hello: 'universe' });
 Putting that all together, we can see the overall structure of the code.
 
 ```typescript
-import { RelayBox } from '@relaybox/client';
+import RelayBox from '@relaybox/client';
 
 const relayBox = new RelayBox({
   apiKey: xxxx.xxxx.xxxxxxxx // Replace with your api key
