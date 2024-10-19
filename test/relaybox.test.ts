@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi, beforeEach, MockInstance } from 'vitest';
-import { RelayBox } from '../lib/relaybox';
+import RelayBox from '../lib/relaybox';
 import {
   HTTPRequestError,
   SocketConnectionError,
