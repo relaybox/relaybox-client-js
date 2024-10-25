@@ -60,6 +60,8 @@ export interface AuthUserPublic {
   clientId: string;
   orgId: string;
   username: string;
+  firstName?: string;
+  lastName?: string;
   createdAt: string;
   updatedAt: string;
   isOnline: boolean;
@@ -71,6 +73,8 @@ export interface AuthUser {
   orgId: string;
   clientId: string;
   username: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   createdAt: string;
   updatedAt: string;

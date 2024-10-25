@@ -28,6 +28,7 @@ export interface SocketHandshake {
 }
 
 export enum SocketEvent {
+  CONNECTING = 'connecting',
   CONNECT = 'connect',
   DISCONNECT = 'disconnect',
   ERROR = 'error',

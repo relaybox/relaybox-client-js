@@ -84,6 +84,7 @@ export default class RelayBox {
   public clientId?: string | number;
   public connectionId: string | null = null;
   public auth: Auth;
+  public isConnected: boolean;
 
   /**
    * Creates an instance of RelayBox.
@@ -116,6 +117,7 @@ export default class RelayBox {
     this.authParams = typeof opts.authParams === 'function' ? opts.authParams() : opts.authParams;
     this.authRequestOptions = opts.authRequestOptions;
     this.authTokenLifeCycle = opts.authTokenLifeCycle;
+    this.isConnected = false;
 
     this.auth = this.createAuthInstance(
       this.socketManager,
@@ -171,35 +173,48 @@ export default class RelayBox {
    * Registers the default socket event listeners to propagate events to the connection.
    */
   private registerSocketManagerListeners() {
+    this.manageSocketEventListener(SocketEvent.CONNECTING, () => {
+      this.isConnected = false;
+      this.connection.emit(SocketEvent.CONNECTING);
+    });
+
     this.manageSocketEventListener(SocketEvent.CONNECT, () => {
+      this.isConnected = true;
       this.connection.emit(SocketEvent.CONNECT);
     });
 
     this.manageSocketEventListener(SocketEvent.RECONNECTED, (attempts: number) => {
+      this.isConnected = true;
       this.connection.emit(SocketEvent.RECONNECTED, attempts);
     });
 
     this.manageSocketEventListener(SocketEvent.DISCONNECT, (reason: string) => {
+      this.isConnected = false;
       this.connection.emit(SocketEvent.DISCONNECT, reason);
     });
 
     this.manageSocketEventListener(SocketEvent.RECONNECTING, (attempt: number) => {
+      this.isConnected = false;
       this.connection.emit(SocketEvent.RECONNECTING, attempt);
     });
 
     this.manageSocketEventListener(SocketEvent.ERROR, (err: any) => {
+      this.isConnected = false;
       this.connection.emit(SocketEvent.ERROR, err);
     });
 
     this.manageSocketEventListener(SocketEvent.CONNECT_ERROR, (err: any) => {
+      this.isConnected = false;
       this.connection.emit(SocketEvent.CONNECT_ERROR, err);
     });
 
     this.manageSocketEventListener(SocketEvent.CONNECT_FAILED, (err: any) => {
+      this.isConnected = false;
       this.connection.emit(SocketEvent.CONNECT_FAILED, err);
     });
 
     this.manageSocketEventListener(SocketEvent.RECONNECT_FAILED, (err: any) => {
+      this.isConnected = false;
       this.connection.emit(SocketEvent.RECONNECT_FAILED, err);
     });
 
