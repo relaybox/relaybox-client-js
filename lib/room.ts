@@ -21,6 +21,7 @@ export class Room {
   private readonly eventRegistry = new EventRegistry();
   private nspRoomId: string | null = null;
 
+  public readonly id: string;
   public readonly roomId: string;
   public presence: Presence | null = null;
   public metrics: Metrics | null = null;
@@ -41,7 +42,7 @@ export class Room {
     metricsFactory: MetricsFactory,
     historyFactory: HistoryFactory
   ) {
-    this.roomId = roomId;
+    this.roomId = this.id = roomId;
     this.socketManager = socketManager;
     this.presenceFactory = presencefactory;
     this.metricsFactory = metricsFactory;

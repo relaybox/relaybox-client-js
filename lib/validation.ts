@@ -7,6 +7,7 @@ export function validateUserData(userData: any, maxSize?: number): boolean {
   if (!userData) {
     throw new ValidationError('No data to be published');
   }
+
   const dataString = JSON.stringify(userData);
 
   if (new TextEncoder().encode(dataString).length > (maxSize || USER_DATA_MAX_SIZE)) {
