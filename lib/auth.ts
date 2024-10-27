@@ -67,6 +67,7 @@ enum AuthEndpoint {
  * @extends EventEmitter
  */
 export class Auth extends EventEmitter {
+  public readonly enabled: boolean;
   private readonly publicKey: string | null;
   private readonly authServiceUrl: string;
   private readonly socketManager: SocketManager;
@@ -90,6 +91,7 @@ export class Auth extends EventEmitter {
     this.publicKey = publicKey;
     this.authServiceUrl = authServiceUrl;
     this.socketManager = socketManager;
+    this.enabled = !!publicKey;
 
     this.mfa = {
       enroll: this.mfaEnroll.bind(this),

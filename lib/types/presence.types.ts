@@ -1,7 +1,11 @@
+import { AuthUserPublic } from './auth.types';
+
 export interface PresenceEvent<T = any> {
-  id: string;
+  clientId: string;
   timestamp: string;
   data: T;
+  event: PresenceEventType;
+  user?: AuthUserPublic;
 }
 
 export enum PresenceEventAllowedValue {

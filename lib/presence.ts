@@ -52,7 +52,9 @@ export class Presence extends EventEmitter {
     handler?: SocketEventHandler
   ): Promise<void> {
     this.validateEvent(eventOrHandler);
+
     const { events, eventHandler } = this.prepareSubscription(eventOrHandler, handler);
+
     await this.execSubscription(events, eventHandler);
   }
 
@@ -229,7 +231,9 @@ export class Presence extends EventEmitter {
    * @throws Will throw an error if joining the room fails.
    */
   async join(userData?: any): Promise<void> {
-    validateUserData(userData, USER_DATA_MAX_SIZE_KB);
+    if (userData) {
+      validateUserData(userData, USER_DATA_MAX_SIZE_KB);
+    }
 
     const data = { roomId: this.roomId, userData };
 

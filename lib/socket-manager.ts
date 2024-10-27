@@ -51,6 +51,7 @@ export class SocketManager {
     if (this.tokenExpired()) {
       this.eventEmitter.emit(SocketEvent.AUTH_TOKEN_EXPIRED, this.tokenExpiryUnix);
     } else {
+      this.eventEmitter.emit(SocketEvent.CONNECTING);
       this.connectionString = this.getConnectionString();
       this.connection = new WebSocket(this.connectionString!);
       this.registerSocketStateEventListeners();
