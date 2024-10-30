@@ -30,16 +30,32 @@ export class SocketManager {
   public id?: string;
   public eventEmitter: EventEmitter;
 
+  /**
+   * Creates a new instance of SocketManager.
+   *
+   * @param {string} coreServiceUrl - The core service URL for the WebSocket connection.
+   */
   constructor(coreServiceUrl: string) {
     this.eventEmitter = new EventEmitter();
     this.coreServiceUrl = coreServiceUrl;
   }
 
+  /**
+   * Initializes the WebSocket connection with the provided authentication data.
+   *
+   * @private
+   * @param {TokenResponse | KeyData} auth - Authentication token or API key data.
+   */
   private initializeSocket(auth: TokenResponse | KeyData): void {
     this.disconnectSocket();
     this.socketAuth = auth;
   }
 
+  /**
+   * Generates the WebSocket connection string.
+   *
+   * @returns {string} The WebSocket connection string with query parameters.
+   */
   getConnectionString(): string {
     const searchParams = new URLSearchParams(this.socketAuth as unknown as Record<string, string>);
     const queryString = searchParams.toString();
@@ -47,6 +63,10 @@ export class SocketManager {
     return `${this.coreServiceUrl}?${queryString}`;
   }
 
+  /**
+   * Establishes a new WebSocket connection and registers event listeners.
+   * If the token is expired, emits the AUTH_TOKEN_EXPIRED event.
+   */
   connectSocket(): void {
     if (this.tokenExpired()) {
       this.eventEmitter.emit(SocketEvent.AUTH_TOKEN_EXPIRED, this.tokenExpiryUnix);
@@ -60,7 +80,12 @@ export class SocketManager {
     }
   }
 
-  registerSocketStateEventListeners() {
+  /**
+   * Registers WebSocket state event listeners (open, message, close, error).
+   *
+   * @private
+   */
+  private registerSocketStateEventListeners() {
     if (!this.connection) {
       return;
     }
@@ -71,6 +96,11 @@ export class SocketManager {
     this.connection.onerror = this.handleSocketErrorEvent.bind(this);
   }
 
+  /**
+   * Handles the WebSocket open event and emits the appropriate events.
+   *
+   * @private
+   */
   private handleSocketOpenEvent() {
     this.socket = {};
     this.socket.connected = true;
