@@ -23,7 +23,7 @@ export class Room {
   private readonly eventRegistry = new EventRegistry();
   private readonly httpServiceUrl: string;
   private nspRoomId: string | null = null;
-  private getTokenResponse: () => TokenResponse | null;
+  private getAuthToken: () => string | null;
 
   public readonly id: string;
   public readonly roomId: string;
@@ -46,7 +46,7 @@ export class Room {
     metricsFactory: MetricsFactory,
     historyFactory: HistoryFactory,
     httpServiceUrl: string,
-    getTokenResponse: () => TokenResponse | null
+    getAuthToken: () => string | null
   ) {
     this.roomId = this.id = roomId;
     this.socketManager = socketManager;
@@ -54,7 +54,7 @@ export class Room {
     this.metricsFactory = metricsFactory;
     this.historyFactory = historyFactory;
     this.httpServiceUrl = httpServiceUrl;
-    this.getTokenResponse = getTokenResponse;
+    this.getAuthToken = getAuthToken;
   }
 
   /**
@@ -86,7 +86,7 @@ export class Room {
         this.nspRoomId,
         this.roomId,
         this.httpServiceUrl,
-        this.getTokenResponse
+        this.getAuthToken
       );
 
       return this;

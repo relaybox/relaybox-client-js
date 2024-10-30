@@ -34,7 +34,7 @@ export class History {
   private nextPageToken: string | null = null;
   private itemsRemaining?: number;
   private iterationInProgress: boolean = false;
-  private getTokenResponse: () => TokenResponse | null;
+  private getAuthToken: () => string | null;
 
   /**
    * Creates an instance of History.
@@ -46,13 +46,13 @@ export class History {
     nspRoomId: string,
     roomId: string,
     httpServiceUrl: string,
-    getTokenResponse: () => TokenResponse | null
+    getAuthToken: () => string | null
   ) {
     this.socketManager = socketManager;
     this.nspRoomId = nspRoomId;
     this.roomId = roomId;
     this.httpServiceUrl = httpServiceUrl;
-    this.getTokenResponse = getTokenResponse;
+    this.getAuthToken = getAuthToken;
   }
 
   /**
@@ -162,13 +162,12 @@ export class History {
         mode: HttpMode.CORS
       };
 
-      const tokenResponse = this.getTokenResponse();
-      const token = tokenResponse?.token;
+      const authToken = this.getAuthToken();
 
       const defaultHeaders = {
         Accept: 'application/json',
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${authToken}`
       };
 
       params.headers = {

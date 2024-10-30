@@ -2,8 +2,6 @@ import { Metrics } from './metrics';
 import { Presence } from './presence';
 import { History } from './history';
 import { SocketManager } from './socket-manager';
-import { Auth } from './auth';
-import { TokenResponse } from './types';
 
 export class PresenceFactory {
   createPresence(socketManager: SocketManager, roomId: string, nspRoomId: string): Presence {
@@ -23,8 +21,8 @@ export class HistoryFactory {
     nspRoomId: string,
     roomId: string,
     httpServiceUrl: string,
-    getTokenResponse: () => TokenResponse | null
+    getAuthToken: () => string | null
   ): History {
-    return new History(socketManager, nspRoomId, roomId, httpServiceUrl, getTokenResponse);
+    return new History(socketManager, nspRoomId, roomId, httpServiceUrl, getAuthToken);
   }
 }

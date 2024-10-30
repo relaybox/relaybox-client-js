@@ -83,7 +83,7 @@ export default class RelayBox {
   private readonly httpServiceUrl: string;
   private socketManagerListeners: SocketManagerListener[] = [];
   private refreshTimeout: NodeJS.Timeout | number | null = null;
-  private _tokenResponse: TokenResponse | null = null;
+  private tokenResponse: TokenResponse | null = null;
 
   public readonly connection: EventEmitter;
   public clientId?: string | number;
@@ -141,8 +141,8 @@ export default class RelayBox {
    *
    * @returns {string | null} The authentication token or null if not authenticated.
    */
-  get tokenResponse(): TokenResponse | null {
-    return this._tokenResponse || null;
+  get authToken(): string | null {
+    return this.auth?.token ?? this.tokenResponse?.token ?? null;
   }
 
   private getOfflineServiceUrls({
@@ -310,7 +310,7 @@ export default class RelayBox {
       throw new TokenError(`No token response received`);
     }
 
-    this._tokenResponse = tokenResponse;
+    this.tokenResponse = tokenResponse;
 
     if (refresh) {
       this.socketManager.updateSocketAuth(tokenResponse);
@@ -340,7 +340,7 @@ export default class RelayBox {
       throw new TokenError(`No token response received`);
     }
 
-    this._tokenResponse = tokenResponse;
+    this.tokenResponse = tokenResponse;
 
     if (refresh) {
       this.socketManager.updateSocketAuth(tokenResponse);
@@ -384,8 +384,6 @@ export default class RelayBox {
     }
 
     const tokenResponse = this.auth.tokenResponse;
-
-    console.log(tokenResponse);
 
     if (!tokenResponse) {
       throw new TokenError(`No token response found`);
@@ -522,7 +520,7 @@ export default class RelayBox {
    * @throws Will throw an error if room creation fails.
    */
   async join(roomId: string): Promise<Room> {
-    const getTokenResponse = () => this.tokenResponse;
+    const getAuthToken = () => this.authToken;
 
     const room = new Room(
       roomId,
@@ -531,7 +529,7 @@ export default class RelayBox {
       this.metricsFactory,
       this.historyFactory,
       this.httpServiceUrl,
-      getTokenResponse
+      getAuthToken
     );
 
     try {
