@@ -161,6 +161,8 @@ export class SocketManager {
     this.tokenResponse = tokenResponse;
     this.tokenExpiryUnix = this.getTokenExpiryUnix(tokenResponse);
 
+    console.log('UPDATING', tokenResponse);
+
     this.socketAuth = {
       ...this.socketAuth,
       ...tokenResponse

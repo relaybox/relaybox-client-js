@@ -11,7 +11,7 @@ import {
 import { ValidationError } from './errors';
 import { SocketManager } from './socket-manager';
 import { ClientEvent } from './types/event.types';
-import { HttpMethod, HttpMode } from './types';
+import { HttpMethod, HttpMode, TokenResponse } from './types';
 import { serviceRequest } from './request';
 
 const HISTORY_MAX_REQUEST_LIMIT = 100;
@@ -34,6 +34,7 @@ export class History {
   private nextPageToken: string | null = null;
   private itemsRemaining?: number;
   private iterationInProgress: boolean = false;
+  private getTokenResponse: () => TokenResponse | null;
 
   /**
    * Creates an instance of History.
@@ -44,12 +45,14 @@ export class History {
     socketManager: SocketManager,
     nspRoomId: string,
     roomId: string,
-    httpServiceUrl: string
+    httpServiceUrl: string,
+    getTokenResponse: () => TokenResponse | null
   ) {
     this.socketManager = socketManager;
     this.nspRoomId = nspRoomId;
     this.roomId = roomId;
     this.httpServiceUrl = httpServiceUrl;
+    this.getTokenResponse = getTokenResponse;
   }
 
   /**
@@ -159,10 +162,13 @@ export class History {
         mode: HttpMode.CORS
       };
 
+      const tokenResponse = this.getTokenResponse();
+      const token = tokenResponse?.token;
+
       const defaultHeaders = {
         Accept: 'application/json',
         'Content-Type': 'application/json',
-        Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiZmJjNjA4Mi03YzJhLTRhYjAtYWY5Yi0zMTdiZDk5MjQ4MjgiLCJwdWJsaWNLZXkiOiJiV1QydkxuVm12YUwuSUtpSTZpVGpOU1U4IiwiY2xpZW50SWQiOiJTQXRRZEYzN1dwc3UiLCJ0b2tlblR5cGUiOiJpZF90b2tlbiIsInRpbWVzdGFtcCI6IjIwMjQtMTAtMzBUMTM6MDI6MDEuMzczWiIsImlhdCI6MTczMDI5MzMyMSwiZXhwIjoxNzMwMjk2OTIxLCJpc3MiOiJodHRwczovL3JlbGF5Ym94Lm5ldCJ9.SdqPjKLexOVJA71np9F3x3_S9w65e24EeMseb86QkSo`
+        Authorization: `Bearer ${token}`
       };
 
       params.headers = {

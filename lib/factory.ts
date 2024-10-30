@@ -3,6 +3,7 @@ import { Presence } from './presence';
 import { History } from './history';
 import { SocketManager } from './socket-manager';
 import { Auth } from './auth';
+import { TokenResponse } from './types';
 
 export class PresenceFactory {
   createPresence(socketManager: SocketManager, roomId: string, nspRoomId: string): Presence {
@@ -21,8 +22,9 @@ export class HistoryFactory {
     socketManager: SocketManager,
     nspRoomId: string,
     roomId: string,
-    httpServiceUrl: string
+    httpServiceUrl: string,
+    getTokenResponse: () => TokenResponse | null
   ): History {
-    return new History(socketManager, nspRoomId, roomId, httpServiceUrl);
+    return new History(socketManager, nspRoomId, roomId, httpServiceUrl, getTokenResponse);
   }
 }

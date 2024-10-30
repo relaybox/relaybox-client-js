@@ -8,6 +8,8 @@ import { Metrics } from './metrics';
 import { History } from './history';
 import { EventRegistry } from './event-registry';
 import { SocketManager } from './socket-manager';
+import RelayBox from './relaybox';
+import { TokenResponse } from './types';
 
 /**
  * The Room class represents a room in a chat or messaging application.
@@ -21,6 +23,7 @@ export class Room {
   private readonly eventRegistry = new EventRegistry();
   private readonly httpServiceUrl: string;
   private nspRoomId: string | null = null;
+  private getTokenResponse: () => TokenResponse | null;
 
   public readonly id: string;
   public readonly roomId: string;
@@ -42,7 +45,8 @@ export class Room {
     presencefactory: PresenceFactory,
     metricsFactory: MetricsFactory,
     historyFactory: HistoryFactory,
-    httpServiceUrl: string
+    httpServiceUrl: string,
+    getTokenResponse: () => TokenResponse | null
   ) {
     this.roomId = this.id = roomId;
     this.socketManager = socketManager;
@@ -50,6 +54,7 @@ export class Room {
     this.metricsFactory = metricsFactory;
     this.historyFactory = historyFactory;
     this.httpServiceUrl = httpServiceUrl;
+    this.getTokenResponse = getTokenResponse;
   }
 
   /**
@@ -80,7 +85,8 @@ export class Room {
         this.socketManager,
         this.nspRoomId,
         this.roomId,
-        this.httpServiceUrl
+        this.httpServiceUrl,
+        this.getTokenResponse
       );
 
       return this;

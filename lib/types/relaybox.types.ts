@@ -28,7 +28,12 @@ export interface OfflineOptions {
    * Defaults to wss://gnet.prod.relaybox-services.net
    */
   coreServiceUrl?: string | null;
-
+  /**
+   * https://relaybox.net/docs/api-reference/relaybox-client#relaybox-options
+   *
+   * Specify an override url for the REST service. This is useful for testing or when using relayBox platform emulator.
+   * Defaults to https://gnet.prod.relaybox-services.net
+   */
   httpServiceUrl?: string | null;
 }
 

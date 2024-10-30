@@ -48,7 +48,7 @@ const AUTH_TOKEN_REFRESH_BUFFER_SECONDS = 20;
 const AUTH_TOKEN_REFRESH_RETRY_MS = 10000;
 const AUTH_TOKEN_REFRESH_JITTER_RANGE_MS = 2000;
 const AUTH_TOKEN_LIFECYCLE_SESSION = 'session';
-const AUTH_TOKEN_LIFECYCLE_EXPIRY = 'expiry';
+// const AUTH_TOKEN_LIFECYCLE_EXPIRY = 'expiry';
 
 /**
  * Offline defaults
@@ -83,6 +83,7 @@ export default class RelayBox {
   private readonly httpServiceUrl: string;
   private socketManagerListeners: SocketManagerListener[] = [];
   private refreshTimeout: NodeJS.Timeout | number | null = null;
+  private _tokenResponse: TokenResponse | null = null;
 
   public readonly connection: EventEmitter;
   public clientId?: string | number;
@@ -133,6 +134,15 @@ export default class RelayBox {
     );
 
     this.registerSocketManagerListeners();
+  }
+
+  /**
+   * Retrieves the current authentication token from the session, if available.
+   *
+   * @returns {string | null} The authentication token or null if not authenticated.
+   */
+  get tokenResponse(): TokenResponse | null {
+    return this._tokenResponse || null;
   }
 
   private getOfflineServiceUrls({
@@ -286,7 +296,7 @@ export default class RelayBox {
    * @throws Will throw an error if the authentication fails.
    */
   private async handleAuthTokenConnect(refresh?: boolean): Promise<void> {
-    logger.logInfo(`Fetching auth token response for new connection`);
+    logger.logInfo(`Fetching auth token response from auth endpoint`);
 
     const tokenResponse = await getAuthTokenResponse(
       this.authEndpoint,
@@ -300,15 +310,15 @@ export default class RelayBox {
       throw new TokenError(`No token response received`);
     }
 
+    this._tokenResponse = tokenResponse;
+
     if (refresh) {
       this.socketManager.updateSocketAuth(tokenResponse);
     } else {
       this.socketManager.authTokenInitSocket(tokenResponse);
     }
 
-    if (this.authTokenLifeCycle === AUTH_TOKEN_LIFECYCLE_EXPIRY) {
-      this.setAuthTokenRefreshTimeout(tokenResponse.expiresIn);
-    }
+    this.setAuthTokenRefreshTimeout(tokenResponse.expiresIn);
   }
 
   /**
@@ -318,7 +328,7 @@ export default class RelayBox {
    * @throws Will throw an error if the authentication fails.
    */
   private async handleAuthActionConnect(refresh?: boolean): Promise<void> {
-    logger.logInfo(`Fetching auth token response for new connection from server action`);
+    logger.logInfo(`Fetching auth token response from server action`);
 
     if (!this.authAction) {
       throw new ValidationError(`No authentication function provided`);
@@ -330,15 +340,15 @@ export default class RelayBox {
       throw new TokenError(`No token response received`);
     }
 
+    this._tokenResponse = tokenResponse;
+
     if (refresh) {
       this.socketManager.updateSocketAuth(tokenResponse);
     } else {
       this.socketManager.authTokenInitSocket(tokenResponse);
     }
 
-    if (this.authTokenLifeCycle === AUTH_TOKEN_LIFECYCLE_EXPIRY) {
-      this.setAuthTokenRefreshTimeout(tokenResponse.expiresIn);
-    }
+    this.setAuthTokenRefreshTimeout(tokenResponse.expiresIn);
   }
 
   /**
@@ -479,9 +489,20 @@ export default class RelayBox {
     const refreshBufferSeconds = AUTH_TOKEN_REFRESH_BUFFER_SECONDS;
     const timeout = retryMs || (expiresIn - refreshBufferSeconds) * 1000;
 
+    if (!this.authAction && !this.authEndpoint) {
+      logger.logWarning('No authentication method provided');
+      return;
+    }
+
     this.refreshTimeout = setTimeout(async () => {
       try {
-        await this.handleAuthTokenConnect(true);
+        // await this.handleAuthTokenConnect(true);
+
+        if (this.authAction) {
+          await this.handleAuthActionConnect(true);
+        } else if (this.authEndpoint) {
+          await this.handleAuthTokenConnect(true);
+        }
       } catch (err) {
         const jitter =
           Math.floor(Math.random() * AUTH_TOKEN_REFRESH_JITTER_RANGE_MS) +
@@ -501,13 +522,16 @@ export default class RelayBox {
    * @throws Will throw an error if room creation fails.
    */
   async join(roomId: string): Promise<Room> {
+    const getTokenResponse = () => this.tokenResponse;
+
     const room = new Room(
       roomId,
       this.socketManager,
       this.presenceFactory,
       this.metricsFactory,
       this.historyFactory,
-      this.httpServiceUrl
+      this.httpServiceUrl,
+      getTokenResponse
     );
 
     try {
