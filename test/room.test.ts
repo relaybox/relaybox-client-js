@@ -4,11 +4,12 @@ import { SocketManager } from '../lib/socket-manager';
 import { HistoryFactory, PresenceFactory } from '../lib/factory';
 import { MetricsFactory } from '../lib/factory';
 import { ClientEvent } from '../lib/types/event.types';
-import { mock } from 'node:test';
 
 const mockCoreServiceUrl = process.env.CORE_SERVICE_URL || '';
+const mockHttpServiceUrl = process.env.HTTP_SERVICE_URL || '';
 const mockRoomId = 'roomId123';
 const mockEvent = 'mock:event';
+const mockAuthToken = 'eyJhbGc.eyJrZXlOYW1lIjoiRz:5hg9z5Gd4YI9jSw1Y66gz6q';
 
 const socketManagerOn = vi.fn();
 const socketManagerOff = vi.fn();
@@ -59,8 +60,17 @@ describe('Room', () => {
     presenceFactory = new PresenceFactory();
     metricsFactory = new MetricsFactory();
     historyFactory = new HistoryFactory();
+    const getAuthToken = () => mockAuthToken;
 
-    room = new Room(mockRoomId, socketManager, presenceFactory, metricsFactory, historyFactory);
+    room = new Room(
+      mockRoomId,
+      socketManager,
+      presenceFactory,
+      metricsFactory,
+      historyFactory,
+      mockHttpServiceUrl,
+      getAuthToken
+    );
   });
 
   afterEach(() => {
