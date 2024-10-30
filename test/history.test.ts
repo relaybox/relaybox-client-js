@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
 import { History } from '../lib/history';
 import {
   getMockHistoryResponse,
@@ -159,22 +159,24 @@ describe('History', () => {
     });
   });
 
-  describe.only('v2, http', () => {
+  describe.only('http service request', () => {
     const defaultHistoryOptions = {
       limit: 2
     };
 
     beforeAll(() => {
       server.use(
-        http.get<never, any, any>(
-          `${mockHttpServiceUrl}/history/${mockRoomId}/messages`,
-          async ({ request }) => {
-            console.log('here');
-            return HttpResponse.json(getMockHistoryResponse());
-            return getMockApiErrorResponse();
-          }
-        )
+        http.get(`${mockHttpServiceUrl}/history/${mockRoomId}/messages`, async ({ request }) => {
+          return HttpResponse.json(getMockHistoryResponse(2));
+        })
       );
+
+      server.listen();
+    });
+
+    afterAll(() => {
+      server.close();
+      vi.restoreAllMocks();
     });
 
     beforeEach(() => {

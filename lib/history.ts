@@ -150,9 +150,9 @@ export class History {
     logger.logInfo(`Fetching message history for room "${this.roomId}" (https)`);
 
     try {
-      const queryParams = this.getHistoryQueryParams(start, end, offset, limit);
+      const queryParams = this.getHistoryQueryParams(start, end, offset, limit, order);
       const queryString = new URLSearchParams(queryParams).toString();
-      const requestUrl = `${this.httpServiceUrl}/${HISTORY_SERVICE_PATHNAME}/${this.roomId}/messages?${queryString}`;
+      const requestUrl = `${this.httpServiceUrl}${HISTORY_SERVICE_PATHNAME}/${this.roomId}/messages?${queryString}`;
 
       const params: RequestInit = {
         method: HttpMethod.GET,
@@ -162,7 +162,7 @@ export class History {
       const defaultHeaders = {
         Accept: 'application/json',
         'Content-Type': 'application/json',
-        Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiZmJjNjA4Mi03YzJhLTRhYjAtYWY5Yi0zMTdiZDk5MjQ4MjgiLCJwdWJsaWNLZXkiOiJiV1QydkxuVm12YUwuSUtpSTZpVGpOU1U4IiwiY2xpZW50SWQiOiJTQXRRZEYzN1dwc3UiLCJ0b2tlblR5cGUiOiJpZF90b2tlbiIsInRpbWVzdGFtcCI6IjIwMjQtMTAtMzBUMTE6NDc6MzMuMTU3WiIsImlhdCI6MTczMDI4ODg1MywiZXhwIjoxNzMwMjkyNDUzLCJpc3MiOiJodHRwczovL3JlbGF5Ym94Lm5ldCJ9.9wjSl0NnHbL1bKPNeNRyTkJ2w9UmChjsv95yWY9_nu4`
+        Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiZmJjNjA4Mi03YzJhLTRhYjAtYWY5Yi0zMTdiZDk5MjQ4MjgiLCJwdWJsaWNLZXkiOiJiV1QydkxuVm12YUwuSUtpSTZpVGpOU1U4IiwiY2xpZW50SWQiOiJTQXRRZEYzN1dwc3UiLCJ0b2tlblR5cGUiOiJpZF90b2tlbiIsInRpbWVzdGFtcCI6IjIwMjQtMTAtMzBUMTM6MDI6MDEuMzczWiIsImlhdCI6MTczMDI5MzMyMSwiZXhwIjoxNzMwMjk2OTIxLCJpc3MiOiJodHRwczovL3JlbGF5Ym94Lm5ldCJ9.SdqPjKLexOVJA71np9F3x3_S9w65e24EeMseb86QkSo`
       };
 
       params.headers = {
@@ -180,7 +180,13 @@ export class History {
     }
   }
 
-  getHistoryQueryParams(start?: number, end?: number, offset?: number, limit?: number) {
+  getHistoryQueryParams(
+    start?: number,
+    end?: number,
+    offset?: number,
+    limit?: number,
+    order?: HistoryOrder
+  ) {
     const queryParams: Record<string, string> = {};
 
     if (start) {
@@ -197,6 +203,10 @@ export class History {
 
     if (limit) {
       queryParams[HistoryQueryParam.LIMIT] = limit.toString();
+    }
+
+    if (order) {
+      queryParams[HistoryQueryParam.ORDER] = order;
     }
 
     return queryParams;

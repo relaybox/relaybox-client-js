@@ -1,3 +1,5 @@
+import { faker } from '@faker-js/faker';
+
 export const mockHistoryResponse = {
   messages: [
     {
@@ -24,33 +26,23 @@ export const mockHistoryNextResponse = {
 
 export function getMockHistoryMessage() {
   return {
-    id: 'd8148d81-3139-4ffc-b353-68a24b6afaec',
-    body: {
-      message: '3'
-    },
+    id: faker.string.uuid(),
+    body: {},
     sender: {
-      clientId: 'CitCsVzOsNMi',
-      connectionId: 'bWT2vLnVmvaL:IF96unfsKo4-',
-      user: {
-        id: '5d84bd63-da65-4f15-854c-7d8387db2bdf',
-        clientId: 'CitCsVzOsNMi',
-        createdAt: '2024-10-17T09:34:28.798829',
-        username: 'KeyCrayfish580',
-        isOnline: true,
-        lastOnline: '2024-10-30T10:31:56.091',
-        blockedAt: null,
-        firstName: null,
-        lastName: null
-      }
+      clientId: faker.string.alphanumeric(12),
+      connectionId: `${faker.string.alphanumeric(12)}:${faker.string.alphanumeric(12)}`,
+      user: {}
     },
-    timestamp: 1730212184585,
+    timestamp: Date.now(),
     event: 'custom'
   };
 }
 
-export function getMockHistoryResponse() {
+export function getMockHistoryResponse(count: number = 1) {
+  const data = Array.from({ length: count }, () => getMockHistoryMessage());
+
   return {
     count: 2,
-    data: [getMockHistoryMessage()]
+    data
   };
 }
