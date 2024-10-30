@@ -12,6 +12,16 @@ export interface HistoryGetOptions {
   order?: HistoryOrder;
 }
 
+export interface HistoryGetOptionsV2 {
+  start?: number;
+  end?: number;
+  offset?: number;
+  limit?: number;
+  seconds?: number;
+  items?: number;
+  order?: HistoryOrder;
+}
+
 export interface HistoryResponse {
   messages: ClientMessage[];
   nextPageToken: string | null;
@@ -23,10 +33,16 @@ export interface HistoryClientResponse {
   next?: () => Promise<HistoryClientResponse> | HistoryClientResponse;
 }
 
+export interface PaginatedHistoryClientResponse {
+  count: number;
+  data: ClientMessage[];
+}
+
 export enum HistoryQueryParam {
   START = 'start',
   END = 'end',
   SECONDS = 'seconds',
+  OFFSET = 'offset',
   LIMIT = 'limit',
   ITEMS = 'items',
   ORDER = 'order',

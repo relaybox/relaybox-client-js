@@ -19,6 +19,7 @@ export class Room {
   private readonly metricsFactory: MetricsFactory;
   private readonly historyFactory: HistoryFactory;
   private readonly eventRegistry = new EventRegistry();
+  private readonly httpServiceUrl: string;
   private nspRoomId: string | null = null;
 
   public readonly id: string;
@@ -40,13 +41,15 @@ export class Room {
     socketManager: SocketManager,
     presencefactory: PresenceFactory,
     metricsFactory: MetricsFactory,
-    historyFactory: HistoryFactory
+    historyFactory: HistoryFactory,
+    httpServiceUrl: string
   ) {
     this.roomId = this.id = roomId;
     this.socketManager = socketManager;
     this.presenceFactory = presencefactory;
     this.metricsFactory = metricsFactory;
     this.historyFactory = historyFactory;
+    this.httpServiceUrl = httpServiceUrl;
   }
 
   /**
@@ -73,7 +76,12 @@ export class Room {
       );
 
       this.metrics = this.metricsFactory.createMetrics(this.socketManager, this.roomId);
-      this.history = this.historyFactory.createHistory(this.socketManager, this.nspRoomId);
+      this.history = this.historyFactory.createHistory(
+        this.socketManager,
+        this.nspRoomId,
+        this.roomId,
+        this.httpServiceUrl
+      );
 
       return this;
     } catch (err: any) {

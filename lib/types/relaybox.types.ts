@@ -28,6 +28,8 @@ export interface OfflineOptions {
    * Defaults to wss://gnet.prod.relaybox-services.net
    */
   coreServiceUrl?: string | null;
+
+  httpServiceUrl?: string | null;
 }
 
 export interface RelayBoxOptions {

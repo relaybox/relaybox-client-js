@@ -1,12 +1,21 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
 import { History } from '../lib/history';
-import { mockHistoryNextResponse, mockHistoryResponse } from './mock/history.mock';
+import {
+  getMockHistoryResponse,
+  mockHistoryNextResponse,
+  mockHistoryResponse
+} from './mock/history.mock';
 import { SocketManager } from '../lib/socket-manager';
 import { ClientEvent } from '../lib/types/event.types';
-import { mock } from 'node:test';
+import { setupServer } from 'msw/node';
+import { http, HttpResponse } from 'msw';
 
 const mockCoreServiceUrl = process.env.CORE_SERVICE_URL || '';
+const mockHttpServiceUrl = process.env.HTTP_SERVICE_URL || '';
 const mockNspRoomid = 'ewRnbOj5f2yR:config';
+const mockRoomId = 'config';
+
+const server = setupServer();
 
 vi.mock('../lib/logger', () => ({
   logger: {
@@ -23,13 +32,20 @@ vi.mock('../lib/socket-manager', () => ({
   }))
 }));
 
+function getMockApiErrorResponse() {
+  return HttpResponse.json(
+    { name: 'Error', message: 'failed', data: { schema: false } },
+    { status: 400 }
+  );
+}
+
 describe('History', () => {
   let history: History;
   let socketManager: SocketManager;
 
   beforeEach(() => {
     socketManager = new SocketManager(mockCoreServiceUrl);
-    history = new History(socketManager, mockNspRoomid);
+    history = new History(socketManager, mockNspRoomid, mockRoomId);
   });
 
   afterEach(() => {
@@ -139,6 +155,37 @@ describe('History', () => {
             `history.next() called before history.get()`
           );
         });
+      });
+    });
+  });
+
+  describe.only('v2, http', () => {
+    const defaultHistoryOptions = {
+      limit: 2
+    };
+
+    beforeAll(() => {
+      server.use(
+        http.get<never, any, any>(
+          `${mockHttpServiceUrl}/history/${mockRoomId}/messages`,
+          async ({ request }) => {
+            console.log('here');
+            return HttpResponse.json(getMockHistoryResponse());
+            return getMockApiErrorResponse();
+          }
+        )
+      );
+    });
+
+    beforeEach(() => {
+      socketManager = {} as SocketManager;
+      history = new History(socketManager, mockNspRoomid, mockRoomId, mockHttpServiceUrl);
+    });
+
+    describe('get()', () => {
+      it('should sucessfullt fetch history for a given room', async () => {
+        const response = await history.get(defaultHistoryOptions);
+        console.log(response);
       });
     });
   });

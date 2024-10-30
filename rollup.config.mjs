@@ -32,6 +32,7 @@ export default {
     replace({
       'process.env.CORE_SERVICE_URL': JSON.stringify(process.env.CORE_SERVICE_URL),
       'process.env.AUTH_SERVICE_URL': JSON.stringify(process.env.AUTH_SERVICE_URL),
+      'process.env.HTTP_SERVICE_URL': JSON.stringify(process.env.HTTP_SERVICE_URL),
       preventAssignment: true
     }),
     terser({

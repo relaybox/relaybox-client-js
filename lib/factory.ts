@@ -17,7 +17,12 @@ export class MetricsFactory {
 }
 
 export class HistoryFactory {
-  createHistory(socketManager: SocketManager, nspRoomId: string): History {
-    return new History(socketManager, nspRoomId);
+  createHistory(
+    socketManager: SocketManager,
+    nspRoomId: string,
+    roomId: string,
+    httpServiceUrl: string
+  ): History {
+    return new History(socketManager, nspRoomId, roomId, httpServiceUrl);
   }
 }

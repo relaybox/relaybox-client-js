@@ -2,21 +2,29 @@ import { logger } from './logger';
 import {
   HistoryClientResponse,
   HistoryGetOptions,
+  HistoryGetOptionsV2,
   HistoryOrder,
-  HistoryResponse
+  HistoryQueryParam,
+  HistoryResponse,
+  PaginatedHistoryClientResponse
 } from './types/history.types';
 import { ValidationError } from './errors';
 import { SocketManager } from './socket-manager';
 import { ClientEvent } from './types/event.types';
+import { HttpMethod, HttpMode } from './types';
+import { serviceRequest } from './request';
 
 const HISTORY_MAX_REQUEST_LIMIT = 100;
+const HISTORY_SERVICE_PATHNAME = '/history';
 
 /**
  * The History class handles fetching message history for a specific room.
  */
 export class History {
   private readonly nspRoomId: string;
+  private readonly roomId: string;
   private readonly socketManager: SocketManager;
+  private readonly httpServiceUrl: string;
   private start?: number;
   private end?: number;
   private seconds?: number;
@@ -32,9 +40,16 @@ export class History {
    * @param {SocketManager} socketManager - The socket manager to handle socket connections.
    * @param {string} nspRoomId - The ID of the room for which metrics are being managed.
    */
-  constructor(socketManager: SocketManager, nspRoomId: string) {
+  constructor(
+    socketManager: SocketManager,
+    nspRoomId: string,
+    roomId: string,
+    httpServiceUrl: string
+  ) {
     this.socketManager = socketManager;
     this.nspRoomId = nspRoomId;
+    this.roomId = roomId;
+    this.httpServiceUrl = httpServiceUrl;
   }
 
   /**
@@ -44,7 +59,7 @@ export class History {
    * @returns {Promise<HistoryClientResponse>} - A promise that resolves to a list of items with associated iterator method.
    * @throws {Error} - Throws an error if the request fails.
    */
-  async get(opts?: HistoryGetOptions, nextPageToken?: string): Promise<HistoryClientResponse> {
+  async _get(opts?: HistoryGetOptions, nextPageToken?: string): Promise<HistoryClientResponse> {
     const { start, end, seconds, limit, https, items, order } = opts || {};
 
     this.start = start;
@@ -56,6 +71,29 @@ export class History {
     this.iterationInProgress = true;
 
     return this.getHistoryWs(start, end, seconds, limit, items, order, nextPageToken);
+  }
+
+  /**
+   * Fetches message history for the specified room.
+   * @param {HistoryGetOptions} opts - The options for fetching history, including the number of seconds and the limit.
+   * @param {string} [nextPageToken] - The token for fetching the next page of results, if available.
+   * @returns {Promise<HistoryClientResponse>} - A promise that resolves to a list of items with associated iterator method.
+   * @throws {Error} - Throws an error if the request fails.
+   */
+  async get(
+    opts?: HistoryGetOptionsV2,
+    nextPageToken?: string
+  ): Promise<PaginatedHistoryClientResponse> {
+    const { start, end, offset, limit, seconds, order } = opts || {};
+
+    this.start = start;
+    this.end = end;
+    this.seconds = seconds;
+    this.limit = limit ?? HISTORY_MAX_REQUEST_LIMIT;
+    this.order = order;
+    this.iterationInProgress = true;
+
+    return this.getHistoryHttps(start, end, offset, limit, order);
   }
 
   /**
@@ -102,13 +140,75 @@ export class History {
     }
   }
 
+  private async getHistoryHttps(
+    start?: number,
+    end?: number,
+    offset?: number,
+    limit?: number,
+    order?: HistoryOrder
+  ): Promise<PaginatedHistoryClientResponse> {
+    logger.logInfo(`Fetching message history for room "${this.roomId}" (https)`);
+
+    try {
+      const queryParams = this.getHistoryQueryParams(start, end, offset, limit);
+      const queryString = new URLSearchParams(queryParams).toString();
+      const requestUrl = `${this.httpServiceUrl}/${HISTORY_SERVICE_PATHNAME}/${this.roomId}/messages?${queryString}`;
+
+      const params: RequestInit = {
+        method: HttpMethod.GET,
+        mode: HttpMode.CORS
+      };
+
+      const defaultHeaders = {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiZmJjNjA4Mi03YzJhLTRhYjAtYWY5Yi0zMTdiZDk5MjQ4MjgiLCJwdWJsaWNLZXkiOiJiV1QydkxuVm12YUwuSUtpSTZpVGpOU1U4IiwiY2xpZW50SWQiOiJTQXRRZEYzN1dwc3UiLCJ0b2tlblR5cGUiOiJpZF90b2tlbiIsInRpbWVzdGFtcCI6IjIwMjQtMTAtMzBUMTE6NDc6MzMuMTU3WiIsImlhdCI6MTczMDI4ODg1MywiZXhwIjoxNzMwMjkyNDUzLCJpc3MiOiJodHRwczovL3JlbGF5Ym94Lm5ldCJ9.9wjSl0NnHbL1bKPNeNRyTkJ2w9UmChjsv95yWY9_nu4`
+      };
+
+      params.headers = {
+        ...defaultHeaders,
+        ...(params?.headers || {})
+      };
+
+      const response = await serviceRequest<PaginatedHistoryClientResponse>(requestUrl, params);
+
+      return response;
+    } catch (err: any) {
+      const message = `Error getting message history for "${this.roomId}"`;
+      logger.logError(message, err);
+      throw new Error(message);
+    }
+  }
+
+  getHistoryQueryParams(start?: number, end?: number, offset?: number, limit?: number) {
+    const queryParams: Record<string, string> = {};
+
+    if (start) {
+      queryParams[HistoryQueryParam.START] = start.toString();
+    }
+
+    if (end) {
+      queryParams[HistoryQueryParam.END] = end.toString();
+    }
+
+    if (offset) {
+      queryParams[HistoryQueryParam.OFFSET] = offset.toString();
+    }
+
+    if (limit) {
+      queryParams[HistoryQueryParam.LIMIT] = limit.toString();
+    }
+
+    return queryParams;
+  }
+
   /**
    * Fetches the next page of message history for the specified room.
    * @returns {Promise<HistoryClientResponse>} - A promise that resolves to a list of items with associated iterator method.
    * @throws {ValidationError} - Throws a ValidationError if called before `get()`
    * @throws {Error} - Throws an error if the request fails.
    */
-  async next(): Promise<HistoryClientResponse> {
+  async next(): Promise<any> {
     if (!this.iterationInProgress) {
       throw new ValidationError('history.next() called before history.get()');
     }

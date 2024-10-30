@@ -41,6 +41,7 @@ import { TokenResponse } from './types/request.types';
 import { Auth } from './auth';
 
 const CORE_SERVICE_URL = process.env.CORE_SERVICE_URL || '';
+const HTTP_SERVICE_URL = process.env.HTTP_SERVICE_URL || '';
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || '';
 const SOCKET_CONNECTION_ACK_TIMEOUT_MS = 2000;
 const AUTH_TOKEN_REFRESH_BUFFER_SECONDS = 20;
@@ -54,6 +55,8 @@ const AUTH_TOKEN_LIFECYCLE_EXPIRY = 'expiry';
  */
 const DEFAULT_OFFLINE_AUTH_HOST = 'http://localhost';
 const DEFAULT_OFFLINE_AUTH_PATH = 'auth';
+const DEFAULT_OFFLINE_HTTP_HOST = 'http://localhost';
+const DEFAULT_OFFLINE_HTTP_PATH = 'core';
 const DEFAULT_OFFLINE_CORE_HOST = 'ws://localhost';
 const DEFAULT_OFFLINE_CORE_PATH = 'core';
 const DEFAULT_OFFLINE_PORT = 9000;
@@ -77,6 +80,7 @@ export default class RelayBox {
   private readonly authTokenLifeCycle?: AuthTokenLifeCycle = AUTH_TOKEN_LIFECYCLE_SESSION;
   private readonly authServiceUrl: string;
   private readonly coreServiceUrl: string;
+  private readonly httpServiceUrl: string;
   private socketManagerListeners: SocketManagerListener[] = [];
   private refreshTimeout: NodeJS.Timeout | number | null = null;
 
@@ -98,7 +102,9 @@ export default class RelayBox {
       );
     }
 
-    const { authServiceUrl, coreServiceUrl } = this.getOfflineServiceUrls(opts.offline);
+    const { authServiceUrl, coreServiceUrl, httpServiceUrl } = this.getOfflineServiceUrls(
+      opts.offline
+    );
 
     this.apiKey = opts.apiKey;
     this.publicKey = opts.publicKey;
@@ -107,6 +113,7 @@ export default class RelayBox {
     this.authAction = opts.authAction;
     this.authServiceUrl = authServiceUrl || AUTH_SERVICE_URL;
     this.coreServiceUrl = coreServiceUrl || CORE_SERVICE_URL;
+    this.httpServiceUrl = httpServiceUrl || HTTP_SERVICE_URL;
     this.socketManager = new SocketManager(this.coreServiceUrl);
     this.presenceFactory = new PresenceFactory();
     this.metricsFactory = new MetricsFactory();
@@ -132,9 +139,11 @@ export default class RelayBox {
     enabled = false,
     port = 0,
     authServiceUrl = null,
-    coreServiceUrl = null
+    coreServiceUrl = null,
+    httpServiceUrl = null
   }: OfflineOptions = {}): {
     authServiceUrl: string | null;
+    httpServiceUrl: string | null;
     coreServiceUrl: string | null;
   } {
     if (enabled || port || authServiceUrl || coreServiceUrl) {
@@ -144,11 +153,17 @@ export default class RelayBox {
         authServiceUrl:
           authServiceUrl ?? `${DEFAULT_OFFLINE_AUTH_HOST}:${port}/${DEFAULT_OFFLINE_AUTH_PATH}`,
         coreServiceUrl:
-          coreServiceUrl ?? `${DEFAULT_OFFLINE_CORE_HOST}:${port}/${DEFAULT_OFFLINE_CORE_PATH}`
+          coreServiceUrl ?? `${DEFAULT_OFFLINE_CORE_HOST}:${port}/${DEFAULT_OFFLINE_CORE_PATH}`,
+        httpServiceUrl:
+          httpServiceUrl ?? `${DEFAULT_OFFLINE_HTTP_HOST}:${port}/${DEFAULT_OFFLINE_HTTP_PATH}`
       };
     }
 
-    return { authServiceUrl, coreServiceUrl };
+    return {
+      authServiceUrl,
+      coreServiceUrl,
+      httpServiceUrl
+    };
   }
 
   private createAuthInstance(
@@ -360,6 +375,8 @@ export default class RelayBox {
 
     const tokenResponse = this.auth.tokenResponse;
 
+    console.log(tokenResponse);
+
     if (!tokenResponse) {
       throw new TokenError(`No token response found`);
     }
@@ -489,7 +506,8 @@ export default class RelayBox {
       this.socketManager,
       this.presenceFactory,
       this.metricsFactory,
-      this.historyFactory
+      this.historyFactory,
+      this.httpServiceUrl
     );
 
     try {
