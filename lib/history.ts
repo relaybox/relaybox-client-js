@@ -8,10 +8,10 @@ import {
   HistoryResponse,
   PaginatedHistoryClientResponse
 } from './types/history.types';
-import { ValidationError } from './errors';
+import { TokenError, ValidationError } from './errors';
 import { SocketManager } from './socket-manager';
 import { ClientEvent } from './types/event.types';
-import { HttpMethod, HttpMode, TokenResponse } from './types';
+import { HttpMethod, HttpMode } from './types';
 import { serviceRequest } from './request';
 
 const HISTORY_MAX_REQUEST_LIMIT = 100;
@@ -143,6 +143,23 @@ export class History {
     }
   }
 
+  /**
+   * Fetches paginated message history for the room via HTTPS.
+   *
+   * Constructs and sends an HTTP GET request with the provided query
+   * parameters to retrieve message history. Requires an authentication token.
+   *
+   * @private
+   * @async
+   * @param {number} [start] - Start timestamp for messages.
+   * @param {number} [end] - End timestamp for messages.
+   * @param {number} [offset] - Pagination offset.
+   * @param {number} [limit] - Maximum number of messages to retrieve.
+   * @param {HistoryOrder} [order] - Sort order ('asc' or 'desc').
+   * @returns {Promise<PaginatedHistoryClientResponse>} Resolves with paginated message history.
+   * @throws {TokenError} If no authentication token is provided.
+   * @throws {Error} On request failure.
+   */
   private async getHistoryHttps(
     start?: number,
     end?: number,
@@ -164,15 +181,14 @@ export class History {
 
       const authToken = this.getAuthToken();
 
-      const defaultHeaders = {
+      if (!authToken) {
+        throw new TokenError('No authentication token provided');
+      }
+
+      params.headers = {
         Accept: 'application/json',
         'Content-Type': 'application/json',
         Authorization: `Bearer ${authToken}`
-      };
-
-      params.headers = {
-        ...defaultHeaders,
-        ...(params?.headers || {})
       };
 
       const response = await serviceRequest<PaginatedHistoryClientResponse>(requestUrl, params);
@@ -181,11 +197,25 @@ export class History {
     } catch (err: any) {
       const message = `Error getting message history for "${this.roomId}"`;
       logger.logError(message, err);
-      throw new Error(message);
+      throw err;
     }
   }
 
-  getHistoryQueryParams(
+  /**
+   * Builds query parameters for message history requests.
+   *
+   * Returns an object with non-undefined values for filtering messages
+   * by start/end timestamps, pagination, and sort order.
+   *
+   * @private
+   * @param {number} [start] - Start timestamp for filtering messages.
+   * @param {number} [end] - End timestamp for filtering messages.
+   * @param {number} [offset] - Pagination offset.
+   * @param {number} [limit] - Maximum number of messages to retrieve.
+   * @param {HistoryOrder} [order] - Sort order ('asc' or 'desc').
+   * @returns {Record<string, string>} Query parameters object.
+   */
+  private getHistoryQueryParams(
     start?: number,
     end?: number,
     offset?: number,
