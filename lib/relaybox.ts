@@ -48,7 +48,6 @@ const AUTH_TOKEN_REFRESH_BUFFER_SECONDS = 20;
 const AUTH_TOKEN_REFRESH_RETRY_MS = 10000;
 const AUTH_TOKEN_REFRESH_JITTER_RANGE_MS = 2000;
 const AUTH_TOKEN_LIFECYCLE_SESSION = 'session';
-// const AUTH_TOKEN_LIFECYCLE_EXPIRY = 'expiry';
 
 /**
  * Offline defaults
@@ -137,7 +136,9 @@ export default class RelayBox {
   }
 
   /**
-   * Retrieves the current authentication token from the session, if available.
+   * Retrieves the current authentication token from either...
+   * a) Auth service session if exists
+   * b) Token response from auth endpoint or auth action
    *
    * @returns {string | null} The authentication token or null if not authenticated.
    */
