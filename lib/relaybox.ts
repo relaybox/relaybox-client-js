@@ -36,7 +36,7 @@ import { logger } from './logger';
 import { PresenceFactory, MetricsFactory, HistoryFactory } from './factory';
 import { SocketConnectionError, TokenError, ValidationError } from './errors';
 import { SocketManager } from './socket-manager';
-import { AuthKeyData, AuthRequestOptions, AuthTokenLifeCycle } from './types/auth.types';
+import { AuthKeyData, AuthRequestOptions } from './types/auth.types';
 import { TokenResponse } from './types/request.types';
 import { Auth } from './auth';
 
@@ -47,7 +47,6 @@ const SOCKET_CONNECTION_ACK_TIMEOUT_MS = 2000;
 const AUTH_TOKEN_REFRESH_BUFFER_SECONDS = 20;
 const AUTH_TOKEN_REFRESH_RETRY_MS = 10000;
 const AUTH_TOKEN_REFRESH_JITTER_RANGE_MS = 2000;
-const AUTH_TOKEN_LIFECYCLE_SESSION = 'session';
 
 /**
  * Offline defaults
@@ -76,7 +75,6 @@ export default class RelayBox {
   private readonly authAction?: (params?: any) => Promise<TokenResponse | undefined>;
   private readonly apiKey?: string;
   private readonly publicKey?: string;
-  private readonly authTokenLifeCycle?: AuthTokenLifeCycle = AUTH_TOKEN_LIFECYCLE_SESSION;
   private readonly authServiceUrl: string;
   private readonly coreServiceUrl: string;
   private readonly httpServiceUrl: string;
@@ -123,7 +121,6 @@ export default class RelayBox {
       typeof opts.authHeaders === 'function' ? opts.authHeaders() : opts.authHeaders;
     this.authParams = typeof opts.authParams === 'function' ? opts.authParams() : opts.authParams;
     this.authRequestOptions = opts.authRequestOptions;
-    this.authTokenLifeCycle = opts.authTokenLifeCycle;
     this.isConnected = false;
 
     this.auth = this.createAuthInstance(

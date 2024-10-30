@@ -1,16 +1,12 @@
 import { logger } from './logger';
 import {
-  HistoryClientResponse,
-  HistoryGetOptions,
   HistoryGetOptionsV2,
   HistoryOrder,
   HistoryQueryParam,
-  HistoryResponse,
   PaginatedHistoryClientResponse
 } from './types/history.types';
-import { TokenError, ValidationError } from './errors';
+import { TokenError } from './errors';
 import { SocketManager } from './socket-manager';
-import { ClientEvent } from './types/event.types';
 import { HttpMethod, HttpMode } from './types';
 import { serviceRequest } from './request';
 
@@ -62,27 +58,6 @@ export class History {
    * @returns {Promise<HistoryClientResponse>} - A promise that resolves to a list of items with associated iterator method.
    * @throws {Error} - Throws an error if the request fails.
    */
-  async _get(opts?: HistoryGetOptions, nextPageToken?: string): Promise<HistoryClientResponse> {
-    const { start, end, seconds, limit, https, items, order } = opts || {};
-
-    this.start = start;
-    this.end = end;
-    this.seconds = seconds;
-    this.limit = limit ?? HISTORY_MAX_REQUEST_LIMIT;
-    this.order = order;
-    this.https = https;
-    this.iterationInProgress = true;
-
-    return this.getHistoryWs(start, end, seconds, limit, items, order, nextPageToken);
-  }
-
-  /**
-   * Fetches message history for the specified room.
-   * @param {HistoryGetOptions} opts - The options for fetching history, including the number of seconds and the limit.
-   * @param {string} [nextPageToken] - The token for fetching the next page of results, if available.
-   * @returns {Promise<HistoryClientResponse>} - A promise that resolves to a list of items with associated iterator method.
-   * @throws {Error} - Throws an error if the request fails.
-   */
   async get(
     opts?: HistoryGetOptionsV2,
     nextPageToken?: string
@@ -97,50 +72,6 @@ export class History {
     this.iterationInProgress = true;
 
     return this.getHistoryHttps(start, end, offset, limit, order);
-  }
-
-  /**
-   * Fetches message history using WebSocket communication.
-   * @param {number} [seconds] - The number of seconds of history to retrieve.
-   * @param {number} [limit] - The maximum number of messages to retrieve.
-   * @param {string} [nextPageToken] - The token for fetching the next page of results, if available.
-   * @returns {Promise<HistoryClientResponse>} - A promise that resolves to a list of items with associated iterator method.
-   * @throws {Error} - Throws an error if the request fails.
-   */
-  private async getHistoryWs(
-    start?: number,
-    end?: number,
-    seconds?: number,
-    limit?: number,
-    items?: number,
-    order?: HistoryOrder,
-    nextPageToken?: string
-  ): Promise<HistoryClientResponse> {
-    logger.logInfo(`Fetching message history for room "${this.nspRoomId}" (ws)`);
-
-    try {
-      const historyRequestData = {
-        nspRoomId: this.nspRoomId,
-        start,
-        end,
-        seconds,
-        limit,
-        items,
-        nextPageToken,
-        order
-      };
-
-      const historyResponseData = await this.socketManager.emitWithAck<HistoryResponse>(
-        ClientEvent.ROOM_HISTORY_GET,
-        historyRequestData
-      );
-
-      return this.handleHistoryResponse(historyResponseData);
-    } catch (err: any) {
-      const message = `Error getting message history for "${this.nspRoomId}"`;
-      logger.logError(message, err);
-      throw new Error(message);
-    }
   }
 
   /**
@@ -245,68 +176,5 @@ export class History {
     }
 
     return queryParams;
-  }
-
-  /**
-   * Fetches the next page of message history for the specified room.
-   * @returns {Promise<HistoryClientResponse>} - A promise that resolves to a list of items with associated iterator method.
-   * @throws {ValidationError} - Throws a ValidationError if called before `get()`
-   * @throws {Error} - Throws an error if the request fails.
-   */
-  async next(): Promise<any> {
-    if (!this.iterationInProgress) {
-      throw new ValidationError('history.next() called before history.get()');
-    }
-
-    if (!this.nextPageToken) {
-      return this.handleHistoryResponse();
-    }
-
-    logger.logInfo(
-      `Fetching next page of message history for room "${this.nspRoomId}" (${
-        this.https ? 'https' : 'ws'
-      })`
-    );
-
-    const historyOptions = {
-      seconds: this.seconds,
-      start: this.start,
-      end: this.end,
-      limit: this.limit,
-      https: this.https,
-      order: this.order,
-      items: this.itemsRemaining
-    };
-
-    return this.get(historyOptions, this.nextPageToken);
-  }
-
-  /**
-   * Handles the response from a history request.
-   * @param {HistoryResponse} [historyResponseData] - The data returned from the history request.
-   * @returns {ClientMessage[]} - An array of client messages extracted from the history response.
-   */
-  private handleHistoryResponse(historyResponseData?: HistoryResponse): HistoryClientResponse {
-    this.nextPageToken = null;
-    this.itemsRemaining = undefined;
-
-    const historyClientResponse: HistoryClientResponse = {
-      items: []
-    };
-
-    if (historyResponseData) {
-      const { messages, nextPageToken, itemsRemaining } = historyResponseData;
-
-      historyClientResponse.items = messages || [];
-
-      if (nextPageToken) {
-        historyClientResponse.next = this.next.bind(this);
-        this.nextPageToken = nextPageToken;
-      }
-
-      this.itemsRemaining = itemsRemaining;
-    }
-
-    return historyClientResponse;
   }
 }

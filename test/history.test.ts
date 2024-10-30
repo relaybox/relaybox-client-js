@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from 'vitest';
 import { History } from '../lib/history';
 import { getMockHistoryResponse } from './mock/history.mock';
 import { SocketManager } from '../lib/socket-manager';
