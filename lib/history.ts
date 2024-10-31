@@ -21,15 +21,13 @@ export class History {
   private readonly roomId: string;
   private readonly socketManager: SocketManager;
   private readonly httpServiceUrl: string;
+  private offset?: number;
+  private limit?: number;
   private start?: number;
   private end?: number;
-  private seconds?: number;
-  private limit?: number;
   private order?: HistoryOrder;
   private https?: boolean;
   private nextPageToken: string | null = null;
-  private itemsRemaining?: number;
-  private iterationInProgress: boolean = false;
   private getAuthToken: () => string | null;
 
   /**
@@ -62,16 +60,15 @@ export class History {
     opts?: HistoryGetOptionsV2,
     nextPageToken?: string
   ): Promise<PaginatedHistoryClientResponse> {
-    const { start, end, offset, limit, seconds, order } = opts || {};
+    const { offset, limit, start, end, order } = opts || {};
 
+    this.offset = offset;
+    this.limit = limit ?? HISTORY_MAX_REQUEST_LIMIT;
     this.start = start;
     this.end = end;
-    this.seconds = seconds;
-    this.limit = limit ?? HISTORY_MAX_REQUEST_LIMIT;
     this.order = order;
-    this.iterationInProgress = true;
 
-    return this.getHistoryHttps(start, end, offset, limit, order);
+    return this.getHistoryHttps(offset, limit, start, end, order);
   }
 
   /**
@@ -82,27 +79,28 @@ export class History {
    *
    * @private
    * @async
-   * @param {number} [start] - Start timestamp for messages.
-   * @param {number} [end] - End timestamp for messages.
    * @param {number} [offset] - Pagination offset.
    * @param {number} [limit] - Maximum number of messages to retrieve.
+   * @param {number} [start] - Start timestamp for messages.
+   * @param {number} [end] - End timestamp for messages.
    * @param {HistoryOrder} [order] - Sort order ('asc' or 'desc').
    * @returns {Promise<PaginatedHistoryClientResponse>} Resolves with paginated message history.
    * @throws {TokenError} If no authentication token is provided.
    * @throws {Error} On request failure.
    */
   private async getHistoryHttps(
-    start?: number,
-    end?: number,
     offset?: number,
     limit?: number,
+    start?: number,
+    end?: number,
     order?: HistoryOrder
   ): Promise<PaginatedHistoryClientResponse> {
     logger.logInfo(`Fetching message history for room "${this.roomId}" (https)`);
 
     try {
-      const queryParams = this.getHistoryQueryParams(start, end, offset, limit, order);
+      const queryParams = this.getHistoryQueryParams(offset, limit, start, end, order);
       const queryString = new URLSearchParams(queryParams).toString();
+      console.log(queryString);
       const requestUrl = `${this.httpServiceUrl}${HISTORY_SERVICE_PATHNAME}/${this.roomId}/messages?${queryString}`;
 
       const params: RequestInit = {
@@ -139,29 +137,21 @@ export class History {
    * by start/end timestamps, pagination, and sort order.
    *
    * @private
-   * @param {number} [start] - Start timestamp for filtering messages.
-   * @param {number} [end] - End timestamp for filtering messages.
    * @param {number} [offset] - Pagination offset.
    * @param {number} [limit] - Maximum number of messages to retrieve.
+   * @param {number} [start] - Start timestamp for filtering messages.
+   * @param {number} [end] - End timestamp for filtering messages.
    * @param {HistoryOrder} [order] - Sort order ('asc' or 'desc').
    * @returns {Record<string, string>} Query parameters object.
    */
   private getHistoryQueryParams(
-    start?: number,
-    end?: number,
     offset?: number,
     limit?: number,
+    start?: number,
+    end?: number,
     order?: HistoryOrder
-  ) {
+  ): Record<string, string> {
     const queryParams: Record<string, string> = {};
-
-    if (start) {
-      queryParams[HistoryQueryParam.START] = start.toString();
-    }
-
-    if (end) {
-      queryParams[HistoryQueryParam.END] = end.toString();
-    }
 
     if (offset) {
       queryParams[HistoryQueryParam.OFFSET] = offset.toString();
@@ -169,6 +159,14 @@ export class History {
 
     if (limit) {
       queryParams[HistoryQueryParam.LIMIT] = limit.toString();
+    }
+
+    if (start) {
+      queryParams[HistoryQueryParam.START] = start.toString();
+    }
+
+    if (end) {
+      queryParams[HistoryQueryParam.END] = end.toString();
     }
 
     if (order) {

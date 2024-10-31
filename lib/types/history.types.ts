@@ -13,12 +13,10 @@ export interface HistoryGetOptions {
 }
 
 export interface HistoryGetOptionsV2 {
-  start?: number;
-  end?: number;
   offset?: number;
   limit?: number;
-  seconds?: number;
-  items?: number;
+  start?: number;
+  end?: number;
   order?: HistoryOrder;
 }
 
