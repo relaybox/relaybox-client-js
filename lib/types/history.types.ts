@@ -3,16 +3,6 @@ import { ClientMessage } from './message.types';
 export type HistoryOrder = 'asc' | 'desc';
 
 export interface HistoryGetOptions {
-  start?: number;
-  end?: number;
-  seconds?: number;
-  limit?: number;
-  https?: boolean;
-  items?: number;
-  order?: HistoryOrder;
-}
-
-export interface HistoryGetOptionsV2 {
   offset?: number;
   limit?: number;
   start?: number;
@@ -28,12 +18,12 @@ export interface HistoryResponse {
 
 export interface HistoryClientResponse {
   items: ClientMessage[];
-  next?: () => Promise<HistoryClientResponse> | HistoryClientResponse;
+  next: (() => Promise<HistoryClientResponse>) | null;
 }
 
 export interface PaginatedHistoryClientResponse {
-  count: number;
-  data: ClientMessage[];
+  items: ClientMessage[];
+  nextPageToken: string | null;
 }
 
 export enum HistoryQueryParam {

@@ -82,8 +82,6 @@ export class Room {
 
       this.metrics = this.metricsFactory.createMetrics(this.socketManager, this.roomId);
       this.history = this.historyFactory.createHistory(
-        this.socketManager,
-        this.nspRoomId,
         this.roomId,
         this.httpServiceUrl,
         this.getAuthToken

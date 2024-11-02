@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker';
+import { PaginatedHistoryClientResponse } from '../../lib/types/history.types';
 
 export const mockHistoryResponse = {
   messages: [
@@ -38,11 +39,11 @@ export function getMockHistoryMessage() {
   };
 }
 
-export function getMockHistoryResponse(count: number = 1) {
-  const data = Array.from({ length: count }, () => getMockHistoryMessage());
+export function getMockHistoryResponse(count: number = 1): PaginatedHistoryClientResponse {
+  const items = Array.from({ length: count }, () => getMockHistoryMessage());
 
   return {
-    count: 2,
-    data
+    items,
+    nextPageToken: 'abc'
   };
 }
