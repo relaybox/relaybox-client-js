@@ -53,6 +53,7 @@ jobs:
         run: |
           touch .env
           echo "CORE_SERVICE_URL=${{ vars.CORE_SERVICE_URL }}" >> .env
+          echo "HTTP_SERVICE_URL=${{ vars.HTTP_SERVICE_URL }}" >> .env
           echo "AUTH_SERVICE_URL=${{ vars.AUTH_SERVICE_URL }}" >> .env
           echo "NODE_ENV=${{ vars.NODE_ENV }}" >> .env
           cat .env
