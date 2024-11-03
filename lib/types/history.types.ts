@@ -13,7 +13,6 @@ export interface HistoryGetOptions {
 export interface HistoryResponse {
   messages: ClientMessage[];
   nextPageToken: string | null;
-  itemsRemaining?: number;
 }
 
 export interface HistoryClientResponse {
