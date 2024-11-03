@@ -43,7 +43,7 @@ export class History {
   }
 
   /**
-   * Fetches message history for the specified room.
+   * Fetches next iteration of message history for the specified room using internally stored nextPageToken.
    * @returns {Promise<HistoryClientResponse>} - A promise that resolves to a list of items with associated iterator method.
    * @throws {Error} - Throws an error if the request fails.
    */
