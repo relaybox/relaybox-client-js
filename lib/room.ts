@@ -8,6 +8,8 @@ import { Metrics } from './metrics';
 import { History } from './history';
 import { EventRegistry } from './event-registry';
 import { SocketManager } from './socket-manager';
+import RelayBox from './relaybox';
+import { TokenResponse } from './types';
 
 /**
  * The Room class represents a room in a chat or messaging application.
@@ -19,7 +21,9 @@ export class Room {
   private readonly metricsFactory: MetricsFactory;
   private readonly historyFactory: HistoryFactory;
   private readonly eventRegistry = new EventRegistry();
+  private readonly httpServiceUrl: string;
   private nspRoomId: string | null = null;
+  private getAuthToken: () => string | null;
 
   public readonly id: string;
   public readonly roomId: string;
@@ -40,13 +44,17 @@ export class Room {
     socketManager: SocketManager,
     presencefactory: PresenceFactory,
     metricsFactory: MetricsFactory,
-    historyFactory: HistoryFactory
+    historyFactory: HistoryFactory,
+    httpServiceUrl: string,
+    getAuthToken: () => string | null
   ) {
     this.roomId = this.id = roomId;
     this.socketManager = socketManager;
     this.presenceFactory = presencefactory;
     this.metricsFactory = metricsFactory;
     this.historyFactory = historyFactory;
+    this.httpServiceUrl = httpServiceUrl;
+    this.getAuthToken = getAuthToken;
   }
 
   /**
@@ -73,7 +81,11 @@ export class Room {
       );
 
       this.metrics = this.metricsFactory.createMetrics(this.socketManager, this.roomId);
-      this.history = this.historyFactory.createHistory(this.socketManager, this.nspRoomId);
+      this.history = this.historyFactory.createHistory(
+        this.roomId,
+        this.httpServiceUrl,
+        this.getAuthToken
+      );
 
       return this;
     } catch (err: any) {

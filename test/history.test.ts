@@ -1,12 +1,15 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import { History } from '../lib/history';
-import { mockHistoryNextResponse, mockHistoryResponse } from './mock/history.mock';
-import { SocketManager } from '../lib/socket-manager';
-import { ClientEvent } from '../lib/types/event.types';
-import { mock } from 'node:test';
+import { getMockHistoryResponse } from './mock/history.mock';
+import { setupServer } from 'msw/node';
+import { http, HttpResponse } from 'msw';
+import { TokenError } from '../lib/errors';
 
-const mockCoreServiceUrl = process.env.CORE_SERVICE_URL || '';
-const mockNspRoomid = 'ewRnbOj5f2yR:config';
+const mockHttpServiceUrl = process.env.HTTP_SERVICE_URL || '';
+const mockRoomId = 'config';
+const mockUrl = `${mockHttpServiceUrl}/history/${mockRoomId}/messages`;
+
+const server = setupServer();
 
 vi.mock('../lib/logger', () => ({
   logger: {
@@ -15,129 +18,73 @@ vi.mock('../lib/logger', () => ({
   }
 }));
 
-const socketManagerEmitWithAck = vi.fn();
-
-vi.mock('../lib/socket-manager', () => ({
-  SocketManager: vi.fn(() => ({
-    emitWithAck: socketManagerEmitWithAck
-  }))
-}));
-
 describe('History', () => {
-  let history: History;
-  let socketManager: SocketManager;
-
-  beforeEach(() => {
-    socketManager = new SocketManager(mockCoreServiceUrl);
-    history = new History(socketManager, mockNspRoomid);
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  describe('options: default (websocket)', () => {
-    const defaultHistoryOptions = {
+  describe('http service request', () => {
+    const defaultRequestOptions = {
       limit: 2
     };
 
+    beforeAll(() => {
+      server.use(
+        http.get(mockUrl, ({ request }) => {
+          const authHeader = request.headers.get('Authorization');
+          const bearerToken = authHeader?.substring(7);
+
+          if (!bearerToken || bearerToken === 'invalid token') {
+            return new HttpResponse(null, { status: 401 });
+          }
+
+          return HttpResponse.json(getMockHistoryResponse(2));
+        })
+      );
+
+      server.listen();
+    });
+
+    afterAll(() => {
+      server.close();
+      vi.restoreAllMocks();
+    });
+
     describe('get()', () => {
       describe('success', () => {
-        it('should return message history for a given room', async () => {
-          socketManagerEmitWithAck.mockResolvedValueOnce(mockHistoryResponse);
+        it('should retieve history for a given room', async () => {
+          const history = new History(mockRoomId, mockHttpServiceUrl, () => `${Date.now()}`);
 
-          const historyResponse = await history.get(defaultHistoryOptions);
-
-          expect(socketManagerEmitWithAck).toHaveBeenCalledWith(ClientEvent.ROOM_HISTORY_GET, {
-            ...defaultHistoryOptions,
-            nspRoomId: mockNspRoomid
-          });
-
-          expect(historyResponse.items).toHaveLength(defaultHistoryOptions.limit);
-          expect(historyResponse.items[0]).toHaveProperty('timestamp');
+          await expect(history.get(defaultRequestOptions)).resolves.toBeDefined();
         });
       });
 
       describe('error', () => {
-        it('should throw an error if the request fails', async () => {
-          socketManagerEmitWithAck.mockRejectedValueOnce(new Error());
+        it('should throw TokenError if response is 4xx', async () => {
+          const history = new History(mockRoomId, mockHttpServiceUrl, () => 'invalid token');
 
-          await expect(history.get()).rejects.toThrow(
-            `Error getting message history for "${mockNspRoomid}"`
-          );
+          await expect(history.get(defaultRequestOptions)).rejects.toThrow(Error);
+        });
+
+        it('should throw TokenError if no auth token is provided', async () => {
+          const history = new History(mockRoomId, mockHttpServiceUrl, () => null);
+
+          await expect(history.get(defaultRequestOptions)).rejects.toThrow(TokenError);
         });
       });
     });
 
     describe('next()', () => {
       describe('success', () => {
-        it('should return message history an next page iterator for a given room', async () => {
-          socketManagerEmitWithAck.mockResolvedValueOnce(mockHistoryResponse);
-          socketManagerEmitWithAck.mockResolvedValueOnce(mockHistoryNextResponse);
+        it('should call next iterator following initial get request', async () => {
+          const history = new History(mockRoomId, mockHttpServiceUrl, () => `${Date.now()}`);
 
-          const historyResponse = await history.get(defaultHistoryOptions);
-          const nextHistoryResponse = await historyResponse.next!();
-
-          expect(socketManagerEmitWithAck).toHaveBeenCalledWith(ClientEvent.ROOM_HISTORY_GET, {
-            ...defaultHistoryOptions,
-            nspRoomId: mockNspRoomid
-          });
-
-          expect(socketManagerEmitWithAck).toHaveBeenCalledWith(ClientEvent.ROOM_HISTORY_GET, {
-            ...defaultHistoryOptions,
-            nspRoomId: mockNspRoomid,
-            nextPageToken: mockHistoryResponse.nextPageToken
-          });
-
-          expect(historyResponse.items).toHaveLength(defaultHistoryOptions.limit);
-          expect(nextHistoryResponse.items).toHaveLength(defaultHistoryOptions.limit);
-          expect(historyResponse.items[0].timestamp).not.toEqual(
-            nextHistoryResponse.items[0].timestamp
-          );
-
-          expect(socketManagerEmitWithAck).toHaveBeenCalledTimes(2);
-        });
-
-        it('should iterate through message history for a given room', async () => {
-          socketManagerEmitWithAck.mockResolvedValueOnce(mockHistoryResponse);
-          socketManagerEmitWithAck.mockResolvedValueOnce(mockHistoryNextResponse);
-
-          let historyResponse = await history.get(defaultHistoryOptions);
-          expect(historyResponse.items).toHaveLength(defaultHistoryOptions.limit);
-
-          while (historyResponse?.next) {
-            historyResponse = await historyResponse.next();
-            expect(historyResponse.items).toHaveLength(defaultHistoryOptions.limit);
-          }
-
-          expect(historyResponse.next).toBeUndefined();
-          expect(socketManagerEmitWithAck).toHaveBeenCalledWith(ClientEvent.ROOM_HISTORY_GET, {
-            ...defaultHistoryOptions,
-            nspRoomId: mockNspRoomid
-          });
-          expect(socketManagerEmitWithAck).toHaveBeenCalledWith(ClientEvent.ROOM_HISTORY_GET, {
-            ...defaultHistoryOptions,
-            nspRoomId: mockNspRoomid,
-            nextPageToken: mockHistoryResponse.nextPageToken
-          });
+          const { next } = await history.get(defaultRequestOptions);
+          expect(next).toBeInstanceOf(Function);
+          await expect(history.next()).resolves.toBeDefined();
         });
       });
 
       describe('error', () => {
-        it('should throw an error if the request fails', async () => {
-          socketManagerEmitWithAck.mockResolvedValueOnce(mockHistoryResponse);
-          socketManagerEmitWithAck.mockRejectedValueOnce(new Error());
-
-          await history.get(defaultHistoryOptions);
-          await expect(history.next()).rejects.toThrow(
-            `Error getting message history for "${mockNspRoomid}"`
-          );
-        });
-
-        it('should throw an error if history.next() is called before history.get()', async () => {
-          await expect(history.next()).rejects.toThrow(
-            `history.next() called before history.get()`
-          );
+        it('should throw an error if next() is called before get()', async () => {
+          const history = new History(mockRoomId, mockHttpServiceUrl, () => 'valid token');
+          await expect(history.next()).rejects.toThrow('Next messages unavailable');
         });
       });
     });

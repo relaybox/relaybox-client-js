@@ -36,24 +36,25 @@ import { logger } from './logger';
 import { PresenceFactory, MetricsFactory, HistoryFactory } from './factory';
 import { SocketConnectionError, TokenError, ValidationError } from './errors';
 import { SocketManager } from './socket-manager';
-import { AuthKeyData, AuthRequestOptions, AuthTokenLifeCycle } from './types/auth.types';
+import { AuthKeyData, AuthRequestOptions } from './types/auth.types';
 import { TokenResponse } from './types/request.types';
 import { Auth } from './auth';
 
 const CORE_SERVICE_URL = process.env.CORE_SERVICE_URL || '';
+const HTTP_SERVICE_URL = process.env.HTTP_SERVICE_URL || '';
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || '';
 const SOCKET_CONNECTION_ACK_TIMEOUT_MS = 2000;
 const AUTH_TOKEN_REFRESH_BUFFER_SECONDS = 20;
 const AUTH_TOKEN_REFRESH_RETRY_MS = 10000;
 const AUTH_TOKEN_REFRESH_JITTER_RANGE_MS = 2000;
-const AUTH_TOKEN_LIFECYCLE_SESSION = 'session';
-const AUTH_TOKEN_LIFECYCLE_EXPIRY = 'expiry';
 
 /**
  * Offline defaults
  */
 const DEFAULT_OFFLINE_AUTH_HOST = 'http://localhost';
 const DEFAULT_OFFLINE_AUTH_PATH = 'auth';
+const DEFAULT_OFFLINE_HTTP_HOST = 'http://localhost';
+const DEFAULT_OFFLINE_HTTP_PATH = 'core';
 const DEFAULT_OFFLINE_CORE_HOST = 'ws://localhost';
 const DEFAULT_OFFLINE_CORE_PATH = 'core';
 const DEFAULT_OFFLINE_PORT = 9000;
@@ -74,11 +75,12 @@ export default class RelayBox {
   private readonly authAction?: (params?: any) => Promise<TokenResponse | undefined>;
   private readonly apiKey?: string;
   private readonly publicKey?: string;
-  private readonly authTokenLifeCycle?: AuthTokenLifeCycle = AUTH_TOKEN_LIFECYCLE_SESSION;
   private readonly authServiceUrl: string;
   private readonly coreServiceUrl: string;
+  private readonly httpServiceUrl: string;
   private socketManagerListeners: SocketManagerListener[] = [];
   private refreshTimeout: NodeJS.Timeout | number | null = null;
+  private tokenResponse: TokenResponse | null = null;
 
   public readonly connection: EventEmitter;
   public clientId?: string | number;
@@ -98,7 +100,9 @@ export default class RelayBox {
       );
     }
 
-    const { authServiceUrl, coreServiceUrl } = this.getOfflineServiceUrls(opts.offline);
+    const { authServiceUrl, coreServiceUrl, httpServiceUrl } = this.getOfflineServiceUrls(
+      opts.offline
+    );
 
     this.apiKey = opts.apiKey;
     this.publicKey = opts.publicKey;
@@ -107,6 +111,7 @@ export default class RelayBox {
     this.authAction = opts.authAction;
     this.authServiceUrl = authServiceUrl || AUTH_SERVICE_URL;
     this.coreServiceUrl = coreServiceUrl || CORE_SERVICE_URL;
+    this.httpServiceUrl = httpServiceUrl || HTTP_SERVICE_URL;
     this.socketManager = new SocketManager(this.coreServiceUrl);
     this.presenceFactory = new PresenceFactory();
     this.metricsFactory = new MetricsFactory();
@@ -116,7 +121,6 @@ export default class RelayBox {
       typeof opts.authHeaders === 'function' ? opts.authHeaders() : opts.authHeaders;
     this.authParams = typeof opts.authParams === 'function' ? opts.authParams() : opts.authParams;
     this.authRequestOptions = opts.authRequestOptions;
-    this.authTokenLifeCycle = opts.authTokenLifeCycle;
     this.isConnected = false;
 
     this.auth = this.createAuthInstance(
@@ -128,13 +132,26 @@ export default class RelayBox {
     this.registerSocketManagerListeners();
   }
 
+  /**
+   * Retrieves the current authentication token from either...
+   * a) Auth service session if exists
+   * b) Token response from auth endpoint or auth action
+   *
+   * @returns {string | null} The authentication token or null if not authenticated.
+   */
+  get authToken(): string | null {
+    return this.auth?.token ?? this.tokenResponse?.token ?? null;
+  }
+
   private getOfflineServiceUrls({
     enabled = false,
     port = 0,
     authServiceUrl = null,
-    coreServiceUrl = null
+    coreServiceUrl = null,
+    httpServiceUrl = null
   }: OfflineOptions = {}): {
     authServiceUrl: string | null;
+    httpServiceUrl: string | null;
     coreServiceUrl: string | null;
   } {
     if (enabled || port || authServiceUrl || coreServiceUrl) {
@@ -144,11 +161,17 @@ export default class RelayBox {
         authServiceUrl:
           authServiceUrl ?? `${DEFAULT_OFFLINE_AUTH_HOST}:${port}/${DEFAULT_OFFLINE_AUTH_PATH}`,
         coreServiceUrl:
-          coreServiceUrl ?? `${DEFAULT_OFFLINE_CORE_HOST}:${port}/${DEFAULT_OFFLINE_CORE_PATH}`
+          coreServiceUrl ?? `${DEFAULT_OFFLINE_CORE_HOST}:${port}/${DEFAULT_OFFLINE_CORE_PATH}`,
+        httpServiceUrl:
+          httpServiceUrl ?? `${DEFAULT_OFFLINE_HTTP_HOST}:${port}/${DEFAULT_OFFLINE_HTTP_PATH}`
       };
     }
 
-    return { authServiceUrl, coreServiceUrl };
+    return {
+      authServiceUrl,
+      coreServiceUrl,
+      httpServiceUrl
+    };
   }
 
   private createAuthInstance(
@@ -271,7 +294,7 @@ export default class RelayBox {
    * @throws Will throw an error if the authentication fails.
    */
   private async handleAuthTokenConnect(refresh?: boolean): Promise<void> {
-    logger.logInfo(`Fetching auth token response for new connection`);
+    logger.logInfo(`Fetching auth token response from auth endpoint`);
 
     const tokenResponse = await getAuthTokenResponse(
       this.authEndpoint,
@@ -285,15 +308,15 @@ export default class RelayBox {
       throw new TokenError(`No token response received`);
     }
 
+    this.tokenResponse = tokenResponse;
+
     if (refresh) {
       this.socketManager.updateSocketAuth(tokenResponse);
     } else {
       this.socketManager.authTokenInitSocket(tokenResponse);
     }
 
-    if (this.authTokenLifeCycle === AUTH_TOKEN_LIFECYCLE_EXPIRY) {
-      this.setAuthTokenRefreshTimeout(tokenResponse.expiresIn);
-    }
+    this.setAuthTokenRefreshTimeout(tokenResponse.expiresIn);
   }
 
   /**
@@ -303,7 +326,7 @@ export default class RelayBox {
    * @throws Will throw an error if the authentication fails.
    */
   private async handleAuthActionConnect(refresh?: boolean): Promise<void> {
-    logger.logInfo(`Fetching auth token response for new connection from server action`);
+    logger.logInfo(`Fetching auth token response from server action`);
 
     if (!this.authAction) {
       throw new ValidationError(`No authentication function provided`);
@@ -315,15 +338,15 @@ export default class RelayBox {
       throw new TokenError(`No token response received`);
     }
 
+    this.tokenResponse = tokenResponse;
+
     if (refresh) {
       this.socketManager.updateSocketAuth(tokenResponse);
     } else {
       this.socketManager.authTokenInitSocket(tokenResponse);
     }
 
-    if (this.authTokenLifeCycle === AUTH_TOKEN_LIFECYCLE_EXPIRY) {
-      this.setAuthTokenRefreshTimeout(tokenResponse.expiresIn);
-    }
+    this.setAuthTokenRefreshTimeout(tokenResponse.expiresIn);
   }
 
   /**
@@ -462,9 +485,20 @@ export default class RelayBox {
     const refreshBufferSeconds = AUTH_TOKEN_REFRESH_BUFFER_SECONDS;
     const timeout = retryMs || (expiresIn - refreshBufferSeconds) * 1000;
 
+    if (!this.authAction && !this.authEndpoint) {
+      logger.logWarning('No authentication method provided');
+      return;
+    }
+
     this.refreshTimeout = setTimeout(async () => {
       try {
-        await this.handleAuthTokenConnect(true);
+        // await this.handleAuthTokenConnect(true);
+
+        if (this.authAction) {
+          await this.handleAuthActionConnect(true);
+        } else if (this.authEndpoint) {
+          await this.handleAuthTokenConnect(true);
+        }
       } catch (err) {
         const jitter =
           Math.floor(Math.random() * AUTH_TOKEN_REFRESH_JITTER_RANGE_MS) +
@@ -484,12 +518,16 @@ export default class RelayBox {
    * @throws Will throw an error if room creation fails.
    */
   async join(roomId: string): Promise<Room> {
+    const getAuthToken = () => this.authToken;
+
     const room = new Room(
       roomId,
       this.socketManager,
       this.presenceFactory,
       this.metricsFactory,
-      this.historyFactory
+      this.historyFactory,
+      this.httpServiceUrl,
+      getAuthToken
     );
 
     try {
