@@ -33,7 +33,7 @@ import {
   SocketManagerListener
 } from './types/socket.types';
 import { logger } from './logger';
-import { PresenceFactory, MetricsFactory, HistoryFactory } from './factory';
+import { PresenceFactory, MetricsFactory, HistoryFactory, IntellectFactory } from './factory';
 import { SocketConnectionError, TokenError, ValidationError } from './errors';
 import { SocketManager } from './socket-manager';
 import { AuthKeyData, AuthRequestOptions } from './types/auth.types';
@@ -68,6 +68,7 @@ export default class RelayBox {
   private readonly presenceFactory: PresenceFactory;
   private readonly metricsFactory: MetricsFactory;
   private readonly historyFactory: HistoryFactory;
+  private readonly intellectFactory: IntellectFactory;
   private readonly authEndpoint?: string;
   private readonly authHeaders?: Record<string, unknown> | null;
   private readonly authParams?: Record<string, unknown> | null;
@@ -78,6 +79,7 @@ export default class RelayBox {
   private readonly authServiceUrl: string;
   private readonly coreServiceUrl: string;
   private readonly httpServiceUrl: string;
+  private readonly intellectServiceUrl: string;
   private socketManagerListeners: SocketManagerListener[] = [];
   private refreshTimeout: NodeJS.Timeout | number | null = null;
   private tokenResponse: TokenResponse | null = null;
@@ -100,9 +102,8 @@ export default class RelayBox {
       );
     }
 
-    const { authServiceUrl, coreServiceUrl, httpServiceUrl } = this.getOfflineServiceUrls(
-      opts.offline
-    );
+    const { authServiceUrl, coreServiceUrl, httpServiceUrl, intellectServiceUrl } =
+      this.getOfflineServiceUrls(opts.offline);
 
     this.apiKey = opts.apiKey;
     this.publicKey = opts.publicKey;
@@ -112,10 +113,12 @@ export default class RelayBox {
     this.authServiceUrl = authServiceUrl || AUTH_SERVICE_URL;
     this.coreServiceUrl = coreServiceUrl || CORE_SERVICE_URL;
     this.httpServiceUrl = httpServiceUrl || HTTP_SERVICE_URL;
+    this.intellectServiceUrl = intellectServiceUrl || HTTP_SERVICE_URL;
     this.socketManager = new SocketManager(this.coreServiceUrl);
     this.presenceFactory = new PresenceFactory();
     this.metricsFactory = new MetricsFactory();
     this.historyFactory = new HistoryFactory();
+    this.intellectFactory = new IntellectFactory();
     this.connection = new EventEmitter();
     this.authHeaders =
       typeof opts.authHeaders === 'function' ? opts.authHeaders() : opts.authHeaders;
@@ -148,11 +151,13 @@ export default class RelayBox {
     port = 0,
     authServiceUrl = null,
     coreServiceUrl = null,
-    httpServiceUrl = null
+    httpServiceUrl = null,
+    intellectServiceUrl = null
   }: OfflineOptions = {}): {
     authServiceUrl: string | null;
     httpServiceUrl: string | null;
     coreServiceUrl: string | null;
+    intellectServiceUrl: string | null;
   } {
     if (enabled || port || authServiceUrl || coreServiceUrl) {
       port = port || DEFAULT_OFFLINE_PORT;
@@ -163,14 +168,17 @@ export default class RelayBox {
         coreServiceUrl:
           coreServiceUrl ?? `${DEFAULT_OFFLINE_CORE_HOST}:${port}/${DEFAULT_OFFLINE_CORE_PATH}`,
         httpServiceUrl:
-          httpServiceUrl ?? `${DEFAULT_OFFLINE_HTTP_HOST}:${port}/${DEFAULT_OFFLINE_HTTP_PATH}`
+          httpServiceUrl ?? `${DEFAULT_OFFLINE_HTTP_HOST}:${port}/${DEFAULT_OFFLINE_HTTP_PATH}`,
+        intellectServiceUrl:
+          intellectServiceUrl ?? `${DEFAULT_OFFLINE_HTTP_HOST}:${port}/${DEFAULT_OFFLINE_HTTP_PATH}`
       };
     }
 
     return {
       authServiceUrl,
       coreServiceUrl,
-      httpServiceUrl
+      httpServiceUrl,
+      intellectServiceUrl
     };
   }
 
@@ -526,7 +534,9 @@ export default class RelayBox {
       this.presenceFactory,
       this.metricsFactory,
       this.historyFactory,
+      this.intellectFactory,
       this.httpServiceUrl,
+      this.intellectServiceUrl,
       getAuthToken
     );
 

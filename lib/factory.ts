@@ -24,3 +24,13 @@ export class HistoryFactory {
     return new History(roomId, httpServiceUrl, getAuthToken);
   }
 }
+
+export class IntellectFactory {
+  createIntellect(
+    roomId: string,
+    intellectServiceUrl: string,
+    getAuthToken: () => string | null
+  ): History {
+    return new History(roomId, intellectServiceUrl, getAuthToken);
+  }
+}

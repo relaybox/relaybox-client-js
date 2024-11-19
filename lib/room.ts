@@ -2,28 +2,20 @@ import { ClientEvent } from './types/event.types';
 import { SocketEventHandler } from './types/socket.types';
 import { Presence } from './presence';
 import { logger } from './logger';
-import { HistoryFactory, MetricsFactory, PresenceFactory } from './factory';
+import { HistoryFactory, IntellectFactory, MetricsFactory, PresenceFactory } from './factory';
 import { validateUserData } from './validation';
 import { Metrics } from './metrics';
 import { History } from './history';
 import { EventRegistry } from './event-registry';
 import { SocketManager } from './socket-manager';
-import RelayBox from './relaybox';
-import { TokenResponse } from './types';
 
 /**
  * The Room class represents a room in a chat or messaging application.
  * It handles event subscriptions, presence management, and communication with the server.
  */
 export class Room {
-  private readonly socketManager: SocketManager;
-  private readonly presenceFactory: PresenceFactory;
-  private readonly metricsFactory: MetricsFactory;
-  private readonly historyFactory: HistoryFactory;
   private readonly eventRegistry = new EventRegistry();
-  private readonly httpServiceUrl: string;
   private nspRoomId: string | null = null;
-  private getAuthToken: () => string | null;
 
   public readonly id: string;
   public readonly roomId: string;
@@ -35,26 +27,24 @@ export class Room {
    * Creates an instance of Room.
    * @param {string} roomId - The ID of the room.
    * @param {SocketManager} socketManager - The socket manager for handling socket connections.
-   * @param {PresenceFactory} presencefactory - The factory for creating presence instances.
+   * @param {PresenceFactory} presenceFactory - The factory for creating presence instances.
    * @param {MetricsFactory} metricsFactory - The factory for creating metrics instances.
    * @param {HistoryFactory} historyFactory - The factory for creating history instances.
+   * @param {string} httpServiceUrl - The URL of the HTTP service.
+   * @param {Function} getAuthToken - A function that returns the auth token.
    */
   constructor(
     roomId: string,
-    socketManager: SocketManager,
-    presencefactory: PresenceFactory,
-    metricsFactory: MetricsFactory,
-    historyFactory: HistoryFactory,
-    httpServiceUrl: string,
-    getAuthToken: () => string | null
+    private readonly socketManager: SocketManager,
+    private readonly presenceFactory: PresenceFactory,
+    private readonly metricsFactory: MetricsFactory,
+    private readonly historyFactory: HistoryFactory,
+    private readonly intellectFactory: IntellectFactory,
+    private readonly httpServiceUrl: string,
+    private readonly intellectServiceUrl: string,
+    private getAuthToken: () => string | null
   ) {
     this.roomId = this.id = roomId;
-    this.socketManager = socketManager;
-    this.presenceFactory = presencefactory;
-    this.metricsFactory = metricsFactory;
-    this.historyFactory = historyFactory;
-    this.httpServiceUrl = httpServiceUrl;
-    this.getAuthToken = getAuthToken;
   }
 
   /**
