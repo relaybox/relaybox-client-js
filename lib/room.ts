@@ -71,10 +71,10 @@ export class Room {
       const { socketManager, roomId, httpServiceUrl, intellectServiceUrl, publish, getAuthToken } =
         this;
 
-      this.presence = this.presenceFactory.createPresence(socketManager, roomId, nspRoomId);
-      this.metrics = this.metricsFactory.createMetrics(socketManager, roomId);
-      this.history = this.historyFactory.createHistory(roomId, httpServiceUrl, getAuthToken);
-      this.intellect = this.intellectFactory.createIntellect(
+      this.presence = this.presenceFactory.createInstance(socketManager, roomId, nspRoomId);
+      this.metrics = this.metricsFactory.createInstance(socketManager, roomId);
+      this.history = this.historyFactory.createInstance(roomId, httpServiceUrl, getAuthToken);
+      this.intellect = this.intellectFactory.createInstance(
         roomId,
         intellectServiceUrl,
         publish,
