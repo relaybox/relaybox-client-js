@@ -17,7 +17,6 @@ import { Intellect } from './intellect';
 export class Room {
   private readonly eventRegistry = new EventRegistry();
   private nspRoomId: string | null = null;
-
   public readonly id: string;
   public readonly roomId: string;
   public presence: Presence | null = null;
@@ -68,24 +67,35 @@ export class Room {
 
       this.nspRoomId = nspRoomId;
 
-      const { socketManager, roomId, httpServiceUrl, intellectServiceUrl, publish, getAuthToken } =
-        this;
-
-      this.presence = this.presenceFactory.createInstance(socketManager, roomId, nspRoomId);
-      this.metrics = this.metricsFactory.createInstance(socketManager, roomId);
-      this.history = this.historyFactory.createInstance(roomId, httpServiceUrl, getAuthToken);
-      this.intellect = this.intellectFactory.createInstance(
-        roomId,
-        intellectServiceUrl,
-        publish,
-        getAuthToken
-      );
-
-      return this;
+      return this.initRoomExtensions();
     } catch (err: any) {
       logger.logError(err.message, err);
       throw new Error(err.message);
     }
+  }
+
+  private initRoomExtensions(): Room {
+    const {
+      nspRoomId,
+      socketManager,
+      roomId,
+      httpServiceUrl,
+      intellectServiceUrl,
+      publish,
+      getAuthToken
+    } = this;
+
+    this.presence = this.presenceFactory.createInstance(socketManager, roomId, nspRoomId!);
+    this.metrics = this.metricsFactory.createInstance(socketManager, roomId);
+    this.history = this.historyFactory.createInstance(roomId, httpServiceUrl, getAuthToken);
+    this.intellect = this.intellectFactory.createInstance(
+      roomId,
+      intellectServiceUrl,
+      publish,
+      getAuthToken
+    );
+
+    return this;
   }
 
   /**

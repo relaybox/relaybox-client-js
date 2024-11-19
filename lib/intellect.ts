@@ -24,7 +24,7 @@ export class Intellect extends EventEmitter {
    * @param {IntellectQueryOptions} opts - Optional current {conversationId} for RAG context
    * @returns {IntellectResponse}
    */
-  async query(input: string, opts: IntellectQueryOptions): Promise<IntellectResponse> {
+  async query(input: string, opts?: IntellectQueryOptions): Promise<IntellectResponse> {
     const { conversationId, assetId, streaming } = opts ?? {};
 
     logger.logInfo(`Running intellect query for ${conversationId}`);
@@ -48,10 +48,9 @@ export class Intellect extends EventEmitter {
         }
       };
 
-      const response = await serviceRequest<IntellectResponse>(
-        `${this.intellectServiceUrl}${QUERIES_PATHNAME}`,
-        requestParams
-      );
+      const url = `${this.intellectServiceUrl}${QUERIES_PATHNAME}`;
+
+      const response = await serviceRequest<IntellectResponse>(url, requestParams);
 
       return response;
     } catch (err: any) {

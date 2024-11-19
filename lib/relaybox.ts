@@ -192,7 +192,7 @@ export default class RelayBox {
    * @param {SocketEvent} event - The socket event to listen for.
    * @param {SocketEventHandler} handler - The handler to call when the event occurs.
    */
-  private manageSocketEventListener(event: SocketEvent, handler: SocketEventHandler): void {
+  private registerSocketManagerListener(event: SocketEvent, handler: SocketEventHandler): void {
     this.socketManager.eventEmitter.on(event, handler);
     this.socketManagerListeners.push({ event, handler });
   }
@@ -201,52 +201,52 @@ export default class RelayBox {
    * Registers the default socket event listeners to propagate events to the connection.
    */
   private registerSocketManagerListeners() {
-    this.manageSocketEventListener(SocketEvent.CONNECTING, () => {
+    this.registerSocketManagerListener(SocketEvent.CONNECTING, () => {
       this.isConnected = false;
       this.connection.emit(SocketEvent.CONNECTING);
     });
 
-    this.manageSocketEventListener(SocketEvent.CONNECT, () => {
+    this.registerSocketManagerListener(SocketEvent.CONNECT, () => {
       this.isConnected = true;
       this.connection.emit(SocketEvent.CONNECT);
     });
 
-    this.manageSocketEventListener(SocketEvent.RECONNECTED, (attempts: number) => {
+    this.registerSocketManagerListener(SocketEvent.RECONNECTED, (attempts: number) => {
       this.isConnected = true;
       this.connection.emit(SocketEvent.RECONNECTED, attempts);
     });
 
-    this.manageSocketEventListener(SocketEvent.DISCONNECT, (reason: string) => {
+    this.registerSocketManagerListener(SocketEvent.DISCONNECT, (reason: string) => {
       this.isConnected = false;
       this.connection.emit(SocketEvent.DISCONNECT, reason);
     });
 
-    this.manageSocketEventListener(SocketEvent.RECONNECTING, (attempt: number) => {
+    this.registerSocketManagerListener(SocketEvent.RECONNECTING, (attempt: number) => {
       this.isConnected = false;
       this.connection.emit(SocketEvent.RECONNECTING, attempt);
     });
 
-    this.manageSocketEventListener(SocketEvent.ERROR, (err: any) => {
+    this.registerSocketManagerListener(SocketEvent.ERROR, (err: any) => {
       this.isConnected = false;
       this.connection.emit(SocketEvent.ERROR, err);
     });
 
-    this.manageSocketEventListener(SocketEvent.CONNECT_ERROR, (err: any) => {
+    this.registerSocketManagerListener(SocketEvent.CONNECT_ERROR, (err: any) => {
       this.isConnected = false;
       this.connection.emit(SocketEvent.CONNECT_ERROR, err);
     });
 
-    this.manageSocketEventListener(SocketEvent.CONNECT_FAILED, (err: any) => {
+    this.registerSocketManagerListener(SocketEvent.CONNECT_FAILED, (err: any) => {
       this.isConnected = false;
       this.connection.emit(SocketEvent.CONNECT_FAILED, err);
     });
 
-    this.manageSocketEventListener(SocketEvent.RECONNECT_FAILED, (err: any) => {
+    this.registerSocketManagerListener(SocketEvent.RECONNECT_FAILED, (err: any) => {
       this.isConnected = false;
       this.connection.emit(SocketEvent.RECONNECT_FAILED, err);
     });
 
-    this.manageSocketEventListener(SocketEvent.AUTH_TOKEN_EXPIRED, (tokenExpiryUtc: number) => {
+    this.registerSocketManagerListener(SocketEvent.AUTH_TOKEN_EXPIRED, (tokenExpiryUtc: number) => {
       this.connect(true);
       this.connection.emit(SocketEvent.REAUTHENTICATING, tokenExpiryUtc);
     });
@@ -398,10 +398,10 @@ export default class RelayBox {
   /**
    * Waits for a stable connection to be established by ensuring both the socket connection
    * and the acknowledgment of the connection are successful.
-   * @returns {Promise<void>}
+   * @returns {Promise<unknown>}
    * @throws {SocketConnectionError} If the connection times out.
    */
-  private waitForStableConnection() {
+  private waitForStableConnection(): Promise<unknown> {
     const connectionPromises = [this.waitForSocketConnect(), this.waitForConnectionAck()];
 
     const connectionTimeoutPromise = new Promise((_, reject) => {
@@ -497,8 +497,6 @@ export default class RelayBox {
 
     this.refreshTimeout = setTimeout(async () => {
       try {
-        // await this.handleAuthTokenConnect(true);
-
         if (this.authAction) {
           await this.handleAuthActionConnect(true);
         } else if (this.authEndpoint) {
