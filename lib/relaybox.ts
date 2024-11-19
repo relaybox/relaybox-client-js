@@ -33,7 +33,7 @@ import {
   SocketManagerListener
 } from './types/socket.types';
 import { logger } from './logger';
-import { PresenceFactory, MetricsFactory, HistoryFactory } from './factory';
+import { PresenceFactory, MetricsFactory, HistoryFactory, IntellectFactory } from './factory';
 import { SocketConnectionError, TokenError, ValidationError } from './errors';
 import { SocketManager } from './socket-manager';
 import { AuthKeyData, AuthRequestOptions } from './types/auth.types';
@@ -43,6 +43,7 @@ import { Auth } from './auth';
 const CORE_SERVICE_URL = process.env.CORE_SERVICE_URL || '';
 const HTTP_SERVICE_URL = process.env.HTTP_SERVICE_URL || '';
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || '';
+const INTELLECT_SERVICE_URL = process.env.INTELLECT_SERVICE_URL || '';
 const SOCKET_CONNECTION_ACK_TIMEOUT_MS = 2000;
 const AUTH_TOKEN_REFRESH_BUFFER_SECONDS = 20;
 const AUTH_TOKEN_REFRESH_RETRY_MS = 10000;
@@ -68,6 +69,7 @@ export default class RelayBox {
   private readonly presenceFactory: PresenceFactory;
   private readonly metricsFactory: MetricsFactory;
   private readonly historyFactory: HistoryFactory;
+  private readonly intellectFactory: IntellectFactory;
   private readonly authEndpoint?: string;
   private readonly authHeaders?: Record<string, unknown> | null;
   private readonly authParams?: Record<string, unknown> | null;
@@ -78,6 +80,7 @@ export default class RelayBox {
   private readonly authServiceUrl: string;
   private readonly coreServiceUrl: string;
   private readonly httpServiceUrl: string;
+  private readonly intellectServiceUrl: string;
   private socketManagerListeners: SocketManagerListener[] = [];
   private refreshTimeout: NodeJS.Timeout | number | null = null;
   private tokenResponse: TokenResponse | null = null;
@@ -112,10 +115,12 @@ export default class RelayBox {
     this.authServiceUrl = authServiceUrl || AUTH_SERVICE_URL;
     this.coreServiceUrl = coreServiceUrl || CORE_SERVICE_URL;
     this.httpServiceUrl = httpServiceUrl || HTTP_SERVICE_URL;
+    this.intellectServiceUrl = INTELLECT_SERVICE_URL;
     this.socketManager = new SocketManager(this.coreServiceUrl);
     this.presenceFactory = new PresenceFactory();
     this.metricsFactory = new MetricsFactory();
     this.historyFactory = new HistoryFactory();
+    this.intellectFactory = new IntellectFactory();
     this.connection = new EventEmitter();
     this.authHeaders =
       typeof opts.authHeaders === 'function' ? opts.authHeaders() : opts.authHeaders;
@@ -526,7 +531,9 @@ export default class RelayBox {
       this.presenceFactory,
       this.metricsFactory,
       this.historyFactory,
+      this.intellectFactory,
       this.httpServiceUrl,
+      this.intellectServiceUrl,
       getAuthToken
     );
 

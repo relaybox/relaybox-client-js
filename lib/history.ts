@@ -15,21 +15,19 @@ const HISTORY_SERVICE_PATHNAME = '/history';
  * The History class handles fetching message history for a specific room.
  */
 export class History {
-  private readonly roomId: string;
-  private readonly httpServiceUrl: string;
   private nextPageToken: string | null = null;
-  private getAuthToken: () => string | null;
 
   /**
    * Creates an instance of History.
-   * @param {SocketManager} socketManager - The socket manager to handle socket connections.
-   * @param {string} nspRoomId - The ID of the room for which metrics are being managed.
+   * @param {string} roomId - The room id to fetch history for.
+   * @param {string} httpServiceUrl - The url of the core http service.
+   * @param {Function} getAuthToken - Function to retreive the current auth token
    */
-  constructor(roomId: string, httpServiceUrl: string, getAuthToken: () => string | null) {
-    this.roomId = roomId;
-    this.httpServiceUrl = httpServiceUrl;
-    this.getAuthToken = getAuthToken;
-  }
+  constructor(
+    private readonly roomId: string,
+    private readonly httpServiceUrl: string,
+    private getAuthToken: () => string | null
+  ) {}
 
   /**
    * Fetches message history for the specified room.
