@@ -2,13 +2,20 @@ import { ClientEvent } from './types/event.types';
 import { SocketEventHandler } from './types/socket.types';
 import { Presence } from './presence';
 import { logger } from './logger';
-import { HistoryFactory, IntellectFactory, MetricsFactory, PresenceFactory } from './factory';
+import {
+  CloudStorageFactory,
+  HistoryFactory,
+  IntellectFactory,
+  MetricsFactory,
+  PresenceFactory
+} from './factory';
 import { validateUserData } from './validation';
 import { Metrics } from './metrics';
 import { History } from './history';
 import { EventRegistry } from './event-registry';
 import { SocketManager } from './socket-manager';
 import { Intellect } from './intellect';
+import { CloudStorage } from './cloud-storage';
 
 /**
  * The Room class represents a room in a chat or messaging application.
@@ -23,6 +30,7 @@ export class Room {
   public metrics: Metrics | null = null;
   public history: History | null = null;
   public intellect: Intellect | null = null;
+  public storage: CloudStorage | null = null;
 
   /**
    * Creates an instance of Room.
@@ -32,8 +40,10 @@ export class Room {
    * @param {MetricsFactory} metricsFactory - The factory for creating metrics instances.
    * @param {HistoryFactory} historyFactory - The factory for creating history instances.
    * @param {IntellectFactory} intellectFactory - The factory for creating intellect instances.
+   * @param {CloudStorageFactory} cloudStorageFactory - The factory for creating cloud storage instances.
    * @param {string} httpServiceUrl - The url for interacting with the core HTTP service.
    * @param {string} intellectServiceUrl - The url for interacting with the "intellect" service.
+   * @param {string} storageServiceUrl - The url for interacting with the "storage" service.
    * @param {Function} getAuthToken - Function to retrieve the latest auth token.
    */
   constructor(
@@ -43,8 +53,10 @@ export class Room {
     private readonly metricsFactory: MetricsFactory,
     private readonly historyFactory: HistoryFactory,
     private readonly intellectFactory: IntellectFactory,
+    private readonly cloudStorageFactory: CloudStorageFactory,
     private readonly httpServiceUrl: string,
     private readonly intellectServiceUrl: string,
+    private readonly storageServiceUrl: string,
     private getAuthToken: () => string | null
   ) {
     this.roomId = this.id = roomId;
@@ -81,6 +93,7 @@ export class Room {
       roomId,
       httpServiceUrl,
       intellectServiceUrl,
+      storageServiceUrl,
       publish,
       getAuthToken
     } = this;
@@ -88,6 +101,7 @@ export class Room {
     this.presence = this.presenceFactory.createInstance(socketManager, roomId, nspRoomId!);
     this.metrics = this.metricsFactory.createInstance(socketManager, roomId);
     this.history = this.historyFactory.createInstance(roomId, httpServiceUrl, getAuthToken);
+    this.storage = this.cloudStorageFactory.createInstance(roomId, storageServiceUrl, getAuthToken);
     this.intellect = this.intellectFactory.createInstance(
       roomId,
       intellectServiceUrl,

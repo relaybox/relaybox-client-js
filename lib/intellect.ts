@@ -50,7 +50,7 @@ export class Intellect extends EventEmitter {
         body: JSON.stringify(requestBody),
         headers: {
           ...defaultHeaders,
-          Authorization: `Bearer ${this.getAuthToken()}`
+          Authorization: `Bearer ${authToken}`
         }
       };
 
