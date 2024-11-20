@@ -30,6 +30,12 @@ export class Intellect extends EventEmitter {
     logger.logInfo(`Running intellect query for ${conversationId}`);
 
     try {
+      const authToken = this.getAuthToken();
+
+      if (!authToken) {
+        throw new Error('No auth token found');
+      }
+
       const requestBody = {
         input,
         roomId: this.roomId,
