@@ -4,6 +4,11 @@ import { ApiData, FormattedResponse } from './types/request.types';
 const NODE_FETCH_ERR_MESSAGES = ['Failed to fetch'];
 const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
 
+export const defaultHeaders = {
+  Accept: 'application/json',
+  'Content-Type': 'application/json'
+};
+
 async function formatResponse<T>(response: Response): Promise<FormattedResponse<T & ApiData>> {
   const data = <T & ApiData>await response.json();
 

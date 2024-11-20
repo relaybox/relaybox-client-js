@@ -1,12 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Room } from '../lib/room';
 import { SocketManager } from '../lib/socket-manager';
-import { HistoryFactory, PresenceFactory } from '../lib/factory';
+import { HistoryFactory, IntellectFactory, PresenceFactory } from '../lib/factory';
 import { MetricsFactory } from '../lib/factory';
 import { ClientEvent } from '../lib/types/event.types';
 
 const mockCoreServiceUrl = process.env.CORE_SERVICE_URL || '';
 const mockHttpServiceUrl = process.env.HTTP_SERVICE_URL || '';
+const mockintellectServiceUrl = process.env.HTTP_SERVICE_URL || '';
 const mockRoomId = 'roomId123';
 const mockEvent = 'mock:event';
 const mockAuthToken = 'eyJhbGc.eyJrZXlOYW1lIjoiRz:5hg9z5Gd4YI9jSw1Y66gz6q';
@@ -25,17 +26,22 @@ vi.mock('../lib/socket-manager', () => ({
 
 vi.mock('../lib/factory', () => ({
   PresenceFactory: vi.fn(() => ({
-    createPresence: vi.fn(() => ({
+    createInstance: vi.fn(() => ({
       unsubscribe: vi.fn()
     }))
   })),
   MetricsFactory: vi.fn(() => ({
-    createMetrics: vi.fn(() => ({
+    createInstance: vi.fn(() => ({
       unsubscribe: vi.fn()
     }))
   })),
   HistoryFactory: vi.fn(() => ({
-    createHistory: vi.fn(() => ({
+    createInstance: vi.fn(() => ({
+      get: vi.fn()
+    }))
+  })),
+  IntellectFactory: vi.fn(() => ({
+    createInstance: vi.fn(() => ({
       get: vi.fn()
     }))
   }))
@@ -54,12 +60,15 @@ describe('Room', () => {
   let presenceFactory: PresenceFactory;
   let metricsFactory: MetricsFactory;
   let historyFactory: HistoryFactory;
+  let intellectFactory: IntellectFactory;
 
   beforeEach(async () => {
     socketManager = new SocketManager(mockCoreServiceUrl);
     presenceFactory = new PresenceFactory();
     metricsFactory = new MetricsFactory();
     historyFactory = new HistoryFactory();
+    intellectFactory = new IntellectFactory();
+
     const getAuthToken = () => mockAuthToken;
 
     room = new Room(
@@ -68,7 +77,9 @@ describe('Room', () => {
       presenceFactory,
       metricsFactory,
       historyFactory,
+      intellectFactory,
       mockHttpServiceUrl,
+      mockintellectServiceUrl,
       getAuthToken
     );
   });
@@ -84,9 +95,9 @@ describe('Room', () => {
       roomId: mockRoomId
     });
 
-    expect(presenceFactory.createPresence).toHaveBeenCalled();
-    expect(metricsFactory.createMetrics).toHaveBeenCalled();
-    expect(historyFactory.createHistory).toHaveBeenCalled();
+    expect(presenceFactory.createInstance).toHaveBeenCalled();
+    expect(metricsFactory.createInstance).toHaveBeenCalled();
+    expect(historyFactory.createInstance).toHaveBeenCalled();
   });
 
   it('should handle errors encountered while creating a room', async () => {

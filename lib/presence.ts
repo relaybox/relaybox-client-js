@@ -21,9 +21,6 @@ const PLATFORM_RESERVED_NAMESPACE = '$';
  * user presence in a specific room.
  */
 export class Presence extends EventEmitter {
-  private readonly socketManager: SocketManager;
-  private readonly roomId: string;
-  private readonly nspRoomId: string;
   private readonly eventRegistry = new EventRegistry();
 
   /**
@@ -32,12 +29,12 @@ export class Presence extends EventEmitter {
    * @param {string} roomId - The ID of the room for which presence is being managed.
    * @param {string} nspRoomId - The namespaced room ID used for event subscriptions.
    */
-  constructor(socketManager: SocketManager, roomId: string, nspRoomId: string) {
+  constructor(
+    private readonly socketManager: SocketManager,
+    private readonly roomId: string,
+    private readonly nspRoomId: string
+  ) {
     super();
-
-    this.socketManager = socketManager;
-    this.roomId = roomId;
-    this.nspRoomId = nspRoomId;
   }
 
   /**

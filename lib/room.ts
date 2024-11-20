@@ -2,59 +2,52 @@ import { ClientEvent } from './types/event.types';
 import { SocketEventHandler } from './types/socket.types';
 import { Presence } from './presence';
 import { logger } from './logger';
-import { HistoryFactory, MetricsFactory, PresenceFactory } from './factory';
+import { HistoryFactory, IntellectFactory, MetricsFactory, PresenceFactory } from './factory';
 import { validateUserData } from './validation';
 import { Metrics } from './metrics';
 import { History } from './history';
 import { EventRegistry } from './event-registry';
 import { SocketManager } from './socket-manager';
-import RelayBox from './relaybox';
-import { TokenResponse } from './types';
+import { Intellect } from './intellect';
 
 /**
  * The Room class represents a room in a chat or messaging application.
  * It handles event subscriptions, presence management, and communication with the server.
  */
 export class Room {
-  private readonly socketManager: SocketManager;
-  private readonly presenceFactory: PresenceFactory;
-  private readonly metricsFactory: MetricsFactory;
-  private readonly historyFactory: HistoryFactory;
   private readonly eventRegistry = new EventRegistry();
-  private readonly httpServiceUrl: string;
   private nspRoomId: string | null = null;
-  private getAuthToken: () => string | null;
-
   public readonly id: string;
   public readonly roomId: string;
   public presence: Presence | null = null;
   public metrics: Metrics | null = null;
   public history: History | null = null;
+  public intellect: Intellect | null = null;
 
   /**
    * Creates an instance of Room.
    * @param {string} roomId - The ID of the room.
    * @param {SocketManager} socketManager - The socket manager for handling socket connections.
-   * @param {PresenceFactory} presencefactory - The factory for creating presence instances.
+   * @param {PresenceFactory} presenceFactory - The factory for creating presence instances.
    * @param {MetricsFactory} metricsFactory - The factory for creating metrics instances.
    * @param {HistoryFactory} historyFactory - The factory for creating history instances.
+   * @param {IntellectFactory} intellectFactory - The factory for creating intellect instances.
+   * @param {string} httpServiceUrl - The url for interacting with the core HTTP service.
+   * @param {string} intellectServiceUrl - The url for interacting with the "intellect" service.
+   * @param {Function} getAuthToken - Function to retrieve the latest auth token.
    */
   constructor(
     roomId: string,
-    socketManager: SocketManager,
-    presencefactory: PresenceFactory,
-    metricsFactory: MetricsFactory,
-    historyFactory: HistoryFactory,
-    httpServiceUrl: string,
-    getAuthToken: () => string | null
+    private readonly socketManager: SocketManager,
+    private readonly presenceFactory: PresenceFactory,
+    private readonly metricsFactory: MetricsFactory,
+    private readonly historyFactory: HistoryFactory,
+    private readonly intellectFactory: IntellectFactory,
+    private readonly httpServiceUrl: string,
+    private readonly intellectServiceUrl: string,
+    private getAuthToken: () => string | null
   ) {
     this.roomId = this.id = roomId;
-    this.socketManager = socketManager;
-    this.presenceFactory = presencefactory;
-    this.metricsFactory = metricsFactory;
-    this.historyFactory = historyFactory;
-    this.httpServiceUrl = httpServiceUrl;
-    this.getAuthToken = getAuthToken;
   }
 
   /**
@@ -74,24 +67,35 @@ export class Room {
 
       this.nspRoomId = nspRoomId;
 
-      this.presence = this.presenceFactory.createPresence(
-        this.socketManager,
-        this.roomId,
-        nspRoomId
-      );
-
-      this.metrics = this.metricsFactory.createMetrics(this.socketManager, this.roomId);
-      this.history = this.historyFactory.createHistory(
-        this.roomId,
-        this.httpServiceUrl,
-        this.getAuthToken
-      );
-
-      return this;
+      return this.initRoomExtensions();
     } catch (err: any) {
       logger.logError(err.message, err);
       throw new Error(err.message);
     }
+  }
+
+  private initRoomExtensions(): Room {
+    const {
+      nspRoomId,
+      socketManager,
+      roomId,
+      httpServiceUrl,
+      intellectServiceUrl,
+      publish,
+      getAuthToken
+    } = this;
+
+    this.presence = this.presenceFactory.createInstance(socketManager, roomId, nspRoomId!);
+    this.metrics = this.metricsFactory.createInstance(socketManager, roomId);
+    this.history = this.historyFactory.createInstance(roomId, httpServiceUrl, getAuthToken);
+    this.intellect = this.intellectFactory.createInstance(
+      roomId,
+      intellectServiceUrl,
+      publish,
+      getAuthToken
+    );
+
+    return this;
   }
 
   /**

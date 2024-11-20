@@ -15,8 +15,6 @@ export enum MetricsEventAllowedValue {
  * The Metrics class handles subscribing to and unsubscribing from metrics events for a specific room.
  */
 export class Metrics {
-  private readonly socketManager: SocketManager;
-  private readonly roomId: string;
   private subscription: string | null = null;
   private handlerRefs: Map<SocketEventHandler, number> = new Map();
 
@@ -25,10 +23,7 @@ export class Metrics {
    * @param {SocketManager} socketManager - The socket manager to handle socket connections.
    * @param {string} roomId - The ID of the room for which metrics are being managed.
    */
-  constructor(socketManager: SocketManager, roomId: string) {
-    this.socketManager = socketManager;
-    this.roomId = roomId;
-  }
+  constructor(private readonly socketManager: SocketManager, private readonly roomId: string) {}
 
   /**
    * Subscribes to metrics events for the room and binds the given handler.

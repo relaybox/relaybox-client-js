@@ -68,9 +68,6 @@ enum AuthEndpoint {
  */
 export class Auth extends EventEmitter {
   public readonly enabled: boolean;
-  private readonly publicKey: string | null;
-  private readonly authServiceUrl: string;
-  private readonly socketManager: SocketManager;
   private tmpToken: string | null = null;
   private refreshTimeout: NodeJS.Timeout | number | null = null;
   #authUserSession: AuthUserSession | null = null;
@@ -83,14 +80,15 @@ export class Auth extends EventEmitter {
    * @param {SocketManager} socketManager - An instance of `SocketManager` for handling socket connections.
    * @param {string | null} publicKey - The public key for authenticating API requests. Required for authorization.
    * @param {string} authServiceUrl - The base URL for the authentication service (e.g., API server).
-   * @param {string} authServiceHost - The host name of the authentication service.
    */
 
-  constructor(socketManager: SocketManager, publicKey: string | null, authServiceUrl: string) {
+  constructor(
+    private readonly socketManager: SocketManager,
+    private readonly publicKey: string | null,
+    private readonly authServiceUrl: string
+  ) {
     super();
-    this.publicKey = publicKey;
-    this.authServiceUrl = authServiceUrl;
-    this.socketManager = socketManager;
+
     this.enabled = !!publicKey;
 
     this.mfa = {

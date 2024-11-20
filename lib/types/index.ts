@@ -6,3 +6,4 @@ export * from './presence.types';
 export * from './relaybox.types';
 export * from './request.types';
 export * from './socket.types';
+export * from './intellect.types';
