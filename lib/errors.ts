@@ -78,7 +78,7 @@ export class SocketEmitError extends Error {
 }
 
 export class TimeoutError extends Error {
-  static name = 'TimeoutError';
+  static name = ErrorName.TIMEOUT_ERROR;
 
   constructor(message: string, public details?: any) {
     super(message);
