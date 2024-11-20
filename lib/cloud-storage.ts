@@ -1,9 +1,10 @@
 import EventEmitter from 'eventemitter3';
 import { logger } from './logger';
-import { HttpMethod } from './types';
+import { HttpMethod, PaginatedResponse } from './types';
 import { serviceRequest } from './request';
 import { CloudStorageAsset } from './types/cloud-storage.types';
 
+const STORAGE_ROOMS_PATHNAME = 'rooms';
 const STORAGE_ASSETS_PATHNAME = 'assets';
 
 export class CloudStorage extends EventEmitter {
@@ -42,7 +43,72 @@ export class CloudStorage extends EventEmitter {
         }
       };
 
-      const url = `${this.storageServiceUrl}/${STORAGE_ASSETS_PATHNAME}/${this.roomId}`;
+      const url = `${this.storageServiceUrl}/${STORAGE_ASSETS_PATHNAME}/${STORAGE_ROOMS_PATHNAME}/${this.roomId}`;
+
+      const response = await serviceRequest<CloudStorageAsset>(url, requestParams);
+
+      return response;
+    } catch (err: any) {
+      logger.logError(err.message, err);
+      throw err;
+    }
+  }
+
+  /**
+   * Create and dispatch a new Intellect service query.
+   * Include optional params to refine results
+   *
+   * @returns {PaginatedResponse<CloudStorageAsset>}
+   */
+  async list(): Promise<PaginatedResponse<CloudStorageAsset>> {
+    logger.logInfo(`Running get assets request`);
+
+    try {
+      const authToken = this.getAuthToken();
+
+      if (!authToken) {
+        throw new Error('No auth token found');
+      }
+
+      const requestParams: RequestInit = {
+        method: HttpMethod.GET,
+        headers: {
+          Authorization: `Bearer ${authToken}`
+        }
+      };
+
+      const url = `${this.storageServiceUrl}/${STORAGE_ASSETS_PATHNAME}/${STORAGE_ROOMS_PATHNAME}/${this.roomId}`;
+
+      const response = await serviceRequest<PaginatedResponse<CloudStorageAsset>>(
+        url,
+        requestParams
+      );
+
+      return response;
+    } catch (err: any) {
+      logger.logError(err.message, err);
+      throw err;
+    }
+  }
+
+  async get(assetId: string): Promise<CloudStorageAsset> {
+    logger.logInfo(`Running get asset request`);
+
+    try {
+      const authToken = this.getAuthToken();
+
+      if (!authToken) {
+        throw new Error('No auth token found');
+      }
+
+      const requestParams: RequestInit = {
+        method: HttpMethod.GET,
+        headers: {
+          Authorization: `Bearer ${authToken}`
+        }
+      };
+
+      const url = `${this.storageServiceUrl}/${STORAGE_ASSETS_PATHNAME}/${assetId}`;
 
       const response = await serviceRequest<CloudStorageAsset>(url, requestParams);
 

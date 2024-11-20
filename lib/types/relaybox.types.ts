@@ -35,6 +35,8 @@ export interface OfflineOptions {
    * Defaults to https://gnet.prod.relaybox-services.net
    */
   httpServiceUrl?: string | null;
+
+  intellectServiceUrl?: string | null;
 }
 
 export interface RelayBoxOptions {

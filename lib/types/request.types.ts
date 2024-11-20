@@ -9,6 +9,11 @@ export interface ServiceResponseDataBase {
   message?: string;
 }
 
+export interface PaginatedResponse<T = any> {
+  count: number;
+  data: T[];
+}
+
 export type ServiceResponseData<T = {}> = ServiceResponseDataBase & T;
 
 export interface FormattedResponse<T = any> {

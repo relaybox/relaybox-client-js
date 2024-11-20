@@ -63,6 +63,8 @@ const DEFAULT_OFFLINE_AUTH_HOST = 'http://localhost';
 const DEFAULT_OFFLINE_AUTH_PATH = 'auth';
 const DEFAULT_OFFLINE_HTTP_HOST = 'http://localhost';
 const DEFAULT_OFFLINE_HTTP_PATH = 'core';
+const DEFAULT_OFFLINE_INTELLECT_HOST = 'http://localhost';
+const DEFAULT_OFFLINE_INTELLECT_PATH = 'intellect';
 const DEFAULT_OFFLINE_CORE_HOST = 'ws://localhost';
 const DEFAULT_OFFLINE_CORE_PATH = 'core';
 const DEFAULT_OFFLINE_PORT = 9000;
@@ -112,9 +114,8 @@ export default class RelayBox {
       );
     }
 
-    const { authServiceUrl, coreServiceUrl, httpServiceUrl } = this.getOfflineServiceUrls(
-      opts.offline
-    );
+    const { authServiceUrl, coreServiceUrl, httpServiceUrl, intellectServiceUrl } =
+      this.getOfflineServiceUrls(opts.offline);
 
     this.apiKey = opts.apiKey;
     this.publicKey = opts.publicKey;
@@ -124,7 +125,7 @@ export default class RelayBox {
     this.authServiceUrl = authServiceUrl || AUTH_SERVICE_URL;
     this.coreServiceUrl = coreServiceUrl || CORE_SERVICE_URL;
     this.httpServiceUrl = httpServiceUrl || HTTP_SERVICE_URL;
-    this.intellectServiceUrl = INTELLECT_SERVICE_URL;
+    this.intellectServiceUrl = intellectServiceUrl || INTELLECT_SERVICE_URL;
     this.storageServiceUrl = STORAGE_SERVICE_URL;
     this.socketManager = new SocketManager(this.coreServiceUrl);
     this.presenceFactory = new PresenceFactory();
@@ -164,11 +165,13 @@ export default class RelayBox {
     port = 0,
     authServiceUrl = null,
     coreServiceUrl = null,
-    httpServiceUrl = null
+    httpServiceUrl = null,
+    intellectServiceUrl = null
   }: OfflineOptions = {}): {
     authServiceUrl: string | null;
     httpServiceUrl: string | null;
     coreServiceUrl: string | null;
+    intellectServiceUrl: string | null;
   } {
     if (enabled || port || authServiceUrl || coreServiceUrl) {
       port = port || DEFAULT_OFFLINE_PORT;
@@ -179,14 +182,18 @@ export default class RelayBox {
         coreServiceUrl:
           coreServiceUrl ?? `${DEFAULT_OFFLINE_CORE_HOST}:${port}/${DEFAULT_OFFLINE_CORE_PATH}`,
         httpServiceUrl:
-          httpServiceUrl ?? `${DEFAULT_OFFLINE_HTTP_HOST}:${port}/${DEFAULT_OFFLINE_HTTP_PATH}`
+          httpServiceUrl ?? `${DEFAULT_OFFLINE_HTTP_HOST}:${port}/${DEFAULT_OFFLINE_HTTP_PATH}`,
+        intellectServiceUrl:
+          intellectServiceUrl ??
+          `${DEFAULT_OFFLINE_INTELLECT_HOST}:${port}/${DEFAULT_OFFLINE_INTELLECT_PATH}`
       };
     }
 
     return {
       authServiceUrl,
       coreServiceUrl,
-      httpServiceUrl
+      httpServiceUrl,
+      intellectServiceUrl
     };
   }
 
