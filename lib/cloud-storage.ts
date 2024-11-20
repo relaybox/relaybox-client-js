@@ -1,10 +1,10 @@
 import EventEmitter from 'eventemitter3';
 import { logger } from './logger';
 import { HttpMethod } from './types';
-import { defaultHeaders, serviceRequest } from './request';
+import { serviceRequest } from './request';
 import { CloudStorageAsset } from './types/cloud-storage.types';
 
-const STORAGE_ASSETS_PATHNAME = '/assets';
+const STORAGE_ASSETS_PATHNAME = 'assets';
 
 export class CloudStorage extends EventEmitter {
   constructor(
@@ -19,7 +19,7 @@ export class CloudStorage extends EventEmitter {
    * Create and dispatch a new Intellect service query.
    * Include optional params to refine results
    *
-   * @param {FormData} formData - Files to be uploaded
+   * @param {FileList} files - Files to be uploaded
    * @returns {CloudStorageAsset}
    */
   async put(files: FileList): Promise<CloudStorageAsset> {
@@ -42,7 +42,7 @@ export class CloudStorage extends EventEmitter {
         }
       };
 
-      const url = `${this.storageServiceUrl}${STORAGE_ASSETS_PATHNAME}/${this.roomId}`;
+      const url = `${this.storageServiceUrl}/${STORAGE_ASSETS_PATHNAME}/${this.roomId}`;
 
       const response = await serviceRequest<CloudStorageAsset>(url, requestParams);
 

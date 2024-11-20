@@ -4,7 +4,7 @@ import { defaultHeaders, serviceRequest } from './request';
 import { HttpMethod, HttpMode } from './types';
 import { IntellectQueryOptions, IntellectResponse } from './types/intellect.types';
 
-const QUERIES_PATHNAME = '/queries';
+const QUERIES_PATHNAME = 'queries';
 
 export class Intellect extends EventEmitter {
   constructor(
@@ -54,7 +54,7 @@ export class Intellect extends EventEmitter {
         }
       };
 
-      const url = `${this.intellectServiceUrl}${QUERIES_PATHNAME}`;
+      const url = `${this.intellectServiceUrl}/${QUERIES_PATHNAME}`;
 
       const response = await serviceRequest<IntellectResponse>(url, requestParams);
 
