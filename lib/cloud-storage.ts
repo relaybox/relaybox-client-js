@@ -6,6 +6,7 @@ import { CloudStorageAsset } from './types/cloud-storage.types';
 
 const STORAGE_ROOMS_PATHNAME = 'rooms';
 const STORAGE_ASSETS_PATHNAME = 'assets';
+const STORAGE_ASSETS_METATDATA_PREFIX = 'metadata';
 
 export class CloudStorage extends EventEmitter {
   constructor(
@@ -108,7 +109,7 @@ export class CloudStorage extends EventEmitter {
         }
       };
 
-      const url = `${this.storageServiceUrl}/${STORAGE_ASSETS_PATHNAME}/${assetId}`;
+      const url = `${this.storageServiceUrl}/${STORAGE_ASSETS_PATHNAME}/${assetId}/${STORAGE_ASSETS_METATDATA_PREFIX}`;
 
       const response = await serviceRequest<CloudStorageAsset>(url, requestParams);
 
