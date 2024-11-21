@@ -35,9 +35,19 @@ export interface OfflineOptions {
    * Defaults to https://gnet.prod.relaybox-services.net
    */
   httpServiceUrl?: string | null;
-
+  /**
+   * https://relaybox.net/docs/api-reference/relaybox-client#relaybox-options
+   *
+   * Specify an override url for the intellect service. This is useful for testing or when using relayBox platform emulator.
+   * Defaults to https://gnet.prod.relaybox-services.net
+   */
   intellectServiceUrl?: string | null;
-
+  /**
+   * https://relaybox.net/docs/api-reference/relaybox-client#relaybox-options
+   *
+   * Specify an override url for the storage service. This is useful for testing or when using relayBox platform emulator.
+   * Defaults to https://gnet.prod.relaybox-services.net
+   */
   storageServiceUrl?: string | null;
 }
 

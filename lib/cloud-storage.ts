@@ -1,6 +1,6 @@
 import EventEmitter from 'eventemitter3';
 import { logger } from './logger';
-import { HttpMethod, PaginatedResponse } from './types';
+import { HttpMethod, PaginatedRequestOptions, PaginatedResponse } from './types';
 import { serviceRequest } from './request';
 import { CloudStorageAsset } from './types/cloud-storage.types';
 
@@ -18,11 +18,10 @@ export class CloudStorage extends EventEmitter {
   }
 
   /**
-   * Create and dispatch a new Intellect service query.
-   * Include optional params to refine results
+   * Pass a `FileList` to upload a file or files to the cloud storage service.
    *
    * @param {FileList} files - Files to be uploaded
-   * @returns {CloudStorageAsset}
+   * @returns {CloudStorageAsset} - A promise that resolves to the metadata of the uploaded cloud storage asset.
    */
   async put(files: FileList): Promise<CloudStorageAsset> {
     logger.logInfo(`Running put assets request`);
@@ -56,12 +55,17 @@ export class CloudStorage extends EventEmitter {
   }
 
   /**
-   * Create and dispatch a new Intellect service query.
-   * Include optional params to refine results
+   * Returns a paginated list of assets uplaoded to the room.
+   * Options:
+   * offset: number
+   * limit: number
    *
-   * @returns {PaginatedResponse<CloudStorageAsset>}
+   * @param {PaginatedRequestOptions} options - Paginated list request optiions
+   * @returns {PaginatedResponse<CloudStorageAsset>} - A promise that resolves to paginated list of assets.
    */
-  async list(): Promise<PaginatedResponse<CloudStorageAsset>> {
+  async list({ offset = 0, limit = 10 }: PaginatedRequestOptions = {}): Promise<
+    PaginatedResponse<CloudStorageAsset>
+  > {
     logger.logInfo(`Running get assets request`);
 
     try {
@@ -78,7 +82,14 @@ export class CloudStorage extends EventEmitter {
         }
       };
 
-      const url = `${this.storageServiceUrl}/${STORAGE_ASSETS_PATHNAME}/${STORAGE_ROOMS_PATHNAME}/${this.roomId}`;
+      const queryParams = {
+        offset: offset.toString(),
+        limit: limit.toString()
+      };
+
+      const queryString = new URLSearchParams(queryParams).toString();
+
+      const url = `${this.storageServiceUrl}/${STORAGE_ASSETS_PATHNAME}/${STORAGE_ROOMS_PATHNAME}/${this.roomId}?${queryString}`;
 
       const response = await serviceRequest<PaginatedResponse<CloudStorageAsset>>(
         url,
@@ -92,6 +103,13 @@ export class CloudStorage extends EventEmitter {
     }
   }
 
+  /**
+   * Retrieves metadata for a cloud storage asset by its ID.
+   *
+   * @param {string} assetId - The unique identifier of the asset to retrieve.
+   * @returns {Promise<CloudStorageAsset>} - A promise that resolves to the metadata of the requested cloud storage asset.
+   * @throws {Error} - Throws an error if the authentication token is missing or if the request fails.
+   */
   async get(assetId: string): Promise<CloudStorageAsset> {
     logger.logInfo(`Running get asset request`);
 

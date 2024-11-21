@@ -9,6 +9,11 @@ export interface ServiceResponseDataBase {
   message?: string;
 }
 
+export interface PaginatedRequestOptions {
+  offset?: number;
+  limit?: number;
+}
+
 export interface PaginatedResponse<T = any> {
   count: number;
   data: T[];
