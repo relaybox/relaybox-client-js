@@ -37,6 +37,8 @@ export interface OfflineOptions {
   httpServiceUrl?: string | null;
 
   intellectServiceUrl?: string | null;
+
+  storageServiceUrl?: string | null;
 }
 
 export interface RelayBoxOptions {

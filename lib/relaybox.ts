@@ -65,6 +65,8 @@ const DEFAULT_OFFLINE_HTTP_HOST = 'http://localhost';
 const DEFAULT_OFFLINE_HTTP_PATH = 'core';
 const DEFAULT_OFFLINE_INTELLECT_HOST = 'http://localhost';
 const DEFAULT_OFFLINE_INTELLECT_PATH = 'intellect';
+const DEFAULT_OFFLINE_STORAGE_HOST = 'http://localhost';
+const DEFAULT_OFFLINE_STORAGE_PATH = 'storage';
 const DEFAULT_OFFLINE_CORE_HOST = 'ws://localhost';
 const DEFAULT_OFFLINE_CORE_PATH = 'core';
 const DEFAULT_OFFLINE_PORT = 9000;
@@ -114,8 +116,13 @@ export default class RelayBox {
       );
     }
 
-    const { authServiceUrl, coreServiceUrl, httpServiceUrl, intellectServiceUrl } =
-      this.getOfflineServiceUrls(opts.offline);
+    const {
+      authServiceUrl,
+      coreServiceUrl,
+      httpServiceUrl,
+      intellectServiceUrl,
+      storageServiceUrl
+    } = this.getOfflineServiceUrls(opts.offline);
 
     this.apiKey = opts.apiKey;
     this.publicKey = opts.publicKey;
@@ -126,7 +133,7 @@ export default class RelayBox {
     this.coreServiceUrl = coreServiceUrl || CORE_SERVICE_URL;
     this.httpServiceUrl = httpServiceUrl || HTTP_SERVICE_URL;
     this.intellectServiceUrl = intellectServiceUrl || INTELLECT_SERVICE_URL;
-    this.storageServiceUrl = STORAGE_SERVICE_URL;
+    this.storageServiceUrl = storageServiceUrl || STORAGE_SERVICE_URL;
     this.socketManager = new SocketManager(this.coreServiceUrl);
     this.presenceFactory = new PresenceFactory();
     this.metricsFactory = new MetricsFactory();
@@ -166,12 +173,14 @@ export default class RelayBox {
     authServiceUrl = null,
     coreServiceUrl = null,
     httpServiceUrl = null,
-    intellectServiceUrl = null
+    intellectServiceUrl = null,
+    storageServiceUrl = null
   }: OfflineOptions = {}): {
     authServiceUrl: string | null;
     httpServiceUrl: string | null;
     coreServiceUrl: string | null;
     intellectServiceUrl: string | null;
+    storageServiceUrl: string | null;
   } {
     if (enabled || port || authServiceUrl || coreServiceUrl) {
       port = port || DEFAULT_OFFLINE_PORT;
@@ -185,7 +194,10 @@ export default class RelayBox {
           httpServiceUrl ?? `${DEFAULT_OFFLINE_HTTP_HOST}:${port}/${DEFAULT_OFFLINE_HTTP_PATH}`,
         intellectServiceUrl:
           intellectServiceUrl ??
-          `${DEFAULT_OFFLINE_INTELLECT_HOST}:${port}/${DEFAULT_OFFLINE_INTELLECT_PATH}`
+          `${DEFAULT_OFFLINE_INTELLECT_HOST}:${port}/${DEFAULT_OFFLINE_INTELLECT_PATH}`,
+        storageServiceUrl:
+          storageServiceUrl ??
+          `${DEFAULT_OFFLINE_STORAGE_HOST}:${port}/${DEFAULT_OFFLINE_STORAGE_PATH}`
       };
     }
 
@@ -193,7 +205,8 @@ export default class RelayBox {
       authServiceUrl,
       coreServiceUrl,
       httpServiceUrl,
-      intellectServiceUrl
+      intellectServiceUrl,
+      storageServiceUrl
     };
   }
 
