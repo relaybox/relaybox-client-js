@@ -110,7 +110,7 @@ export class CloudStorage extends EventEmitter {
    * @returns {Promise<CloudStorageAsset>} - A promise that resolves to the metadata of the requested cloud storage asset.
    * @throws {Error} - Throws an error if the authentication token is missing or if the request fails.
    */
-  async get(assetId: string): Promise<CloudStorageAsset> {
+  async getMetadata(assetId: string): Promise<CloudStorageAsset> {
     logger.logInfo(`Running get asset request`);
 
     try {
@@ -136,6 +136,18 @@ export class CloudStorage extends EventEmitter {
       logger.logError(err.message, err);
       throw err;
     }
+  }
+
+  /**
+   * Helper function to retrieve the URL of a cloud storage asset by its ID.
+   *
+   * @param assetId The unique identifier of the asset to retrieve.
+   * @returns The URL of the asset.
+   */
+  getUrl(assetId: string): string {
+    return `${
+      this.storageServiceUrl
+    }/${STORAGE_ASSETS_PATHNAME}/${assetId}?token=${this.getAuthToken()}`;
   }
 
   private getFormData(files: FileList): FormData {
