@@ -10,5 +10,4 @@ export interface CloudStorageAsset {
   encoding: string;
   createdAt: string;
   updatedAt: string;
-  deletedAt: null;
 }
