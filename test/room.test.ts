@@ -1,13 +1,19 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Room } from '../lib/room';
 import { SocketManager } from '../lib/socket-manager';
-import { HistoryFactory, IntellectFactory, PresenceFactory } from '../lib/factory';
+import {
+  CloudStorageFactory,
+  HistoryFactory,
+  IntellectFactory,
+  PresenceFactory
+} from '../lib/factory';
 import { MetricsFactory } from '../lib/factory';
 import { ClientEvent } from '../lib/types/event.types';
 
 const mockCoreServiceUrl = process.env.CORE_SERVICE_URL || '';
 const mockHttpServiceUrl = process.env.HTTP_SERVICE_URL || '';
-const mockintellectServiceUrl = process.env.HTTP_SERVICE_URL || '';
+const mockintellectServiceUrl = process.env.INTELLECT_SERVICE_URL || '';
+const mockStorageServiceUrl = process.env.STORAGE_SERVICE_URL || '';
 const mockRoomId = 'roomId123';
 const mockEvent = 'mock:event';
 const mockAuthToken = 'eyJhbGc.eyJrZXlOYW1lIjoiRz:5hg9z5Gd4YI9jSw1Y66gz6q';
@@ -41,9 +47,10 @@ vi.mock('../lib/factory', () => ({
     }))
   })),
   IntellectFactory: vi.fn(() => ({
-    createInstance: vi.fn(() => ({
-      get: vi.fn()
-    }))
+    createInstance: vi.fn()
+  })),
+  CloudStorageFactory: vi.fn(() => ({
+    createInstance: vi.fn()
   }))
 }));
 
@@ -61,6 +68,7 @@ describe('Room', () => {
   let metricsFactory: MetricsFactory;
   let historyFactory: HistoryFactory;
   let intellectFactory: IntellectFactory;
+  let cloudStorageFactory: CloudStorageFactory;
 
   beforeEach(async () => {
     socketManager = new SocketManager(mockCoreServiceUrl);
@@ -68,6 +76,7 @@ describe('Room', () => {
     metricsFactory = new MetricsFactory();
     historyFactory = new HistoryFactory();
     intellectFactory = new IntellectFactory();
+    cloudStorageFactory = new CloudStorageFactory();
 
     const getAuthToken = () => mockAuthToken;
 
@@ -78,8 +87,10 @@ describe('Room', () => {
       metricsFactory,
       historyFactory,
       intellectFactory,
+      cloudStorageFactory,
       mockHttpServiceUrl,
       mockintellectServiceUrl,
+      mockStorageServiceUrl,
       getAuthToken
     );
   });

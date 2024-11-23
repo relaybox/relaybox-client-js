@@ -3,6 +3,7 @@ import { Presence } from './presence';
 import { History } from './history';
 import { SocketManager } from './socket-manager';
 import { Intellect } from './intellect';
+import { CloudStorage } from './cloud-storage';
 
 export class PresenceFactory {
   createInstance(socketManager: SocketManager, roomId: string, nspRoomId: string): Presence {
@@ -34,5 +35,15 @@ export class IntellectFactory {
     getAuthToken: () => string | null
   ): Intellect {
     return new Intellect(roomId, intellectServiceUrl, publish, getAuthToken);
+  }
+}
+
+export class CloudStorageFactory {
+  createInstance(
+    roomId: string,
+    storageServiceUrl: string,
+    getAuthToken: () => string | null
+  ): CloudStorage {
+    return new CloudStorage(roomId, storageServiceUrl, getAuthToken);
   }
 }

@@ -9,7 +9,7 @@ import { TokenError } from './errors';
 import { HttpMethod, HttpMode } from './types';
 import { serviceRequest } from './request';
 
-const HISTORY_SERVICE_PATHNAME = '/history';
+const HISTORY_SERVICE_PATHNAME = 'history';
 
 /**
  * The History class handles fetching message history for a specific room.
@@ -93,7 +93,7 @@ export class History {
       const queryParams = this.getQueryParams(nextPageToken, opts);
       const queryString = new URLSearchParams(queryParams).toString();
 
-      const requestUrl = `${this.httpServiceUrl}${HISTORY_SERVICE_PATHNAME}/${this.roomId}/messages?${queryString}`;
+      const requestUrl = `${this.httpServiceUrl}/${HISTORY_SERVICE_PATHNAME}/${this.roomId}/messages?${queryString}`;
 
       const response = await serviceRequest<PaginatedHistoryClientResponse>(
         requestUrl,

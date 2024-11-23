@@ -18,7 +18,7 @@ export interface OfflineOptions {
    * https://relaybox.net/docs/api-reference/relaybox-client#relaybox-options
    *
    * Specify an override url for the auth service. This is useful for testing or when using relayBox platform emulator.
-   * Defaults to wss://auth.prod.relaybox-services.net
+   * Defaults to https://auth.prod.relaybox-services.net
    */
   authServiceUrl?: string | null;
   /**
@@ -35,6 +35,20 @@ export interface OfflineOptions {
    * Defaults to https://gnet.prod.relaybox-services.net
    */
   httpServiceUrl?: string | null;
+  /**
+   * https://relaybox.net/docs/api-reference/relaybox-client#relaybox-options
+   *
+   * Specify an override url for the intellect service. This is useful for testing or when using relayBox platform emulator.
+   * Defaults to https://intellect.prod.relaybox-services.net
+   */
+  intellectServiceUrl?: string | null;
+  /**
+   * https://relaybox.net/docs/api-reference/relaybox-client#relaybox-options
+   *
+   * Specify an override url for the storage service. This is useful for testing or when using relayBox platform emulator.
+   * Defaults to https://storage.prod.relaybox-services.net
+   */
+  storageServiceUrl?: string | null;
 }
 
 export interface RelayBoxOptions {

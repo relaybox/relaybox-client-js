@@ -52,9 +52,11 @@ jobs:
       - name: Create env file
         run: |
           touch .env
+          echo "AUTH_SERVICE_URL=${{ vars.AUTH_SERVICE_URL }}" >> .env
           echo "CORE_SERVICE_URL=${{ vars.CORE_SERVICE_URL }}" >> .env
           echo "HTTP_SERVICE_URL=${{ vars.HTTP_SERVICE_URL }}" >> .env
-          echo "AUTH_SERVICE_URL=${{ vars.AUTH_SERVICE_URL }}" >> .env
+          echo "INTELLECT_SERVICE_URL=${{ vars.INTELLECT_SERVICE_URL }}" >> .env
+          echo "STORAGE_SERVICE_URL=${{ vars.STORAGE_SERVICE_URL }}" >> .env
           echo "NODE_ENV=${{ vars.NODE_ENV }}" >> .env
           cat .env
 
