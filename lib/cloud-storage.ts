@@ -18,10 +18,10 @@ export class CloudStorage extends EventEmitter {
   }
 
   /**
-   * Pass a `FileList` to upload a file or files to the cloud storage service.
+   * Upload a file or files to the cloud storage service.
    *
-   * @param {FileList} files - Files to be uploaded
-   * @returns {CloudStorageAsset} - A promise that resolves to the metadata of the uploaded cloud storage asset.
+   * @param {FileList} files Files to be uploaded
+   * @returns {CloudStorageAsset} A promise that resolves to the metadata of the uploaded cloud storage asset.
    */
   async put(files: FileList): Promise<CloudStorageAsset> {
     logger.logInfo(`Running put assets request`);
@@ -60,8 +60,8 @@ export class CloudStorage extends EventEmitter {
    * offset: number
    * limit: number
    *
-   * @param {PaginatedRequestOptions} options - Paginated list request optiions
-   * @returns {PaginatedResponse<CloudStorageAsset>} - A promise that resolves to paginated list of assets.
+   * @param {PaginatedRequestOptions} options Paginated list request optiions
+   * @returns {PaginatedResponse<CloudStorageAsset>} A promise that resolves to paginated list of assets.
    */
   async list({ offset = 0, limit = 10 }: PaginatedRequestOptions = {}): Promise<
     PaginatedResponse<CloudStorageAsset>
@@ -106,9 +106,9 @@ export class CloudStorage extends EventEmitter {
   /**
    * Retrieves metadata for a cloud storage asset by its ID.
    *
-   * @param {string} assetId - The unique identifier of the asset to retrieve.
-   * @returns {Promise<CloudStorageAsset>} - A promise that resolves to the metadata of the requested cloud storage asset.
-   * @throws {Error} - Throws an error if the authentication token is missing or if the request fails.
+   * @param {string} assetId The unique identifier of the asset to retrieve.
+   * @returns {Promise<CloudStorageAsset>} A promise that resolves to the metadata of the requested cloud storage asset.
+   * @throws {Error} Throws an error if the authentication token is missing or if the request fails.
    */
   async getMetadata(assetId: string): Promise<CloudStorageAsset> {
     logger.logInfo(`Running get asset request`);
@@ -139,12 +139,12 @@ export class CloudStorage extends EventEmitter {
   }
 
   /**
-   * Helper function to retrieve the URL of a cloud storage asset by its ID.
+   * Helper function to retrieve the source URL for a cloud storage asset by its ID.
    *
    * @param assetId The unique identifier of the asset to retrieve.
    * @returns The URL of the asset.
    */
-  getUrl(assetId: string): string {
+  getSrcUrl(assetId: string): string {
     return `${
       this.storageServiceUrl
     }/${STORAGE_ASSETS_PATHNAME}/${assetId}?token=${this.getAuthToken()}`;
