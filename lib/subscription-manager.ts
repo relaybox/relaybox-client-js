@@ -73,7 +73,7 @@ export abstract class SubscriptionManager<
   }
 
   private async subscribeEvent(event: string, handler: SocketEventHandler): Promise<void> {
-    logger.logInfo(`Binding handler: ${event}"`);
+    logger.logInfo(`Binding handler: "${event}"`);
 
     const eventState = this.#eventRegistry.getHandlersForEvent(event);
 
