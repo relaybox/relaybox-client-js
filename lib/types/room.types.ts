@@ -1,13 +1,14 @@
-export type RoomType = 'private' | 'public';
+export type RoomVisibility = 'private' | 'public' | 'protected';
 
 export const defaultRoomCreateOptions = {
-  type: 'public'
+  visibility: 'public'
 };
 
 export const defaultRoomJoinOptions = {};
 
 export interface RoomCreateOptions {
-  type?: RoomType;
+  visibility?: RoomVisibility;
+  password?: string;
 }
 
 export interface RoomAttachOptions {
@@ -21,5 +22,5 @@ export interface RoomJoinOptions {
 
 export interface RoomJoinResponse {
   nspRoomId: string;
-  type: RoomType;
+  visibility: RoomVisibility;
 }

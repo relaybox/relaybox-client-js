@@ -51,7 +51,7 @@ import {
   RoomAttachOptions,
   RoomCreateOptions,
   RoomJoinOptions,
-  RoomType
+  RoomVisibility
 } from './types/room.types';
 
 const CORE_SERVICE_URL = process.env.CORE_SERVICE_URL || '';
@@ -561,6 +561,14 @@ export default class RelayBox {
    */
   async create(roomId: string, opts?: RoomCreateOptions): Promise<RoomAttachOptions> {
     try {
+      if (opts) {
+        const { visibility, password } = opts;
+
+        if (visibility === 'protected' && !password) {
+          throw new Error('Password is required for protected rooms');
+        }
+      }
+
       const room = await this.socketManager.emitWithAck<Room>(ClientEvent.ROOM_CREATE, {
         roomId,
         ...opts
