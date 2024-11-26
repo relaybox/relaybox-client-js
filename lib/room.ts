@@ -16,6 +16,7 @@ import { EventRegistry } from './event-registry';
 import { SocketManager } from './socket-manager';
 import { Intellect } from './intellect';
 import { CloudStorage } from './cloud-storage';
+import { RoomJoinOptions, RoomJoinResponse, RoomType } from './types/room.types';
 
 /**
  * The Room class represents a room in a chat or messaging application.
@@ -26,6 +27,7 @@ export class Room {
   private nspRoomId: string | null = null;
   public readonly id: string;
   public readonly roomId: string;
+  public type: RoomType | null = null;
   public presence: Presence | null = null;
   public metrics: Metrics | null = null;
   public history: History | null = null;
@@ -63,21 +65,28 @@ export class Room {
   }
 
   /**
-   * Creates and joins the room, initializing presence and metrics.
+   * Creates and joins the room, initializing room and event extensions.
    * @returns {Promise<Room>} The created room instance.
    * @throws Will throw an error if the room creation or joining fails.
    */
-  async create(): Promise<Room> {
+  async create(opts?: RoomJoinOptions): Promise<Room> {
     logger.logInfo(`Creating room "${this.roomId}"`);
 
-    const data = { roomId: this.roomId };
+    const data = {
+      roomId: this.roomId,
+      ...opts
+    };
 
     try {
-      const nspRoomId = await this.socketManager.emitWithAck<string>(ClientEvent.ROOM_JOIN, data);
+      const { nspRoomId, type } = await this.socketManager.emitWithAck<RoomJoinResponse>(
+        ClientEvent.ROOM_JOIN,
+        data
+      );
 
       logger.logInfo(`Successfully joined room "${nspRoomId}"`);
 
       this.nspRoomId = nspRoomId;
+      this.type = type as RoomType;
 
       return this.initRoomExtensions();
     } catch (err: any) {

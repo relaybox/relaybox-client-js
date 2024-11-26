@@ -23,7 +23,7 @@ SOFTWARE.
 */
 import EventEmitter from 'eventemitter3';
 import { getAuthTokenResponse } from './authentication';
-import { ServerEvent } from './types/event.types';
+import { ClientEvent, ServerEvent } from './types/event.types';
 import { OfflineOptions, RelayBoxOptions } from './types/relaybox.types';
 import { Room } from './room';
 import {
@@ -45,6 +45,14 @@ import { SocketManager } from './socket-manager';
 import { AuthKeyData, AuthRequestOptions } from './types/auth.types';
 import { TokenResponse } from './types/request.types';
 import { Auth } from './auth';
+import {
+  defaultRoomCreateOptions,
+  defaultRoomJoinOptions,
+  RoomAttachOptions,
+  RoomCreateOptions,
+  RoomJoinOptions,
+  RoomType
+} from './types/room.types';
 
 const CORE_SERVICE_URL = process.env.CORE_SERVICE_URL || '';
 const HTTP_SERVICE_URL = process.env.HTTP_SERVICE_URL || '';
@@ -546,12 +554,35 @@ export default class RelayBox {
   }
 
   /**
+   * Create a room with predefined options.
+   * @param roomId The ID of the room to create.
+   * @param opts Room create options, see RoomOptions.
+   * @returns
+   */
+  async create(roomId: string, opts?: RoomCreateOptions): Promise<RoomAttachOptions> {
+    try {
+      const room = await this.socketManager.emitWithAck<Room>(ClientEvent.ROOM_CREATE, {
+        roomId,
+        ...opts
+      });
+
+      return {
+        ...room,
+        join: (opts?: RoomJoinOptions) => this.join.bind(this, roomId, opts)
+      };
+    } catch (err: any) {
+      logger.logError(err.message);
+      throw new Error(err.message);
+    }
+  }
+
+  /**
    * Joins a room, creating it if it doesn't exist.
    * @param {string} roomId - The ID of the room to join.
    * @returns {Promise<Room>} The created or joined room instance.
    * @throws Will throw an error if room creation fails.
    */
-  async join(roomId: string): Promise<Room> {
+  async join(roomId: string, opts?: RoomJoinOptions): Promise<Room> {
     const getAuthToken = () => this.authToken;
 
     const room = new Room(
@@ -569,7 +600,7 @@ export default class RelayBox {
     );
 
     try {
-      return await room.create();
+      return await room.create(opts || defaultRoomJoinOptions);
     } catch (err) {
       throw err;
     }

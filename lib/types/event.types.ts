@@ -1,5 +1,6 @@
 export enum ClientEvent {
   DISCONNECT = 'disconnect',
+  ROOM_CREATE = 'ds:client:room:create',
   ROOM_JOIN = 'ds:client:room:join',
   ROOM_LEAVE = 'ds:client:room:leave',
   ROOM_SUBSCRIPTION_BIND = 'ds:client:room:subscription:bind',
