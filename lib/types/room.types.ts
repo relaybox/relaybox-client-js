@@ -23,4 +23,9 @@ export interface RoomJoinOptions {
 export interface RoomJoinResponse {
   nspRoomId: string;
   visibility: RoomVisibility;
+  passwordRequired: boolean;
+}
+
+export enum RoomEvent {
+  PROTECTED_PASSWORD_REQUIRED = 'PROTECTED_PASSWORD_REQUIRED'
 }

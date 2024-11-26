@@ -10,6 +10,7 @@ import {
 import { logger } from './logger';
 import { ClientEvent, ServerEvent } from './types/event.types';
 import { KeyData, TokenResponse } from './types/request.types';
+import { CustomError } from './errors';
 
 const MAX_RECONNECT_ATTEMPTS = 10;
 const INITIAL_RECONNECT_DELAY_MS = 500;
@@ -291,7 +292,7 @@ export class SocketManager {
     return new Promise((resolve, reject) => {
       function ackHandler(response: T, err: any) {
         if (err) {
-          return reject(new Error(err.message));
+          return reject(new CustomError(err));
         }
 
         resolve(response);

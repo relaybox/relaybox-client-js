@@ -1,4 +1,4 @@
-enum ErrorName {
+export enum ErrorName {
   VALIDATION_ERROR = 'ValidationError',
   NETWORK_ERROR = 'NetworkError',
   HTTP_REQUEST_ERROR = 'HTTPRequestError',
@@ -7,7 +7,8 @@ enum ErrorName {
   TOKEN_ERROR = 'TokenError',
   SOCKET_CONNECTION_ERROR = 'SocketConnectionError',
   SOCKET_EMIT_ERROR = 'SocketEmitError',
-  TIMEOUT_ERROR = 'TimeoutError'
+  TIMEOUT_ERROR = 'TimeoutError',
+  PASSWORD_REQUIRED_ERROR = 'PasswordRequiredError'
 }
 
 export class ValidationError extends Error {
@@ -83,5 +84,13 @@ export class TimeoutError extends Error {
   constructor(message: string, public details?: any) {
     super(message);
     this.name = ErrorName.TIMEOUT_ERROR;
+  }
+}
+
+export class CustomError extends Error {
+  constructor(args: { name: string; message: string }) {
+    super(args.message);
+    this.name = args.name;
+    Object.setPrototypeOf(this, new.target.prototype);
   }
 }

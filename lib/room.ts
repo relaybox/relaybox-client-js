@@ -91,7 +91,7 @@ export class Room {
       return this.initRoomExtensions();
     } catch (err: any) {
       logger.logError(err.message, err);
-      throw new Error(err.message);
+      throw err;
     }
   }
 

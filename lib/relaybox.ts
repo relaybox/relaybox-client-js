@@ -40,18 +40,17 @@ import {
   IntellectFactory,
   CloudStorageFactory
 } from './factory';
-import { SocketConnectionError, TokenError, ValidationError } from './errors';
+import { ErrorName, SocketConnectionError, TokenError, ValidationError } from './errors';
 import { SocketManager } from './socket-manager';
 import { AuthKeyData, AuthRequestOptions } from './types/auth.types';
 import { TokenResponse } from './types/request.types';
 import { Auth } from './auth';
 import {
-  defaultRoomCreateOptions,
   defaultRoomJoinOptions,
   RoomAttachOptions,
   RoomCreateOptions,
-  RoomJoinOptions,
-  RoomVisibility
+  RoomEvent,
+  RoomJoinOptions
 } from './types/room.types';
 
 const CORE_SERVICE_URL = process.env.CORE_SERVICE_URL || '';
@@ -83,7 +82,7 @@ const DEFAULT_OFFLINE_PORT = 9000;
  * RelayBox manages the connection and communication with a remote server
  * via WebSocket, handling authentication and socket events.
  */
-export default class RelayBox {
+export default class RelayBox extends EventEmitter {
   private readonly socketManager: SocketManager;
   private readonly presenceFactory: PresenceFactory;
   private readonly metricsFactory: MetricsFactory;
@@ -118,6 +117,8 @@ export default class RelayBox {
    * @throws {ValidationError} If neither `authEndpoint` nor `apiKey` is provided.
    */
   constructor(opts: RelayBoxOptions) {
+    super();
+
     if (!opts.apiKey && !opts.authEndpoint && !opts.authAction && !opts.publicKey) {
       throw new ValidationError(
         `Please provide either "authEndpoint", "apiKey", "authAction" or "publicKey"`
@@ -560,15 +561,15 @@ export default class RelayBox {
    * @returns
    */
   async create(roomId: string, opts?: RoomCreateOptions): Promise<RoomAttachOptions> {
-    try {
-      if (opts) {
-        const { visibility, password } = opts;
+    if (opts) {
+      const { visibility, password } = opts;
 
-        if (visibility === 'protected' && !password) {
-          throw new Error('Password is required for protected rooms');
-        }
+      if (visibility === 'protected' && !password) {
+        throw new Error('Password is required for protected rooms');
       }
+    }
 
+    try {
       const room = await this.socketManager.emitWithAck<Room>(ClientEvent.ROOM_CREATE, {
         roomId,
         ...opts
@@ -580,7 +581,7 @@ export default class RelayBox {
       };
     } catch (err: any) {
       logger.logError(err.message);
-      throw new Error(err.message);
+      throw err;
     }
   }
 
@@ -609,7 +610,11 @@ export default class RelayBox {
 
     try {
       return await room.create(opts || defaultRoomJoinOptions);
-    } catch (err) {
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === ErrorName.PASSWORD_REQUIRED_ERROR) {
+        this.emit(RoomEvent.PROTECTED_PASSWORD_REQUIRED, roomId);
+      }
+
       throw err;
     }
   }
