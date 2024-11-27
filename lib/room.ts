@@ -20,14 +20,12 @@ import { RoomJoinOptions, RoomJoinResponse, RoomVisibility } from './types/room.
 
 interface MemberActions {
   /**
-   * Add member to private room.
-   * This operation is only allowed for private rooms
+   * Add member to private room. Private rooms only.
    * @param clientId The clientId of the member to add
    */
   add: (clientId: string) => Promise<void>;
   /**
-   * Remove member from private room.
-   * This operation is only permitted for private rooms
+   * Remove member from private room. Private rooms only.
    * @param clientId The clientId of the member to delete
    */
   remove: (clientId: string) => Promise<void>;
@@ -353,7 +351,7 @@ export class Room {
    * This operation is only allowed for private rooms
    * @param clientId The clientId of the member to add
    */
-  async addMember(clientId: string): Promise<void> {
+  private async addMember(clientId: string): Promise<void> {
     if (this.visibility !== 'private') {
       throw new Error('Room is not private');
     }
@@ -373,7 +371,7 @@ export class Room {
    * This operation is only permitted for private rooms
    * @param clientId The clientId of the member to delete
    */
-  async removeMember(clientId: string): Promise<void> {
+  private async removeMember(clientId: string): Promise<void> {
     if (this.visibility !== 'private') {
       throw new Error('Room is not private');
     }
