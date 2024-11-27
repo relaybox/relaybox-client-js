@@ -315,6 +315,63 @@ export class Room {
   }
 
   /**
+   * Updates protected room password. Operation is only allowed for protected rooms
+   * @param password The new password for the room
+   */
+  async updatePassword(password: string): Promise<void> {
+    if (this.visibility !== 'protected') {
+      throw new Error('Room is not protected');
+    }
+
+    const data = { roomId: this.roomId, password };
+
+    try {
+      await this.socketManager.emitWithAck(ClientEvent.ROOM_PASSWORD_UPDATE, data);
+    } catch (err: any) {
+      logger.logError(err.message);
+      throw new Error(err.message);
+    }
+  }
+
+  /**
+   * Add member to private room. Operation is only allowed for private rooms
+   * @param clientId The clientId of the member to add
+   */
+  async addMember(clientId: string): Promise<void> {
+    if (this.visibility !== 'private') {
+      throw new Error('Room is not private');
+    }
+
+    const data = { roomId: this.roomId, clientId };
+
+    try {
+      await this.socketManager.emitWithAck(ClientEvent.ROOM_MEMBER_ADD, data);
+    } catch (err: any) {
+      logger.logError(err.message);
+      throw new Error(err.message);
+    }
+  }
+
+  /**
+   * Delete member from private room. Operation is only allowed for private rooms
+   * @param clientId The clientId of the member to delete
+   */
+  async removeMember(clientId: string): Promise<void> {
+    if (this.visibility !== 'private') {
+      throw new Error('Room is not private');
+    }
+
+    const data = { roomId: this.roomId, clientId };
+
+    try {
+      await this.socketManager.emitWithAck(ClientEvent.ROOM_MEMBER_REMOVE, data);
+    } catch (err: any) {
+      logger.logError(err.message);
+      throw new Error(err.message);
+    }
+  }
+
+  /**
    * Disconnects the socket manager from the server.
    */
   disconnect() {
