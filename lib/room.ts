@@ -18,6 +18,21 @@ import { Intellect } from './intellect';
 import { CloudStorage } from './cloud-storage';
 import { RoomJoinOptions, RoomJoinResponse, RoomVisibility } from './types/room.types';
 
+interface MemberActions {
+  /**
+   * Add member to private room.
+   * This operation is only allowed for private rooms
+   * @param clientId The clientId of the member to add
+   */
+  add: (clientId: string) => Promise<void>;
+  /**
+   * Remove member from private room.
+   * This operation is only permitted for private rooms
+   * @param clientId The clientId of the member to delete
+   */
+  remove: (clientId: string) => Promise<void>;
+}
+
 /**
  * The Room class represents a room in a chat or messaging application.
  * It handles event subscriptions, presence management, and communication with the server.
@@ -334,7 +349,8 @@ export class Room {
   }
 
   /**
-   * Add member to private room. Operation is only allowed for private rooms
+   * Add member to private room.
+   * This operation is only allowed for private rooms
    * @param clientId The clientId of the member to add
    */
   async addMember(clientId: string): Promise<void> {
@@ -353,7 +369,8 @@ export class Room {
   }
 
   /**
-   * Delete member from private room. Operation is only allowed for private rooms
+   * Remove member from private room.
+   * This operation is only permitted for private rooms
    * @param clientId The clientId of the member to delete
    */
   async removeMember(clientId: string): Promise<void> {
@@ -370,6 +387,11 @@ export class Room {
       throw new Error(err.message);
     }
   }
+
+  readonly members: MemberActions = {
+    add: this.addMember.bind(this),
+    remove: this.removeMember.bind(this)
+  };
 
   /**
    * Disconnects the socket manager from the server.
