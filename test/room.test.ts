@@ -20,10 +20,11 @@ const mockAuthToken = 'eyJhbGc.eyJrZXlOYW1lIjoiRz:5hg9z5Gd4YI9jSw1Y66gz6q';
 
 const socketManagerOn = vi.fn();
 const socketManagerOff = vi.fn();
+const socketManagerEmitWithAck = vi.fn();
 
 vi.mock('../lib/socket-manager', () => ({
   SocketManager: vi.fn(() => ({
-    emitWithAck: vi.fn(),
+    emitWithAck: socketManagerEmitWithAck,
     on: socketManagerOn,
     off: socketManagerOff,
     emit: vi.fn()
@@ -100,6 +101,11 @@ describe('Room', () => {
   });
 
   it('should successfully create a room and confirm join', async () => {
+    socketManagerEmitWithAck.mockResolvedValueOnce({
+      nspRoomId: mockRoomId,
+      visibility: 'public'
+    });
+
     await expect(room.create()).resolves.toBe(room);
 
     expect(socketManager.emitWithAck).toHaveBeenCalledWith(ClientEvent.ROOM_JOIN, {
@@ -109,6 +115,22 @@ describe('Room', () => {
     expect(presenceFactory.createInstance).toHaveBeenCalled();
     expect(metricsFactory.createInstance).toHaveBeenCalled();
     expect(historyFactory.createInstance).toHaveBeenCalled();
+    expect(intellectFactory.createInstance).toHaveBeenCalled();
+    expect(cloudStorageFactory.createInstance).toHaveBeenCalled();
+  });
+
+  it('should leave the room and perform necessary cleanup operations', async () => {
+    socketManagerEmitWithAck.mockResolvedValueOnce({
+      nspRoomId: mockRoomId,
+      visibility: 'public'
+    });
+
+    await room.create();
+
+    await expect(room.leave()).resolves.toBeUndefined();
+    expect(socketManager.emitWithAck).toHaveBeenCalledWith(ClientEvent.ROOM_LEAVE, {
+      roomId: mockRoomId
+    });
   });
 
   it('should handle errors encountered while creating a room', async () => {
@@ -167,15 +189,6 @@ describe('Room', () => {
     });
   });
 
-  it('should leave the room and perform necessary cleanup operations', async () => {
-    await room.create();
-
-    await expect(room.leave()).resolves.toBeUndefined();
-    expect(socketManager.emitWithAck).toHaveBeenCalledWith(ClientEvent.ROOM_LEAVE, {
-      roomId: mockRoomId
-    });
-  });
-
   it('should throw an error encountered when leaving a room', async () => {
     (socketManager.emitWithAck as any).mockRejectedValueOnce(new Error('Leave failed'));
     await expect(room.leave()).rejects.toThrow('Leave failed');
@@ -185,7 +198,16 @@ describe('Room', () => {
     let testRoom: Room;
 
     beforeEach(async () => {
+      socketManagerEmitWithAck.mockResolvedValueOnce({
+        nspRoomId: mockRoomId,
+        visibility: 'public'
+      });
+
       testRoom = await room.create();
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
     });
 
     it('should attach a handler to an event and verify the binding process', async () => {
