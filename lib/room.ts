@@ -18,10 +18,13 @@ import { Intellect } from './intellect';
 import { CloudStorage } from './cloud-storage';
 import { RoomJoinOptions, RoomJoinResponse, RoomVisibility } from './types/room.types';
 
+/**
+ * Convenience interface for room members actions
+ */
 interface MemberActions {
   /**
    * Add member to private room. Private rooms only.
-   * @param clientId The clientId of the member to add
+   * @param {string} clientId The clientId of the member to add
    */
   add: (clientId: string) => Promise<void>;
   /**
@@ -41,11 +44,11 @@ export class Room {
   public readonly id: string;
   public readonly roomId: string;
   public visibility: RoomVisibility | null = null;
-  public presence: Presence | null = null;
-  public metrics: Metrics | null = null;
-  public history: History | null = null;
-  public intellect: Intellect | null = null;
-  public storage: CloudStorage | null = null;
+  public presence!: Presence;
+  public metrics!: Metrics;
+  public history!: History;
+  public intellect!: Intellect;
+  public storage!: CloudStorage;
 
   /**
    * Creates an instance of Room.
@@ -263,7 +266,10 @@ export class Room {
   private async unbindAllSync(event: string, handler?: SocketEventHandler): Promise<void> {
     logger.logInfo(`All handlers unbound, syncing ${this.nspRoomId}:${event}`);
 
-    const data = { roomId: this.roomId, event };
+    const data = {
+      roomId: this.roomId,
+      event
+    };
 
     try {
       this.unbindAll(event);
@@ -336,7 +342,10 @@ export class Room {
       throw new Error('Room is not protected');
     }
 
-    const data = { roomId: this.roomId, password };
+    const data = {
+      roomId: this.roomId,
+      password
+    };
 
     try {
       await this.socketManager.emitWithAck(ClientEvent.ROOM_PASSWORD_UPDATE, data);
@@ -356,7 +365,10 @@ export class Room {
       throw new Error('Room is not private');
     }
 
-    const data = { roomId: this.roomId, clientId };
+    const data = {
+      roomId: this.roomId,
+      clientId
+    };
 
     try {
       await this.socketManager.emitWithAck(ClientEvent.ROOM_MEMBER_ADD, data);
@@ -376,7 +388,10 @@ export class Room {
       throw new Error('Room is not private');
     }
 
-    const data = { roomId: this.roomId, clientId };
+    const data = {
+      roomId: this.roomId,
+      clientId
+    };
 
     try {
       await this.socketManager.emitWithAck(ClientEvent.ROOM_MEMBER_REMOVE, data);
