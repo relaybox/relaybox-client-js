@@ -23,7 +23,7 @@ SOFTWARE.
 */
 import EventEmitter from 'eventemitter3';
 import { getAuthTokenResponse } from './authentication';
-import { ServerEvent } from './types/event.types';
+import { ClientEvent, ServerEvent } from './types/event.types';
 import { OfflineOptions, RelayBoxOptions } from './types/relaybox.types';
 import { Room } from './room';
 import {
@@ -40,11 +40,18 @@ import {
   IntellectFactory,
   CloudStorageFactory
 } from './factory';
-import { SocketConnectionError, TokenError, ValidationError } from './errors';
+import { ErrorName, SocketConnectionError, TokenError, ValidationError } from './errors';
 import { SocketManager } from './socket-manager';
 import { AuthKeyData, AuthRequestOptions } from './types/auth.types';
 import { TokenResponse } from './types/request.types';
 import { Auth } from './auth';
+import {
+  defaultRoomJoinOptions,
+  RoomAttachOptions,
+  RoomCreateOptions,
+  RoomEvent,
+  RoomJoinOptions
+} from './types/room.types';
 
 const CORE_SERVICE_URL = process.env.CORE_SERVICE_URL || '';
 const HTTP_SERVICE_URL = process.env.HTTP_SERVICE_URL || '';
@@ -75,7 +82,7 @@ const DEFAULT_OFFLINE_PORT = 9000;
  * RelayBox manages the connection and communication with a remote server
  * via WebSocket, handling authentication and socket events.
  */
-export default class RelayBox {
+export default class RelayBox extends EventEmitter {
   private readonly socketManager: SocketManager;
   private readonly presenceFactory: PresenceFactory;
   private readonly metricsFactory: MetricsFactory;
@@ -110,6 +117,8 @@ export default class RelayBox {
    * @throws {ValidationError} If neither `authEndpoint` nor `apiKey` is provided.
    */
   constructor(opts: RelayBoxOptions) {
+    super();
+
     if (!opts.apiKey && !opts.authEndpoint && !opts.authAction && !opts.publicKey) {
       throw new ValidationError(
         `Please provide either "authEndpoint", "apiKey", "authAction" or "publicKey"`
@@ -546,12 +555,43 @@ export default class RelayBox {
   }
 
   /**
+   * Create a room with predefined options.
+   * @param roomId The ID of the room to create.
+   * @param opts Room create options, see RoomOptions.
+   * @returns
+   */
+  async create(roomId: string, opts?: RoomCreateOptions): Promise<RoomAttachOptions> {
+    if (opts) {
+      const { visibility, password } = opts;
+
+      if (visibility === 'protected' && !password) {
+        throw new Error('Password is required for protected rooms');
+      }
+    }
+
+    try {
+      const room = await this.socketManager.emitWithAck<Room>(ClientEvent.ROOM_CREATE, {
+        roomId,
+        ...opts
+      });
+
+      return {
+        ...room,
+        join: (opts?: RoomJoinOptions) => this.join.bind(this, roomId, opts)
+      };
+    } catch (err: any) {
+      logger.logError(err.message);
+      throw err;
+    }
+  }
+
+  /**
    * Joins a room, creating it if it doesn't exist.
    * @param {string} roomId - The ID of the room to join.
    * @returns {Promise<Room>} The created or joined room instance.
    * @throws Will throw an error if room creation fails.
    */
-  async join(roomId: string): Promise<Room> {
+  async join(roomId: string, opts?: RoomJoinOptions): Promise<Room> {
     const getAuthToken = () => this.authToken;
 
     const room = new Room(
@@ -569,8 +609,12 @@ export default class RelayBox {
     );
 
     try {
-      return await room.create();
-    } catch (err) {
+      return await room.create(opts || defaultRoomJoinOptions);
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === ErrorName.PASSWORD_REQUIRED_ERROR) {
+        this.emit(RoomEvent.PROTECTED_PASSWORD_REQUIRED, roomId);
+      }
+
       throw err;
     }
   }

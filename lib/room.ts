@@ -16,6 +16,23 @@ import { EventRegistry } from './event-registry';
 import { SocketManager } from './socket-manager';
 import { Intellect } from './intellect';
 import { CloudStorage } from './cloud-storage';
+import { RoomJoinOptions, RoomJoinResponse, RoomVisibility } from './types/room.types';
+
+/**
+ * Convenience interface for room members actions
+ */
+interface MemberActions {
+  /**
+   * Add member to private room. Private rooms only.
+   * @param {string} clientId The clientId of the member to add
+   */
+  add: (clientId: string) => Promise<void>;
+  /**
+   * Remove member from private room. Private rooms only.
+   * @param clientId The clientId of the member to delete
+   */
+  remove: (clientId: string) => Promise<void>;
+}
 
 /**
  * The Room class represents a room in a chat or messaging application.
@@ -26,11 +43,12 @@ export class Room {
   private nspRoomId: string | null = null;
   public readonly id: string;
   public readonly roomId: string;
-  public presence: Presence | null = null;
-  public metrics: Metrics | null = null;
-  public history: History | null = null;
-  public intellect: Intellect | null = null;
-  public storage: CloudStorage | null = null;
+  public visibility: RoomVisibility | null = null;
+  public presence!: Presence;
+  public metrics!: Metrics;
+  public history!: History;
+  public intellect!: Intellect;
+  public storage!: CloudStorage;
 
   /**
    * Creates an instance of Room.
@@ -63,26 +81,33 @@ export class Room {
   }
 
   /**
-   * Creates and joins the room, initializing presence and metrics.
+   * Creates and joins the room, initializing room and event extensions.
    * @returns {Promise<Room>} The created room instance.
    * @throws Will throw an error if the room creation or joining fails.
    */
-  async create(): Promise<Room> {
+  async create(opts?: RoomJoinOptions): Promise<Room> {
     logger.logInfo(`Creating room "${this.roomId}"`);
 
-    const data = { roomId: this.roomId };
+    const data = {
+      roomId: this.roomId,
+      ...opts
+    };
 
     try {
-      const nspRoomId = await this.socketManager.emitWithAck<string>(ClientEvent.ROOM_JOIN, data);
+      const { nspRoomId, visibility } = await this.socketManager.emitWithAck<RoomJoinResponse>(
+        ClientEvent.ROOM_JOIN,
+        data
+      );
 
       logger.logInfo(`Successfully joined room "${nspRoomId}"`);
 
       this.nspRoomId = nspRoomId;
+      this.visibility = visibility as RoomVisibility;
 
       return this.initRoomExtensions();
     } catch (err: any) {
       logger.logError(err.message, err);
-      throw new Error(err.message);
+      throw err;
     }
   }
 
@@ -241,7 +266,10 @@ export class Room {
   private async unbindAllSync(event: string, handler?: SocketEventHandler): Promise<void> {
     logger.logInfo(`All handlers unbound, syncing ${this.nspRoomId}:${event}`);
 
-    const data = { roomId: this.roomId, event };
+    const data = {
+      roomId: this.roomId,
+      event
+    };
 
     try {
       this.unbindAll(event);
@@ -304,6 +332,79 @@ export class Room {
       throw new Error(err.message);
     }
   }
+
+  /**
+   * Updates protected room password. Operation is only allowed for protected rooms
+   * @param password The new password for the room
+   */
+  async updatePassword(password: string): Promise<void> {
+    if (this.visibility !== 'protected') {
+      throw new Error('Room is not protected');
+    }
+
+    const data = {
+      roomId: this.roomId,
+      password
+    };
+
+    try {
+      await this.socketManager.emitWithAck(ClientEvent.ROOM_PASSWORD_UPDATE, data);
+    } catch (err: any) {
+      logger.logError(err.message);
+      throw new Error(err.message);
+    }
+  }
+
+  /**
+   * Add member to private room.
+   * This operation is only allowed for private rooms
+   * @param clientId The clientId of the member to add
+   */
+  private async addMember(clientId: string): Promise<void> {
+    if (this.visibility !== 'private') {
+      throw new Error('Room is not private');
+    }
+
+    const data = {
+      roomId: this.roomId,
+      clientId
+    };
+
+    try {
+      await this.socketManager.emitWithAck(ClientEvent.ROOM_MEMBER_ADD, data);
+    } catch (err: any) {
+      logger.logError(err.message);
+      throw new Error(err.message);
+    }
+  }
+
+  /**
+   * Remove member from private room.
+   * This operation is only permitted for private rooms
+   * @param clientId The clientId of the member to delete
+   */
+  private async removeMember(clientId: string): Promise<void> {
+    if (this.visibility !== 'private') {
+      throw new Error('Room is not private');
+    }
+
+    const data = {
+      roomId: this.roomId,
+      clientId
+    };
+
+    try {
+      await this.socketManager.emitWithAck(ClientEvent.ROOM_MEMBER_REMOVE, data);
+    } catch (err: any) {
+      logger.logError(err.message);
+      throw new Error(err.message);
+    }
+  }
+
+  readonly members: MemberActions = {
+    add: this.addMember.bind(this),
+    remove: this.removeMember.bind(this)
+  };
 
   /**
    * Disconnects the socket manager from the server.
