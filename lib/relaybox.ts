@@ -43,7 +43,7 @@ import {
 import { ErrorName, SocketConnectionError, TokenError, ValidationError } from './errors';
 import { SocketManager } from './socket-manager';
 import { AuthKeyData, AuthRequestOptions } from './types/auth.types';
-import { TokenResponse } from './types/request.types';
+import { HttpMethod, HttpMode, PaginatedResponse, TokenResponse } from './types/request.types';
 import { Auth } from './auth';
 import {
   defaultRoomJoinOptions,
@@ -52,6 +52,8 @@ import {
   RoomEvent,
   RoomJoinOptions
 } from './types/room.types';
+import { serviceRequest } from './request';
+import { PaginatedHistoryClientResponse } from './types';
 
 const CORE_SERVICE_URL = process.env.CORE_SERVICE_URL || '';
 const HTTP_SERVICE_URL = process.env.HTTP_SERVICE_URL || '';
@@ -77,6 +79,17 @@ const DEFAULT_OFFLINE_STORAGE_PATH = 'storage';
 const DEFAULT_OFFLINE_CORE_HOST = 'ws://localhost';
 const DEFAULT_OFFLINE_CORE_PATH = 'core';
 const DEFAULT_OFFLINE_PORT = 9000;
+
+const ROOM_SERVICE_PATHNAME = 'rooms';
+
+/**
+ * Convenience interface for room members actions
+ */
+interface RoomActions {
+  create: (roomId: string, opts?: RoomCreateOptions) => Promise<RoomAttachOptions>;
+  join: (roomId: string, opts?: RoomJoinOptions) => Promise<Room>;
+  list: () => Promise<PaginatedResponse<any>>;
+}
 
 /**
  * RelayBox manages the connection and communication with a remote server
@@ -618,6 +631,46 @@ export default class RelayBox extends EventEmitter {
       throw err;
     }
   }
+
+  /**
+   * List rooms available to the user
+   * @returns {Promise<Room[]>}
+   */
+  async list(): Promise<PaginatedResponse<any>> {
+    try {
+      if (!this.authToken) {
+        throw new TokenError('No authentication token provided');
+      }
+
+      const requestParams: RequestInit = {
+        method: HttpMethod.GET,
+        mode: HttpMode.CORS,
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.authToken}`
+        }
+      };
+
+      // const queryString = new URLSearchParams(queryParams).toString();
+
+      const requestUrl = `${this.httpServiceUrl}/${ROOM_SERVICE_PATHNAME}`;
+
+      const response = await serviceRequest<PaginatedResponse<any>>(requestUrl, requestParams);
+
+      return response;
+    } catch (err: any) {
+      const message = `Error getting room list`;
+      logger.logError(message, err);
+      throw err;
+    }
+  }
+
+  readonly rooms: RoomActions = {
+    create: this.create.bind(this),
+    list: this.list.bind(this),
+    join: this.join.bind(this)
+  };
 
   /**
    * Disconnects from the server, cleaning up resources and removing listeners.
