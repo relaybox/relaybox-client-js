@@ -46,6 +46,7 @@ const AUTH_TOKEN_REFRESH_JITTER_RANGE_MS = 2000;
 
 enum AuthEndpoint {
   CREATE = `/create`,
+  ANONYMOUS = `/anonymous`,
   LOGIN = `/authenticate`,
   VERIFY = `/verify`,
   TOKEN_REFRESH = '/token/refresh',
@@ -842,6 +843,32 @@ export class Auth extends EventEmitter {
       });
 
       return res;
+    } catch (err: any) {
+      logger.logError(err.message, err);
+      throw err;
+    }
+  }
+
+  /**
+   * Creates an anonymous user and authenticates them.
+   * Emits the `SIGN_IN` event upon successful user creation.
+   *
+   * @returns {Promise<AuthUserSession>} The authenticated user's session data.
+   * @throws Will throw an error if the login process fails.
+   */
+  public async createAnonymousUser(): Promise<AuthUserSession> {
+    logger.logInfo(`Creating anonymous user`);
+
+    try {
+      const response = await this.authServiceRequest<AuthUserSession>(AuthEndpoint.ANONYMOUS, {
+        method: HttpMethod.POST
+      });
+
+      const responseData = this.handleAuthUserSessionResponse(response, true);
+
+      this.emit(AuthEvent.ANONYMOUS_USER_CREATED, response);
+
+      return responseData;
     } catch (err: any) {
       logger.logError(err.message, err);
       throw err;

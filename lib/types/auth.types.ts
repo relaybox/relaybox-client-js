@@ -112,7 +112,8 @@ export enum AuthEvent {
   SESSION_EXPIRED = 'SESSION_EXPIRED',
   GET_SESSION = 'GET_SESSION',
   MFA_ENROLL = 'MFA_ENROLL',
-  MFA_CHALLENGE = 'MFA_CHALLENGE'
+  MFA_CHALLENGE = 'MFA_CHALLENGE',
+  ANONYMOUS_USER_CREATED = 'ANONYMOUS_USER_CREATED'
 }
 
 export type AuthEventAllowedValues =
@@ -124,7 +125,8 @@ export type AuthEventAllowedValues =
   | 'PASSWORD_CONFIRM'
   | 'VERIFY'
   | 'RESEND_VERIFICATION'
-  | 'MFA_REQUIRED';
+  | 'MFA_REQUIRED'
+  | 'ANONYMOUS_USER_CREATED';
 
 export type AuthEventHandler = (...args: any[]) => void;
 
