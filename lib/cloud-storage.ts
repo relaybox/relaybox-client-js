@@ -55,10 +55,41 @@ export class CloudStorage extends EventEmitter {
   }
 
   /**
+   * Delete an asset from the cloud storage service.
+   *
+   * @param {string} assetId Files to be uploaded
+   * @returns {void}
+   */
+  async delete(assetId: string): Promise<void> {
+    logger.logInfo(`Deleting asset by id (${assetId})`);
+
+    try {
+      const authToken = this.getAuthToken();
+
+      if (!authToken) {
+        throw new Error('No auth token found');
+      }
+
+      const requestParams: RequestInit = {
+        method: HttpMethod.DELETE,
+        headers: {
+          Authorization: `Bearer ${authToken}`
+        }
+      };
+
+      const url = `${this.storageServiceUrl}/${STORAGE_ASSETS_PATHNAME}/${assetId}`;
+
+      const response = await serviceRequest<void>(url, requestParams);
+
+      return response;
+    } catch (err: any) {
+      logger.logError(err.message, err);
+      throw err;
+    }
+  }
+
+  /**
    * Returns a paginated list of assets uplaoded to the room.
-   * Options:
-   * offset: number
-   * limit: number
    *
    * @param {PaginatedRequestOptions} options Paginated list request optiions
    * @returns {PaginatedResponse<CloudStorageAsset>} A promise that resolves to paginated list of assets.
