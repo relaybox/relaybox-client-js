@@ -24,6 +24,12 @@ export interface RoomJoinResponse {
   nspRoomId: string;
   visibility: RoomVisibility;
   passwordRequired: boolean;
+  memberType: RoomMemberType;
+}
+
+export enum RoomMemberType {
+  OWNER = 'owner',
+  MEMBER = 'member'
 }
 
 export enum RoomEvent {

@@ -16,7 +16,12 @@ import { EventRegistry } from './event-registry';
 import { SocketManager } from './socket-manager';
 import { Intellect } from './intellect';
 import { CloudStorage } from './cloud-storage';
-import { RoomJoinOptions, RoomJoinResponse, RoomVisibility } from './types/room.types';
+import {
+  RoomJoinOptions,
+  RoomJoinResponse,
+  RoomMemberType,
+  RoomVisibility
+} from './types/room.types';
 
 /**
  * Convenience interface for room members actions
@@ -44,6 +49,7 @@ export class Room {
   public readonly id: string;
   public readonly roomId: string;
   public visibility: RoomVisibility | null = null;
+  public memberType: RoomMemberType | null = null;
   public presence!: Presence;
   public metrics!: Metrics;
   public history!: History;
@@ -94,15 +100,14 @@ export class Room {
     };
 
     try {
-      const { nspRoomId, visibility } = await this.socketManager.emitWithAck<RoomJoinResponse>(
-        ClientEvent.ROOM_JOIN,
-        data
-      );
+      const { nspRoomId, visibility, memberType } =
+        await this.socketManager.emitWithAck<RoomJoinResponse>(ClientEvent.ROOM_JOIN, data);
 
       logger.logInfo(`Successfully joined room "${nspRoomId}"`);
 
       this.nspRoomId = nspRoomId;
       this.visibility = visibility as RoomVisibility;
+      this.memberType = memberType as RoomMemberType;
 
       return this.initRoomExtensions();
     } catch (err: any) {
