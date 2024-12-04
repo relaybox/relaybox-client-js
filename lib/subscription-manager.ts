@@ -165,14 +165,22 @@ export abstract class SubscriptionManager<
 
     logger.logInfo(`Removing event handler from ${subscription}`);
 
-    const refCount = this.#eventRegistry.detachHandlers(event, handler);
+    const handlers = this.#eventRegistry.getHandlersForEvent(event);
 
-    if (refCount > 0) {
-      for (let i = refCount; i > 0; i--) {
-        this.#socketManager?.off(subscription, handler);
-      }
-    } else {
-      throw new ValidationError(`Defined handler is not attached the ${event} event`);
+    if (!handlers || !handlers.has(handler)) {
+      throw new ValidationError(`The specified handler is not attached to the "${event}" event.`);
+    }
+
+    this.#eventRegistry.detachHandlers(event, handler);
+
+    this.#socketManager.off(subscription, handler);
+
+    const remainingHandlers = this.#eventRegistry.getHandlersForEvent(event);
+
+    console.log('remainingHandlers', remainingHandlers);
+
+    if (!remainingHandlers || remainingHandlers.size === 0) {
+      this.unbindAll(event);
     }
   }
 

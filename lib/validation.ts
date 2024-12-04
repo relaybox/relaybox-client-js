@@ -14,9 +14,9 @@ export function validateUserData(userData: any, maxSize?: number): boolean {
     throw new ValidationError('Data exceeds the maximum size limit');
   }
 
-  if (!/^[a-zA-Z0-9 \r\n,.!?;:'"(){}\[\]@#$%^&*+=<>\/\\-]*$/.test(dataString)) {
-    throw new ValidationError('Data contains unsafe characters');
-  }
+  // if (!/^[a-zA-Z0-9 \r\n,.!?;:'"(){}\[\]@#$%^&*+=<>\/\\-]*$/.test(dataString)) {
+  //   throw new ValidationError('Data contains unsafe characters');
+  // }
 
   return true;
 }
