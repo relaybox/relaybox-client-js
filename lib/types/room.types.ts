@@ -1,3 +1,5 @@
+import { IntellectPublishOptions } from './intellect.types';
+
 export type RoomVisibility = 'private' | 'public' | 'protected';
 
 export const defaultRoomCreateOptions = {
@@ -25,6 +27,10 @@ export interface RoomJoinResponse {
   visibility: RoomVisibility;
   passwordRequired: boolean;
   memberType: RoomMemberType;
+}
+
+export interface RoomPublishOptions {
+  intellect?: IntellectPublishOptions;
 }
 
 export enum RoomMemberType {

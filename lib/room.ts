@@ -20,8 +20,10 @@ import {
   RoomJoinOptions,
   RoomJoinResponse,
   RoomMemberType,
+  RoomPublishOptions,
   RoomVisibility
 } from './types/room.types';
+import { IntellectPublishOptions } from './types';
 
 /**
  * Convenience interface for room members actions
@@ -297,14 +299,17 @@ export class Room {
    * @returns {Promise<any>} The server's response to the published event.
    * @throws Will throw an error if the publication fails.
    */
-  async publish<T>(event: string, userData: T): Promise<any> {
+  async publish<T>(event: string, userData: T, opts?: RoomPublishOptions): Promise<any> {
     validateUserData(userData);
 
     const data = {
       roomId: this.roomId,
       event,
-      data: userData
+      data: userData,
+      opts
     };
+
+    console.log(data);
 
     try {
       const messageData = await this.socketManager.emitWithAck<T>(ClientEvent.PUBLISH, data);

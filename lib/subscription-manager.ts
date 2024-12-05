@@ -172,12 +172,9 @@ export abstract class SubscriptionManager<
     }
 
     this.#eventRegistry.detachHandlers(event, handler);
-
     this.#socketManager.off(subscription, handler);
 
     const remainingHandlers = this.#eventRegistry.getHandlersForEvent(event);
-
-    console.log('remainingHandlers', remainingHandlers);
 
     if (!remainingHandlers || remainingHandlers.size === 0) {
       this.unbindAll(event);

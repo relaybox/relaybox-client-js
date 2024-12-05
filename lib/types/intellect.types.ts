@@ -8,3 +8,10 @@ export interface IntellectQueryOptions {
   assetId?: string;
   streaming?: boolean;
 }
+
+export interface IntellectPublishOptions {
+  inputPath: string;
+  conversationId?: string;
+  assetId?: string;
+  llm?: string;
+}
