@@ -12,6 +12,10 @@ export abstract class SubscriptionManager<
   AllowedEvents extends string = string
 > extends EventEmitter {
   protected abstract getSubscriptionName(event: string): string;
+  /**
+   * Unique identifier for the subscription.
+   * Appended to appPid (serverside) to create a unique subscription name.
+   */
   protected abstract get subscriptionId(): string;
   protected abstract get subscribeClientEventType(): ClientEvent;
   protected abstract get unsubscribeClientEventType(): ClientEvent;

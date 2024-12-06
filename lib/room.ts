@@ -23,7 +23,6 @@ import {
   RoomPublishOptions,
   RoomVisibility
 } from './types/room.types';
-import { IntellectPublishOptions } from './types';
 
 /**
  * Convenience interface for room members actions
@@ -135,6 +134,8 @@ export class Room {
     this.history = this.historyFactory.createInstance(roomId, httpServiceUrl, getAuthToken);
     this.storage = this.cloudStorageFactory.createInstance(roomId, storageServiceUrl, getAuthToken);
     this.intellect = this.intellectFactory.createInstance(
+      socketManager,
+      nspRoomId!,
       roomId,
       intellectServiceUrl,
       publish,

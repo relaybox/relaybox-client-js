@@ -29,12 +29,21 @@ export class HistoryFactory {
 
 export class IntellectFactory {
   createInstance(
+    socketManager: SocketManager,
+    nspRoomId: string,
     roomId: string,
     intellectServiceUrl: string,
     publish: <T>(event: string, userData: T) => Promise<any>,
     getAuthToken: () => string | null
   ): Intellect {
-    return new Intellect(roomId, intellectServiceUrl, publish, getAuthToken);
+    return new Intellect(
+      socketManager,
+      nspRoomId,
+      roomId,
+      intellectServiceUrl,
+      publish,
+      getAuthToken
+    );
   }
 }
 
