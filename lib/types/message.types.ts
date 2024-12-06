@@ -1,5 +1,10 @@
 import { AuthUserPublic } from './auth.types';
 
+export interface ClientMessageMetadata {
+  humanMessage?: boolean;
+  llmModel?: string;
+}
+
 export interface ClientMessage {
   id: string;
   body: any;
@@ -10,4 +15,5 @@ export interface ClientMessage {
   };
   timestamp: number;
   event?: string;
+  metadata?: ClientMessageMetadata;
 }
