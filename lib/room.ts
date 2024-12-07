@@ -350,7 +350,9 @@ export class Room {
    */
   async updatePassword(password: string): Promise<void> {
     if (this.visibility !== 'protected') {
-      throw new Error('Room is not protected');
+      throw new Error(
+        `Room visibility must be protected to update password, currently ${this.visibility}`
+      );
     }
 
     const data = {
@@ -373,7 +375,9 @@ export class Room {
    */
   private async addMember(clientId: string): Promise<void> {
     if (this.visibility !== 'private') {
-      throw new Error('Room is not private');
+      throw new Error(
+        `Room visibility must be private to add members, currently ${this.visibility}`
+      );
     }
 
     const data = {
@@ -396,7 +400,9 @@ export class Room {
    */
   private async removeMember(clientId: string): Promise<void> {
     if (this.visibility !== 'private') {
-      throw new Error('Room is not private');
+      throw new Error(
+        `Room visibility must be private to remove members, currently ${this.visibility}`
+      );
     }
 
     const data = {

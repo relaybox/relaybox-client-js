@@ -678,8 +678,6 @@ export default class RelayBox extends EventEmitter {
         }
       };
 
-      // const queryString = new URLSearchParams(queryParams).toString();
-
       const requestUrl = `${this.httpServiceUrl}/${ROOM_SERVICE_PATHNAME}`;
       const response = await serviceRequest<PaginatedResponse<any>>(requestUrl, requestParams);
 
