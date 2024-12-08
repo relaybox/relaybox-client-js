@@ -15,9 +15,7 @@ const PLATFORM_RESERVED_NAMESPACE = '$';
 type UserEvents = 'thinking' | 'response';
 
 export class Intellect extends SubscriptionManager<UserEvents> {
-  public model?: string;
-  public prompt?: string;
-  public temperature?: number;
+  private opts?: IntellectOptions | null = null;
 
   constructor(
     socketManager: SocketManager,
@@ -49,7 +47,7 @@ export class Intellect extends SubscriptionManager<UserEvents> {
     return ClientEvent.ROOM_INTELLECT_UNSUBSCRIBE_ALL;
   }
 
-  async set(opts: IntellectOptions): Promise<void> {
+  async set(opts: IntellectOptions): Promise<IntellectOptions> {
     logger.logInfo(`Saving intellect options ${this.roomId}`);
 
     try {
@@ -69,7 +67,13 @@ export class Intellect extends SubscriptionManager<UserEvents> {
         }
       };
 
-      await serviceRequest(`${this.stateServiceUrl}/rooms/${this.roomId}`, requestParams);
+      const requestUrl = `${this.stateServiceUrl}/rooms/${this.roomId}`;
+
+      const response = await serviceRequest<IntellectOptions>(requestUrl, requestParams);
+
+      this.opts = response;
+
+      return response;
     } catch (err: any) {
       logger.logError(err.message, err);
       throw err;
@@ -78,6 +82,10 @@ export class Intellect extends SubscriptionManager<UserEvents> {
 
   async get(): Promise<IntellectOptions> {
     logger.logInfo(`Getting intellect options ${this.roomId}`);
+
+    if (this.opts) {
+      return this.opts;
+    }
 
     try {
       const authToken = this.getAuthToken();
@@ -98,6 +106,8 @@ export class Intellect extends SubscriptionManager<UserEvents> {
       const requestUrl = `${this.stateServiceUrl}/rooms/${this.roomId}`;
 
       const response = await serviceRequest<IntellectOptions>(requestUrl, requestParams);
+
+      this.opts = response;
 
       return response;
     } catch (err: any) {
