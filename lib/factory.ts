@@ -32,9 +32,10 @@ export class IntellectFactory {
     socketManager: SocketManager,
     nspRoomId: string,
     roomId: string,
+    stateServiceUrl: string,
     getAuthToken: () => string | null
   ): Intellect {
-    return new Intellect(socketManager, nspRoomId, roomId, getAuthToken);
+    return new Intellect(socketManager, nspRoomId, roomId, stateServiceUrl, getAuthToken);
   }
 }
 

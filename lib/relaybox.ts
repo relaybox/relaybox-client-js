@@ -76,6 +76,8 @@ const DEFAULT_OFFLINE_INTELLECT_HOST = 'http://localhost';
 const DEFAULT_OFFLINE_INTELLECT_PATH = 'intellect';
 const DEFAULT_OFFLINE_STORAGE_HOST = 'http://localhost';
 const DEFAULT_OFFLINE_STORAGE_PATH = 'storage';
+const DEFAULT_OFFLINE_STATE_HOST = 'http://localhost';
+const DEFAULT_OFFLINE_STATE_PATH = 'state';
 const DEFAULT_OFFLINE_CORE_HOST = 'ws://localhost';
 const DEFAULT_OFFLINE_CORE_PATH = 'core';
 const DEFAULT_OFFLINE_PORT = 9000;
@@ -131,6 +133,7 @@ export default class RelayBox extends EventEmitter {
   private readonly httpServiceUrl: string;
   // private readonly intellectServiceUrl: string;
   private readonly storageServiceUrl: string;
+  private readonly stateServiceUrl: string;
   private socketManagerListeners: SocketManagerListener[] = [];
   private refreshTimeout: NodeJS.Timeout | number | null = null;
   private tokenResponse: TokenResponse | null = null;
@@ -169,7 +172,8 @@ export default class RelayBox extends EventEmitter {
       coreServiceUrl,
       httpServiceUrl,
       // intellectServiceUrl,
-      storageServiceUrl
+      storageServiceUrl,
+      stateServiceUrl
     } = this.getOfflineServiceUrls(opts.offline);
 
     this.apiKey = opts.apiKey;
@@ -182,6 +186,7 @@ export default class RelayBox extends EventEmitter {
     this.httpServiceUrl = httpServiceUrl || HTTP_SERVICE_URL;
     // this.intellectServiceUrl = intellectServiceUrl || INTELLECT_SERVICE_URL;
     this.storageServiceUrl = storageServiceUrl || STORAGE_SERVICE_URL;
+    this.stateServiceUrl = stateServiceUrl || STATE_SERVICE_URL;
     this.socketManager = new SocketManager(this.coreServiceUrl);
     this.presenceFactory = new PresenceFactory();
     this.metricsFactory = new MetricsFactory();
@@ -222,13 +227,15 @@ export default class RelayBox extends EventEmitter {
     coreServiceUrl = null,
     httpServiceUrl = null,
     intellectServiceUrl = null,
-    storageServiceUrl = null
+    storageServiceUrl = null,
+    stateServiceUrl = null
   }: OfflineOptions = {}): {
     authServiceUrl: string | null;
     httpServiceUrl: string | null;
     coreServiceUrl: string | null;
     intellectServiceUrl: string | null;
     storageServiceUrl: string | null;
+    stateServiceUrl: string | null;
   } {
     if (enabled || port || authServiceUrl || coreServiceUrl) {
       port = port || DEFAULT_OFFLINE_PORT;
@@ -245,7 +252,9 @@ export default class RelayBox extends EventEmitter {
           `${DEFAULT_OFFLINE_INTELLECT_HOST}:${port}/${DEFAULT_OFFLINE_INTELLECT_PATH}`,
         storageServiceUrl:
           storageServiceUrl ??
-          `${DEFAULT_OFFLINE_STORAGE_HOST}:${port}/${DEFAULT_OFFLINE_STORAGE_PATH}`
+          `${DEFAULT_OFFLINE_STORAGE_HOST}:${port}/${DEFAULT_OFFLINE_STORAGE_PATH}`,
+        stateServiceUrl:
+          stateServiceUrl ?? `${DEFAULT_OFFLINE_STATE_HOST}:${port}/${DEFAULT_OFFLINE_STATE_PATH}`
       };
     }
 
@@ -254,7 +263,8 @@ export default class RelayBox extends EventEmitter {
       coreServiceUrl,
       httpServiceUrl,
       intellectServiceUrl,
-      storageServiceUrl
+      storageServiceUrl,
+      stateServiceUrl
     };
   }
 
@@ -644,6 +654,7 @@ export default class RelayBox extends EventEmitter {
       this.cloudStorageFactory,
       this.httpServiceUrl,
       this.storageServiceUrl,
+      this.stateServiceUrl,
       getAuthToken
     );
 

@@ -1,21 +1,29 @@
 import { logger } from './logger';
 import { defaultHeaders, serviceRequest } from './request';
 import { ClientEvent, HttpMethod, HttpMode } from './types';
-import { IntellectQueryOptions, IntellectResponse } from './types/intellect.types';
+import {
+  IntellectOptions,
+  IntellectQueryOptions,
+  IntellectResponse
+} from './types/intellect.types';
 import { SubscriptionManager } from './subscription-manager';
 import { SocketManager } from './socket-manager';
 
-const QUERIES_PATHNAME = 'queries';
 const SUBSCRIPTION_NAMESPACE = 'intellect';
 const PLATFORM_RESERVED_NAMESPACE = '$';
 
 type UserEvents = 'thinking' | 'response';
 
 export class Intellect extends SubscriptionManager<UserEvents> {
+  public model?: string;
+  public prompt?: string;
+  public temperature?: number;
+
   constructor(
     socketManager: SocketManager,
     private nspRoomId: string,
     private readonly roomId: string,
+    private readonly stateServiceUrl: string,
     private readonly getAuthToken: () => string | null
   ) {
     super(socketManager);
@@ -41,52 +49,60 @@ export class Intellect extends SubscriptionManager<UserEvents> {
     return ClientEvent.ROOM_INTELLECT_UNSUBSCRIBE_ALL;
   }
 
-  /**
-   * Create and dispatch a new Intellect service query.
-   * Include optional params to refine results
-   *
-   * @param {string} input - Natural language query relating to current room
-   * @param {IntellectQueryOptions} opts - Optional current {conversationId} for RAG context
-   * @returns {IntellectResponse}
-   */
-  // async query(input: string, opts?: IntellectQueryOptions): Promise<IntellectResponse> {
-  //   const { conversationId, assetId, streaming } = opts ?? {};
+  async set(opts: IntellectOptions): Promise<void> {
+    logger.logInfo(`Saving intellect options ${this.roomId}`);
 
-  //   logger.logInfo(`Running intellect query for ${conversationId}`);
+    try {
+      const authToken = this.getAuthToken();
 
-  //   try {
-  //     const authToken = this.getAuthToken();
+      if (!authToken) {
+        throw new Error('No auth token found');
+      }
 
-  //     if (!authToken) {
-  //       throw new Error('No auth token found');
-  //     }
+      const requestParams: RequestInit = {
+        method: HttpMethod.PUT,
+        mode: HttpMode.CORS,
+        body: JSON.stringify(opts),
+        headers: {
+          ...defaultHeaders,
+          Authorization: `Bearer ${authToken}`
+        }
+      };
 
-  //     const requestBody = {
-  //       input,
-  //       roomId: this.roomId,
-  //       conversationId,
-  //       assetId,
-  //       streaming
-  //     };
+      await serviceRequest(`${this.stateServiceUrl}/rooms/${this.roomId}`, requestParams);
+    } catch (err: any) {
+      logger.logError(err.message, err);
+      throw err;
+    }
+  }
 
-  //     const requestParams: RequestInit = {
-  //       method: HttpMethod.POST,
-  //       mode: HttpMode.CORS,
-  //       body: JSON.stringify(requestBody),
-  //       headers: {
-  //         ...defaultHeaders,
-  //         Authorization: `Bearer ${authToken}`
-  //       }
-  //     };
+  async get(): Promise<IntellectOptions> {
+    logger.logInfo(`Getting intellect options ${this.roomId}`);
 
-  //     const url = `${this.intellectServiceUrl}/${QUERIES_PATHNAME}`;
+    try {
+      const authToken = this.getAuthToken();
 
-  //     const response = await serviceRequest<IntellectResponse>(url, requestParams);
+      if (!authToken) {
+        throw new Error('No auth token found');
+      }
 
-  //     return response;
-  //   } catch (err: any) {
-  //     logger.logError(err.message, err);
-  //     throw err;
-  //   }
-  // }
+      const requestParams: RequestInit = {
+        method: HttpMethod.GET,
+        mode: HttpMode.CORS,
+        headers: {
+          ...defaultHeaders,
+          Authorization: `Bearer ${authToken}`
+        }
+      };
+
+      const requestUrl = `${this.stateServiceUrl}/rooms/${this.roomId}`;
+
+      const response = await serviceRequest<IntellectOptions>(requestUrl, requestParams);
+
+      return response;
+    } catch (err: any) {
+      logger.logError(err.message, err);
+      throw err;
+    }
+  }
 }

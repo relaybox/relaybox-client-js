@@ -68,6 +68,7 @@ export class Room {
    * @param {CloudStorageFactory} cloudStorageFactory - The factory for creating cloud storage instances.
    * @param {string} httpServiceUrl - The url for interacting with the core HTTP service.
    * @param {string} storageServiceUrl - The url for interacting with the "storage" service.
+   * @param {string} stateServiceUrl - The url for interacting with the "storage" service.
    * @param {Function} getAuthToken - Function to retrieve the latest auth token.
    */
   constructor(
@@ -80,6 +81,7 @@ export class Room {
     private readonly cloudStorageFactory: CloudStorageFactory,
     private readonly httpServiceUrl: string,
     private readonly storageServiceUrl: string,
+    private readonly stateServiceUrl: string,
     private getAuthToken: () => string | null
   ) {
     this.roomId = this.id = roomId;
@@ -116,8 +118,15 @@ export class Room {
   }
 
   private initRoomExtensions(): Room {
-    const { nspRoomId, socketManager, roomId, httpServiceUrl, storageServiceUrl, getAuthToken } =
-      this;
+    const {
+      nspRoomId,
+      socketManager,
+      roomId,
+      httpServiceUrl,
+      storageServiceUrl,
+      stateServiceUrl,
+      getAuthToken
+    } = this;
 
     this.presence = this.presenceFactory.createInstance(socketManager, roomId, nspRoomId!);
     this.metrics = this.metricsFactory.createInstance(socketManager, roomId);
@@ -127,6 +136,7 @@ export class Room {
       socketManager,
       nspRoomId!,
       roomId,
+      stateServiceUrl,
       getAuthToken
     );
 

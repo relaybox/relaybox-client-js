@@ -49,6 +49,13 @@ export interface OfflineOptions {
    * Defaults to https://storage.prod.relaybox-services.net
    */
   storageServiceUrl?: string | null;
+  /**
+   * https://relaybox.net/docs/api-reference/relaybox-client#relaybox-options
+   *
+   * Specify an override url for the storage service. This is useful for testing or when using relayBox platform emulator.
+   * Defaults to https://storage.prod.relaybox-services.net
+   */
+  stateServiceUrl?: string | null;
 }
 
 export interface RelayBoxOptions {

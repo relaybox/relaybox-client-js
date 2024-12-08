@@ -15,3 +15,9 @@ export interface IntellectPublishOptions {
   assetId?: string;
   llm?: string;
 }
+
+export interface IntellectOptions {
+  model?: string;
+  prompt?: string;
+  temperature?: number;
+}
