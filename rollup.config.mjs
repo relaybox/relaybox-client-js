@@ -35,6 +35,7 @@ export default {
       'process.env.HTTP_SERVICE_URL': JSON.stringify(process.env.HTTP_SERVICE_URL),
       'process.env.INTELLECT_SERVICE_URL': JSON.stringify(process.env.INTELLECT_SERVICE_URL),
       'process.env.STORAGE_SERVICE_URL': JSON.stringify(process.env.STORAGE_SERVICE_URL),
+      'process.env.STATE_SERVICE_URL': JSON.stringify(process.env.STATE_SERVICE_URL),
       preventAssignment: true
     }),
     terser({

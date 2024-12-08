@@ -1,5 +1,5 @@
 import { ClientEvent } from './types/event.types';
-import { SocketEventHandler } from './types/socket.types';
+import { SocketEventAndHandler, SocketEventHandler } from './types/socket.types';
 import { Presence } from './presence';
 import { logger } from './logger';
 import {
@@ -67,7 +67,6 @@ export class Room {
    * @param {IntellectFactory} intellectFactory - The factory for creating intellect instances.
    * @param {CloudStorageFactory} cloudStorageFactory - The factory for creating cloud storage instances.
    * @param {string} httpServiceUrl - The url for interacting with the core HTTP service.
-   * @param {string} intellectServiceUrl - The url for interacting with the "intellect" service.
    * @param {string} storageServiceUrl - The url for interacting with the "storage" service.
    * @param {Function} getAuthToken - Function to retrieve the latest auth token.
    */
@@ -80,7 +79,6 @@ export class Room {
     private readonly intellectFactory: IntellectFactory,
     private readonly cloudStorageFactory: CloudStorageFactory,
     private readonly httpServiceUrl: string,
-    private readonly intellectServiceUrl: string,
     private readonly storageServiceUrl: string,
     private getAuthToken: () => string | null
   ) {
@@ -118,16 +116,8 @@ export class Room {
   }
 
   private initRoomExtensions(): Room {
-    const {
-      nspRoomId,
-      socketManager,
-      roomId,
-      httpServiceUrl,
-      intellectServiceUrl,
-      storageServiceUrl,
-      publish,
-      getAuthToken
-    } = this;
+    const { nspRoomId, socketManager, roomId, httpServiceUrl, storageServiceUrl, getAuthToken } =
+      this;
 
     this.presence = this.presenceFactory.createInstance(socketManager, roomId, nspRoomId!);
     this.metrics = this.metricsFactory.createInstance(socketManager, roomId);
@@ -137,8 +127,6 @@ export class Room {
       socketManager,
       nspRoomId!,
       roomId,
-      intellectServiceUrl,
-      publish,
       getAuthToken
     );
 
@@ -149,12 +137,12 @@ export class Room {
    * Retrieves the event name and handler based on the provided parameters.
    * @param {string | SocketEventHandler} [eventOrHandler] - The event name or handler function.
    * @param {SocketEventHandler} [eventHandler] - The event handler function.
-   * @returns {{ event: string | undefined; handler: SocketEventHandler }} The event name and handler.
+   * @returns {SocketEventAndHandler} The event name and handler.
    */
   getEventAndHandler(
     eventOrHandler?: string | SocketEventHandler,
     eventHandler?: SocketEventHandler
-  ): { event: string | undefined; handler: SocketEventHandler } {
+  ): SocketEventAndHandler {
     if (typeof eventOrHandler === 'function') {
       return {
         event: '$:subscribe:all',
@@ -309,8 +297,6 @@ export class Room {
       data: userData,
       opts
     };
-
-    console.log(data);
 
     try {
       const messageData = await this.socketManager.emitWithAck<T>(ClientEvent.PUBLISH, data);

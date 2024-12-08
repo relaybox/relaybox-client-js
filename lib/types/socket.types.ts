@@ -69,6 +69,11 @@ export enum SocketIoEvent {
 
 export type SocketEventHandler = (...args: any[]) => void;
 
+export interface SocketEventAndHandler {
+  event: string | undefined;
+  handler: SocketEventHandler;
+}
+
 export interface SocketRoomEventHandlers {
   on: (event: string, fn: SocketEventHandler) => void;
   off: (event: string, fn?: SocketEventHandler) => void;

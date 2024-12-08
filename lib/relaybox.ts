@@ -57,8 +57,9 @@ import { serviceRequest } from './request';
 const CORE_SERVICE_URL = process.env.CORE_SERVICE_URL || '';
 const HTTP_SERVICE_URL = process.env.HTTP_SERVICE_URL || '';
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || '';
-const INTELLECT_SERVICE_URL = process.env.INTELLECT_SERVICE_URL || '';
+// const INTELLECT_SERVICE_URL = process.env.INTELLECT_SERVICE_URL || '';
 const STORAGE_SERVICE_URL = process.env.STORAGE_SERVICE_URL || '';
+const STATE_SERVICE_URL = process.env.STATE_SERVICE_URL || '';
 const SOCKET_CONNECTION_ACK_TIMEOUT_MS = 2000;
 const AUTH_TOKEN_REFRESH_BUFFER_SECONDS = 20;
 const AUTH_TOKEN_REFRESH_RETRY_MS = 10000;
@@ -128,7 +129,7 @@ export default class RelayBox extends EventEmitter {
   private readonly authServiceUrl: string;
   private readonly coreServiceUrl: string;
   private readonly httpServiceUrl: string;
-  private readonly intellectServiceUrl: string;
+  // private readonly intellectServiceUrl: string;
   private readonly storageServiceUrl: string;
   private socketManagerListeners: SocketManagerListener[] = [];
   private refreshTimeout: NodeJS.Timeout | number | null = null;
@@ -167,7 +168,7 @@ export default class RelayBox extends EventEmitter {
       authServiceUrl,
       coreServiceUrl,
       httpServiceUrl,
-      intellectServiceUrl,
+      // intellectServiceUrl,
       storageServiceUrl
     } = this.getOfflineServiceUrls(opts.offline);
 
@@ -179,7 +180,7 @@ export default class RelayBox extends EventEmitter {
     this.authServiceUrl = authServiceUrl || AUTH_SERVICE_URL;
     this.coreServiceUrl = coreServiceUrl || CORE_SERVICE_URL;
     this.httpServiceUrl = httpServiceUrl || HTTP_SERVICE_URL;
-    this.intellectServiceUrl = intellectServiceUrl || INTELLECT_SERVICE_URL;
+    // this.intellectServiceUrl = intellectServiceUrl || INTELLECT_SERVICE_URL;
     this.storageServiceUrl = storageServiceUrl || STORAGE_SERVICE_URL;
     this.socketManager = new SocketManager(this.coreServiceUrl);
     this.presenceFactory = new PresenceFactory();
@@ -642,7 +643,6 @@ export default class RelayBox extends EventEmitter {
       this.intellectFactory,
       this.cloudStorageFactory,
       this.httpServiceUrl,
-      this.intellectServiceUrl,
       this.storageServiceUrl,
       getAuthToken
     );

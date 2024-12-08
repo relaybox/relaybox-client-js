@@ -16,8 +16,6 @@ export class Intellect extends SubscriptionManager<UserEvents> {
     socketManager: SocketManager,
     private nspRoomId: string,
     private readonly roomId: string,
-    private readonly intellectServiceUrl: string,
-    private readonly publish: <T>(event: string, userData: T) => Promise<any>,
     private readonly getAuthToken: () => string | null
   ) {
     super(socketManager);
