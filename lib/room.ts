@@ -19,15 +19,25 @@ import { CloudStorage } from './cloud-storage';
 import {
   RoomJoinOptions,
   RoomJoinResponse,
+  RoomMember,
   RoomMemberType,
   RoomPublishOptions,
   RoomVisibility
 } from './types/room.types';
+import { HttpMethod, HttpMode, PaginatedRequestOptions, PaginatedResponse } from './types';
+import { defaultHeaders, serviceRequest } from './request';
 
 /**
  * Convenience interface for room members actions
  */
 interface MemberActions {
+  /**
+   * Get paginated list of members.
+   * @param {PaginatedRequestOptions} opts The clientId of the member to add
+   * @example
+   * await room.members.get({ offset: 0, limit: 10 })
+   */
+  get: (opts?: PaginatedRequestOptions) => Promise<PaginatedResponse<RoomMember>>;
   /**
    * Add member to private room. Private rooms only.
    * @param {string} clientId The clientId of the member to add
@@ -145,6 +155,7 @@ export class Room {
 
   /**
    * Retrieves the event name and handler based on the provided parameters.
+   * If first argument is a function, it is assumed to be the event handler and subscribe to all events.
    * @param {string | SocketEventHandler} [eventOrHandler] - The event name or handler function.
    * @param {SocketEventHandler} [eventHandler] - The event handler function.
    * @returns {SocketEventAndHandler} The event name and handler.
@@ -414,7 +425,12 @@ export class Room {
     }
   }
 
+  /**
+   * Member actions helper
+   * Convenience interface for room members actions
+   */
   readonly members: MemberActions = {
+    get: this.getMembers.bind(this),
     add: this.addMember.bind(this),
     remove: this.removeMember.bind(this)
   };
@@ -494,5 +510,86 @@ export class Room {
 
   private getSubscriptionName(event: string): string {
     return `${this.nspRoomId}::${event}`;
+  }
+
+  /**
+   * Get room members as a paginated list
+   * @param {PaginatedRequestOptions} opts The clientId of the member to add
+   */
+  private async getMembers({ offset = 0, limit = 10 }: PaginatedRequestOptions = {}): Promise<
+    PaginatedResponse<RoomMember>
+  > {
+    try {
+      const authToken = this.getAuthToken();
+
+      if (!authToken) {
+        throw new Error('No auth token found');
+      }
+
+      const requestParams: RequestInit = {
+        method: HttpMethod.GET,
+        mode: HttpMode.CORS,
+        headers: {
+          ...defaultHeaders,
+          Authorization: `Bearer ${authToken}`
+        }
+      };
+
+      const queryParams = {
+        offset: offset.toString(),
+        limit: limit.toString()
+      };
+
+      const queryString = new URLSearchParams(queryParams).toString();
+      const requestUrl = `${this.stateServiceUrl}/rooms/${this.roomId}/members?${queryString}`;
+      const response = await serviceRequest<any>(requestUrl, requestParams);
+
+      return response;
+    } catch (err: any) {
+      logger.logError(err.message, err);
+      throw err;
+    }
+  }
+
+  /**
+   * Set room visibility
+   * @param {string} visibility The new visibility for the room
+   * @param {string} password Optional, the new password for the room (protected rooms only)
+   */
+  async setVisibility(visibility: RoomVisibility, password?: string): Promise<any> {
+    logger.logInfo(`Saving room visibility ${this.roomId}`);
+
+    try {
+      const authToken = this.getAuthToken();
+
+      if (!authToken) {
+        throw new Error('No auth token found');
+      }
+
+      const requestBody = {
+        visibility,
+        password
+      };
+
+      const requestParams: RequestInit = {
+        method: HttpMethod.PUT,
+        mode: HttpMode.CORS,
+        body: JSON.stringify(requestBody),
+        headers: {
+          ...defaultHeaders,
+          Authorization: `Bearer ${authToken}`
+        }
+      };
+
+      const requestUrl = `${this.stateServiceUrl}/rooms/${this.roomId}/visibility`;
+      const response = await serviceRequest<any>(requestUrl, requestParams);
+
+      this.visibility = response.visibility;
+
+      return response;
+    } catch (err: any) {
+      logger.logError(err.message, err);
+      throw err;
+    }
   }
 }

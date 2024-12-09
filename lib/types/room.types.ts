@@ -1,3 +1,4 @@
+import { AuthUserPublic } from './auth.types';
 import { IntellectPublishOptions } from './intellect.types';
 
 export type RoomVisibility = 'private' | 'public' | 'protected';
@@ -36,6 +37,13 @@ export interface RoomPublishOptions {
 export enum RoomMemberType {
   OWNER = 'owner',
   MEMBER = 'member'
+}
+
+export interface RoomMember {
+  clientId: string;
+  memberType: RoomMemberType;
+  createdAt: string;
+  user?: AuthUserPublic;
 }
 
 export enum RoomEvent {

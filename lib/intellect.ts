@@ -1,11 +1,7 @@
 import { logger } from './logger';
 import { defaultHeaders, serviceRequest } from './request';
 import { ClientEvent, HttpMethod, HttpMode } from './types';
-import {
-  IntellectOptions,
-  IntellectQueryOptions,
-  IntellectResponse
-} from './types/intellect.types';
+import { IntellectOptions } from './types/intellect.types';
 import { SubscriptionManager } from './subscription-manager';
 import { SocketManager } from './socket-manager';
 
@@ -47,6 +43,11 @@ export class Intellect extends SubscriptionManager<UserEvents> {
     return ClientEvent.ROOM_INTELLECT_UNSUBSCRIBE_ALL;
   }
 
+  /**
+   * Set room intellect options
+   * Fetch intellect options from the server and caches them in browser memory
+   * @param {IntellectOptions} opts The new intellect options for the room
+   */
   async set(opts: IntellectOptions): Promise<IntellectOptions> {
     logger.logInfo(`Saving intellect options ${this.roomId}`);
 
@@ -68,7 +69,6 @@ export class Intellect extends SubscriptionManager<UserEvents> {
       };
 
       const requestUrl = `${this.stateServiceUrl}/rooms/${this.roomId}`;
-
       const response = await serviceRequest<IntellectOptions>(requestUrl, requestParams);
 
       this.opts = response;
@@ -80,6 +80,10 @@ export class Intellect extends SubscriptionManager<UserEvents> {
     }
   }
 
+  /**
+   * Get room intellect options
+   * If fetched previously, returns the cached options (browser memory only)
+   */
   async get(): Promise<IntellectOptions> {
     logger.logInfo(`Getting intellect options ${this.roomId}`);
 
@@ -104,7 +108,6 @@ export class Intellect extends SubscriptionManager<UserEvents> {
       };
 
       const requestUrl = `${this.stateServiceUrl}/rooms/${this.roomId}`;
-
       const response = await serviceRequest<IntellectOptions>(requestUrl, requestParams);
 
       this.opts = response;
