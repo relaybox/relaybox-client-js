@@ -376,6 +376,45 @@ export class Room {
   }
 
   /**
+   * Get room members as a paginated list
+   * @param {PaginatedRequestOptions} opts The clientId of the member to add
+   */
+  private async getMembers({ offset = 0, limit = 10 }: PaginatedRequestOptions = {}): Promise<
+    PaginatedResponse<RoomMember>
+  > {
+    try {
+      const authToken = this.getAuthToken();
+
+      if (!authToken) {
+        throw new Error('No auth token found');
+      }
+
+      const requestParams: RequestInit = {
+        method: HttpMethod.GET,
+        mode: HttpMode.CORS,
+        headers: {
+          ...defaultHeaders,
+          Authorization: `Bearer ${authToken}`
+        }
+      };
+
+      const queryParams = {
+        offset: offset.toString(),
+        limit: limit.toString()
+      };
+
+      const queryString = new URLSearchParams(queryParams).toString();
+      const requestUrl = `${this.stateServiceUrl}/rooms/${this.roomId}/members?${queryString}`;
+      const response = await serviceRequest<any>(requestUrl, requestParams);
+
+      return response;
+    } catch (err: any) {
+      logger.logError(err.message, err);
+      throw err;
+    }
+  }
+
+  /**
    * Add member to private room.
    * This operation is only allowed for private rooms
    * @param clientId The clientId of the member to add
@@ -401,17 +440,11 @@ export class Room {
   }
 
   /**
-   * Remove member from private room.
-   * This operation is only permitted for private rooms
+   * Remove member from room.
+   * This operation will soft delete the member from the room blocking access
    * @param clientId The clientId of the member to delete
    */
   private async removeMember(clientId: string): Promise<void> {
-    if (this.visibility !== 'private') {
-      throw new Error(
-        `Room visibility must be private to remove members, currently ${this.visibility}`
-      );
-    }
-
     const data = {
       roomId: this.roomId,
       clientId
@@ -510,45 +543,6 @@ export class Room {
 
   private getSubscriptionName(event: string): string {
     return `${this.nspRoomId}::${event}`;
-  }
-
-  /**
-   * Get room members as a paginated list
-   * @param {PaginatedRequestOptions} opts The clientId of the member to add
-   */
-  private async getMembers({ offset = 0, limit = 10 }: PaginatedRequestOptions = {}): Promise<
-    PaginatedResponse<RoomMember>
-  > {
-    try {
-      const authToken = this.getAuthToken();
-
-      if (!authToken) {
-        throw new Error('No auth token found');
-      }
-
-      const requestParams: RequestInit = {
-        method: HttpMethod.GET,
-        mode: HttpMode.CORS,
-        headers: {
-          ...defaultHeaders,
-          Authorization: `Bearer ${authToken}`
-        }
-      };
-
-      const queryParams = {
-        offset: offset.toString(),
-        limit: limit.toString()
-      };
-
-      const queryString = new URLSearchParams(queryParams).toString();
-      const requestUrl = `${this.stateServiceUrl}/rooms/${this.roomId}/members?${queryString}`;
-      const response = await serviceRequest<any>(requestUrl, requestParams);
-
-      return response;
-    } catch (err: any) {
-      logger.logError(err.message, err);
-      throw err;
-    }
   }
 
   /**
