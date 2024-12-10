@@ -48,6 +48,11 @@ interface MemberActions {
    * @param clientId The clientId of the member to delete
    */
   remove: (clientId: string) => Promise<void>;
+  /**
+   * Remove member from private room. Private rooms only.
+   * @param clientId The clientId of the member to delete
+   */
+  setMemberType: (clientId: string, memberType: RoomMemberType) => Promise<void>;
 }
 
 /**
@@ -461,13 +466,39 @@ export class Room {
   }
 
   /**
+   * Set room member type.
+   * This operation will change the member type for the user
+   * @param clientId The clientId of the member to delete
+   * @param memberType The member type to set for this user
+   */
+  private async setMemberType(clientId: string, memberType: RoomMemberType): Promise<void> {
+    if (!clientId || !memberType) {
+      throw new Error('No clientId or memberType provided');
+    }
+
+    const data = {
+      roomId: this.roomId,
+      clientId,
+      memberType
+    };
+
+    try {
+      await this.socketManager.emitWithAck(ClientEvent.ROOM_MEMBER_TYPE, data);
+    } catch (err: any) {
+      logger.logError(err.message);
+      throw new Error(err.message);
+    }
+  }
+
+  /**
    * Member actions helper
    * Convenience interface for room members actions
    */
   readonly members: MemberActions = {
     get: this.getMembers.bind(this),
     add: this.addMember.bind(this),
-    remove: this.removeMember.bind(this)
+    remove: this.removeMember.bind(this),
+    setMemberType: this.setMemberType.bind(this)
   };
 
   /**
