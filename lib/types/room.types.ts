@@ -36,6 +36,7 @@ export interface RoomPublishOptions {
 
 export enum RoomMemberType {
   OWNER = 'owner',
+  ADMIN = 'admin',
   MEMBER = 'member'
 }
 
