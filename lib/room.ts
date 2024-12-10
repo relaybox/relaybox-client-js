@@ -420,10 +420,8 @@ export class Room {
    * @param clientId The clientId of the member to add
    */
   private async addMember(clientId: string): Promise<void> {
-    if (this.visibility !== 'private') {
-      throw new Error(
-        `Room visibility must be private to add members, currently ${this.visibility}`
-      );
+    if (!clientId) {
+      throw new Error('No clientId provided');
     }
 
     const data = {
@@ -445,6 +443,10 @@ export class Room {
    * @param clientId The clientId of the member to delete
    */
   private async removeMember(clientId: string): Promise<void> {
+    if (!clientId) {
+      throw new Error('No clientId provided');
+    }
+
     const data = {
       roomId: this.roomId,
       clientId
