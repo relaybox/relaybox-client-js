@@ -9,7 +9,8 @@ import { SocketManager } from './socket-manager';
 import {
   PresenceEvent,
   PresenceEventAllowedValue,
-  PresenceEventType
+  PresenceEventType,
+  PresenceGetOptions
 } from './types/presence.types';
 
 const USER_DATA_MAX_SIZE_KB = 1024;
@@ -289,8 +290,8 @@ export class Presence extends EventEmitter {
    * @returns {Promise<PresenceEvent<T>[]>} A promise that resolves to an array of presence members.
    * @throws Will throw an error if fetching presence events fails.
    */
-  async get<T>(): Promise<PresenceEvent<T>[]> {
-    const data = { roomId: this.roomId };
+  async get<T>(opts: PresenceGetOptions = {}): Promise<PresenceEvent<T>[]> {
+    const data = { roomId: this.roomId, ...opts };
 
     try {
       const res = await this.socketManager.emitWithAck<PresenceEvent<T>[]>(

@@ -12,6 +12,7 @@ export const defaultRoomJoinOptions = {};
 export interface RoomCreateOptions {
   visibility?: RoomVisibility;
   password?: string;
+  roomName?: string;
 }
 
 export interface RoomAttachOptions {
@@ -25,6 +26,7 @@ export interface RoomJoinOptions {
 
 export interface RoomJoinResponse {
   nspRoomId: string;
+  roomName: string;
   visibility: RoomVisibility;
   passwordRequired: boolean;
   memberType: RoomMemberType;

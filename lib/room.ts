@@ -64,6 +64,7 @@ export class Room {
   private nspRoomId: string | null = null;
   public readonly id: string;
   public readonly roomId: string;
+  public roomName: string | null = null;
   public visibility: RoomVisibility | null = null;
   public memberType: RoomMemberType | null = null;
   public presence!: Presence;
@@ -116,12 +117,13 @@ export class Room {
     };
 
     try {
-      const { nspRoomId, visibility, memberType } =
+      const { nspRoomId, roomName, visibility, memberType } =
         await this.socketManager.emitWithAck<RoomJoinResponse>(ClientEvent.ROOM_JOIN, data);
 
       logger.logInfo(`Successfully joined room "${nspRoomId}"`);
 
       this.nspRoomId = nspRoomId;
+      this.roomName = roomName;
       this.visibility = visibility as RoomVisibility;
       this.memberType = memberType as RoomMemberType;
 
@@ -346,6 +348,7 @@ export class Room {
 
       await this.presence?.unsubscribe();
       await this.metrics?.unsubscribe();
+      // TODO: UNSUBSCRIBE FROM INTELLECT
 
       this.clearEventHandlers();
 

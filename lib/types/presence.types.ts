@@ -16,3 +16,7 @@ export enum PresenceEventAllowedValue {
 }
 
 export type PresenceEventType = 'join' | 'leave' | 'update';
+
+export interface PresenceGetOptions {
+  limit?: number;
+}
