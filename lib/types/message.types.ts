@@ -3,6 +3,7 @@ import { AuthUserPublic } from './auth.types';
 export interface ClientMessageMetadata {
   humanMessage?: boolean;
   llmModel?: string;
+  direct?: boolean;
 }
 
 export interface ClientMessage {
