@@ -21,3 +21,15 @@ export interface IntellectOptions {
   prompt?: string;
   temperature?: number;
 }
+
+export enum IntellectActionType {
+  INITIALIZED = 'initialized',
+  PROCESSING = 'processing'
+}
+
+export interface IntellectSystemMessage {
+  correlationId: string;
+  model: string | null;
+  action: IntellectActionType;
+  data?: any;
+}
