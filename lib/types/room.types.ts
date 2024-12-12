@@ -32,8 +32,19 @@ export interface RoomJoinResponse {
   memberType: RoomMemberType;
 }
 
+/**
+ * Room publish options
+ */
 export interface RoomPublishOptions {
+  /**
+   * Set intellect publish options
+   */
   intellect?: IntellectPublishOptions;
+  /**
+   * Transient messages are not persisted to disk once dispatched
+   * Message publish webhook will not be fired
+   */
+  transient?: boolean;
 }
 
 export enum RoomMemberType {
