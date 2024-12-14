@@ -8,6 +8,7 @@ export interface HistoryGetOptions {
   start?: number;
   end?: number;
   order?: HistoryOrder;
+  event?: string;
 }
 
 export interface HistoryResponse {
