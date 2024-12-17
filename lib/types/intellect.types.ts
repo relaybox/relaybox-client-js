@@ -24,7 +24,8 @@ export interface IntellectOptions {
 
 export enum IntellectActionType {
   INITIALIZED = 'initialized',
-  PROCESSING = 'processing'
+  PROCESSING = 'processing',
+  WEB_SEARCH = 'webSearch'
 }
 
 export interface IntellectSystemMessage {
