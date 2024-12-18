@@ -1,4 +1,4 @@
-import { ClientMessage } from './message.types';
+import { ClientMessage } from '../client-message';
 
 export type HistoryOrder = 'asc' | 'desc';
 

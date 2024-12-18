@@ -4,6 +4,7 @@ export * from './metrics';
 export * from './auth';
 export * from './user';
 export * from './types';
+export * from './client-message';
 
 import RelayBox from './relaybox';
 

@@ -11,6 +11,7 @@ import { logger } from './logger';
 import { ClientEvent, ServerEvent } from './types/event.types';
 import { KeyData, TokenResponse } from './types/request.types';
 import { CustomError } from './errors';
+import { ClientMessage } from './client-message';
 
 const MAX_RECONNECT_ATTEMPTS = 10;
 const INITIAL_RECONNECT_DELAY_MS = 500;
@@ -136,7 +137,13 @@ export class SocketManager {
   private handleSocketMessageEvent(messageEvent: MessageEvent) {
     const { type, body } = this.parseServerEventData(messageEvent);
 
-    this.eventEmitter.emit(type, body);
+    let message: ClientMessage | null = null;
+
+    if (body.id) {
+      message = new ClientMessage(body);
+    }
+
+    this.eventEmitter.emit(type, message ?? body);
 
     if (type === ServerEvent.MESSAGE_ACKNOWLEDGED) {
       const { ackId, data, err } = body;

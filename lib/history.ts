@@ -8,6 +8,7 @@ import {
 import { TokenError } from './errors';
 import { HttpMethod, HttpMode } from './types';
 import { serviceRequest } from './request';
+import { ClientMessage } from './client-message';
 
 const HISTORY_SERVICE_PATHNAME = 'history';
 
@@ -92,7 +93,6 @@ export class History {
 
       const queryParams = this.getQueryParams(nextPageToken, opts);
       const queryString = new URLSearchParams(queryParams).toString();
-
       const requestUrl = `${this.httpServiceUrl}/${HISTORY_SERVICE_PATHNAME}/${this.roomId}/messages?${queryString}`;
 
       const response = await serviceRequest<PaginatedHistoryClientResponse>(
@@ -102,8 +102,10 @@ export class History {
 
       this.nextPageToken = response.nextPageToken;
 
+      const items = response.items.map((item) => new ClientMessage(item));
+
       return {
-        items: response.items,
+        items,
         next: this.nextPageToken ? this.next.bind(this) : null
       };
     } catch (err: any) {
