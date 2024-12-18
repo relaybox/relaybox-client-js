@@ -134,6 +134,9 @@ export class Room {
     }
   }
 
+  /**
+   * TODO: Clean this up by passing room instance to each extension rather than named vars
+   */
   private initRoomExtensions(): Room {
     const {
       nspRoomId,
@@ -147,8 +150,15 @@ export class Room {
 
     this.presence = this.presenceFactory.createInstance(socketManager, roomId, nspRoomId!);
     this.metrics = this.metricsFactory.createInstance(socketManager, roomId);
-    this.history = this.historyFactory.createInstance(roomId, httpServiceUrl, getAuthToken);
     this.storage = this.cloudStorageFactory.createInstance(roomId, storageServiceUrl, getAuthToken);
+
+    this.history = this.historyFactory.createInstance(
+      roomId,
+      httpServiceUrl,
+      stateServiceUrl,
+      getAuthToken
+    );
+
     this.intellect = this.intellectFactory.createInstance(
       socketManager,
       nspRoomId!,

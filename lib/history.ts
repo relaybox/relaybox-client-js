@@ -7,7 +7,7 @@ import {
 } from './types/history.types';
 import { TokenError } from './errors';
 import { HttpMethod, HttpMode } from './types';
-import { serviceRequest } from './request';
+import { defaultHeaders, serviceRequest } from './request';
 import { ClientMessage } from './client-message';
 
 const HISTORY_SERVICE_PATHNAME = 'history';
@@ -27,6 +27,7 @@ export class History {
   constructor(
     private readonly roomId: string,
     private readonly httpServiceUrl: string,
+    private readonly stateServiceUrl: string,
     private getAuthToken: () => string | null
   ) {}
 
@@ -102,15 +103,42 @@ export class History {
 
       this.nextPageToken = response.nextPageToken;
 
-      const items = response.items.map((item) => new ClientMessage(item));
-
       return {
-        items,
+        items: response.items,
         next: this.nextPageToken ? this.next.bind(this) : null
       };
     } catch (err: any) {
       const message = `Error getting message history for "${this.roomId}"`;
       logger.logError(message, err);
+      throw err;
+    }
+  }
+
+  /**
+   * Delete a message from room history
+   */
+  async delete(messageId: string): Promise<void> {
+    logger.logInfo(`Deleting message ${messageId}`);
+
+    try {
+      const authToken = this.getAuthToken();
+
+      if (!authToken) {
+        throw new Error('No auth token found');
+      }
+
+      const requestParams: RequestInit = {
+        method: HttpMethod.DELETE,
+        mode: HttpMode.CORS,
+        headers: {
+          ...defaultHeaders,
+          Authorization: `Bearer ${authToken}`
+        }
+      };
+
+      await serviceRequest<any>(`${this.stateServiceUrl}/messages/${messageId}`, requestParams);
+    } catch (err: unknown) {
+      logger.logError(`Failed to delete message ${messageId}`);
       throw err;
     }
   }

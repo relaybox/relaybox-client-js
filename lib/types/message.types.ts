@@ -11,3 +11,12 @@ export interface ClientMessageSender {
   connectionId: string;
   user?: AuthUserPublic;
 }
+
+export interface ClientMessage {
+  id: string;
+  body: any;
+  sender: ClientMessageSender;
+  timestamp: number;
+  event?: string;
+  metadata?: ClientMessageMetadata;
+}

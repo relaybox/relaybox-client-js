@@ -57,7 +57,6 @@ import { serviceRequest } from './request';
 const CORE_SERVICE_URL = process.env.CORE_SERVICE_URL || '';
 const HTTP_SERVICE_URL = process.env.HTTP_SERVICE_URL || '';
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || '';
-// const INTELLECT_SERVICE_URL = process.env.INTELLECT_SERVICE_URL || '';
 const STORAGE_SERVICE_URL = process.env.STORAGE_SERVICE_URL || '';
 const STATE_SERVICE_URL = process.env.STATE_SERVICE_URL || '';
 const SOCKET_CONNECTION_ACK_TIMEOUT_MS = 2000;
@@ -131,7 +130,6 @@ export default class RelayBox extends EventEmitter {
   private readonly authServiceUrl: string;
   private readonly coreServiceUrl: string;
   private readonly httpServiceUrl: string;
-  // private readonly intellectServiceUrl: string;
   private readonly storageServiceUrl: string;
   private readonly stateServiceUrl: string;
   private socketManagerListeners: SocketManagerListener[] = [];
@@ -167,14 +165,8 @@ export default class RelayBox extends EventEmitter {
       );
     }
 
-    const {
-      authServiceUrl,
-      coreServiceUrl,
-      httpServiceUrl,
-      // intellectServiceUrl,
-      storageServiceUrl,
-      stateServiceUrl
-    } = this.getOfflineServiceUrls(opts.offline);
+    const { authServiceUrl, coreServiceUrl, httpServiceUrl, storageServiceUrl, stateServiceUrl } =
+      this.getOfflineServiceUrls(opts.offline);
 
     this.apiKey = opts.apiKey;
     this.publicKey = opts.publicKey;
@@ -184,7 +176,6 @@ export default class RelayBox extends EventEmitter {
     this.authServiceUrl = authServiceUrl || AUTH_SERVICE_URL;
     this.coreServiceUrl = coreServiceUrl || CORE_SERVICE_URL;
     this.httpServiceUrl = httpServiceUrl || HTTP_SERVICE_URL;
-    // this.intellectServiceUrl = intellectServiceUrl || INTELLECT_SERVICE_URL;
     this.storageServiceUrl = storageServiceUrl || STORAGE_SERVICE_URL;
     this.stateServiceUrl = stateServiceUrl || STATE_SERVICE_URL;
     this.socketManager = new SocketManager(this.coreServiceUrl);

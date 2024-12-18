@@ -27,7 +27,6 @@ export class SocketManager {
   private reconnectionTimeout: NodeJS.Timeout | number | null = null;
   private pendingAcknowledgements: Map<string, SocketEventHandler> = new Map();
   private tokenExpiryUnix: number | null = null;
-  private coreServiceUrl: string;
 
   public id?: string;
   public eventEmitter: EventEmitter;
@@ -36,10 +35,10 @@ export class SocketManager {
    * Creates a new instance of SocketManager.
    *
    * @param {string} coreServiceUrl - The core service URL for the WebSocket connection.
+   * @param {string} stateServiceUrl - The state service URL for managing remote state
    */
-  constructor(coreServiceUrl: string) {
+  constructor(private readonly coreServiceUrl: string) {
     this.eventEmitter = new EventEmitter();
-    this.coreServiceUrl = coreServiceUrl;
   }
 
   /**
@@ -134,16 +133,16 @@ export class SocketManager {
     logger.logWarning(`Socket disconnected`, event);
   }
 
+  /**
+   * Handle incoming message event
+   * If the message has an id, create a new `ClientMessage`
+   * Else, pass the messag ebody as is (system messages)
+   * @param messageEvent Server side message event
+   */
   private handleSocketMessageEvent(messageEvent: MessageEvent) {
     const { type, body } = this.parseServerEventData(messageEvent);
 
-    let message: ClientMessage | null = null;
-
-    if (body.id) {
-      message = new ClientMessage(body);
-    }
-
-    this.eventEmitter.emit(type, message ?? body);
+    this.eventEmitter.emit(type, body);
 
     if (type === ServerEvent.MESSAGE_ACKNOWLEDGED) {
       const { ackId, data, err } = body;
@@ -198,8 +197,6 @@ export class SocketManager {
   updateSocketAuth(tokenResponse: TokenResponse): void {
     this.tokenResponse = tokenResponse;
     this.tokenExpiryUnix = this.getTokenExpiryUnix(tokenResponse);
-
-    console.log('UPDATING', tokenResponse);
 
     this.socketAuth = {
       ...this.socketAuth,

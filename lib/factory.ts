@@ -21,9 +21,10 @@ export class HistoryFactory {
   createInstance(
     roomId: string,
     httpServiceUrl: string,
+    stateServiceUrl: string,
     getAuthToken: () => string | null
   ): History {
-    return new History(roomId, httpServiceUrl, getAuthToken);
+    return new History(roomId, httpServiceUrl, stateServiceUrl, getAuthToken);
   }
 }
 
