@@ -15,6 +15,10 @@ export interface RoomCreateOptions {
   roomName?: string;
 }
 
+export interface RoomListOptions {
+  prefix?: string;
+}
+
 export interface RoomAttachOptions {
   id: string;
   join: Function;

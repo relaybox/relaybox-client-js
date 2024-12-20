@@ -50,7 +50,8 @@ import {
   RoomAttachOptions,
   RoomCreateOptions,
   RoomEvent,
-  RoomJoinOptions
+  RoomJoinOptions,
+  RoomListOptions
 } from './types/room.types';
 import { serviceRequest } from './request';
 
@@ -106,7 +107,7 @@ interface RoomActions {
   /**
    * List rooms available to the user
    */
-  list: () => Promise<PaginatedResponse<Room>>;
+  list: (opts?: RoomListOptions) => Promise<PaginatedResponse<Room>>;
 }
 
 /**
@@ -664,7 +665,7 @@ export default class RelayBox extends EventEmitter {
    * List rooms available to the user
    * @returns {Promise<Room[]>}
    */
-  async list(): Promise<PaginatedResponse<any>> {
+  async list(opts: RoomListOptions = {}): Promise<PaginatedResponse<any>> {
     try {
       if (!this.authToken) {
         throw new TokenError('No authentication token provided');
@@ -680,7 +681,14 @@ export default class RelayBox extends EventEmitter {
         }
       };
 
-      const requestUrl = `${this.httpServiceUrl}/${ROOM_SERVICE_PATHNAME}`;
+      const queryParams = new URLSearchParams(opts as Record<string, string>);
+
+      const requestUrl = `${this.httpServiceUrl}/${ROOM_SERVICE_PATHNAME}${
+        queryParams.size && `?${queryParams.toString()}`
+      }`;
+
+      console.log(requestUrl);
+
       const response = await serviceRequest<PaginatedResponse<any>>(requestUrl, requestParams);
 
       return response;
