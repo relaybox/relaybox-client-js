@@ -62,6 +62,7 @@ interface MemberActions {
 export class Room {
   private readonly eventRegistry = new EventRegistry();
   private nspRoomId: string | null = null;
+  private uuid: string | null = null;
   public readonly id: string;
   public readonly roomId: string;
   public roomName: string | null = null;
@@ -117,11 +118,12 @@ export class Room {
     };
 
     try {
-      const { nspRoomId, roomName, visibility, memberType } =
+      const { uuid, nspRoomId, roomName, visibility, memberType } =
         await this.socketManager.emitWithAck<RoomJoinResponse>(ClientEvent.ROOM_JOIN, data);
 
       logger.logInfo(`Successfully joined room "${nspRoomId}"`);
 
+      this.uuid = uuid;
       this.nspRoomId = nspRoomId;
       this.roomName = roomName;
       this.visibility = visibility as RoomVisibility;
@@ -330,6 +332,7 @@ export class Room {
     validateUserData(userData);
 
     const data = {
+      uuid: this.uuid,
       roomId: this.roomId,
       event,
       data: userData,

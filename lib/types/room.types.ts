@@ -29,6 +29,7 @@ export interface RoomJoinOptions {
 }
 
 export interface RoomJoinResponse {
+  uuid: string;
   nspRoomId: string;
   roomName: string;
   visibility: RoomVisibility;
