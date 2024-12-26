@@ -60,14 +60,42 @@ interface MemberActions {
  * It handles event subscriptions, presence management, and communication with the server.
  */
 export class Room {
-  private readonly eventRegistry = new EventRegistry();
-  private nspRoomId: string | null = null;
+  /**
+   * Internal system room identifier in uuid format
+   * Set by database at room creation
+   */
   private uuid: string | null = null;
+  /**
+   * Namespaced room id for internal use only
+   */
+  private nspRoomId: string | null = null;
+  /**
+   * Pubic room id set at room creation
+   * Human readable room id
+   */
   public readonly id: string;
+  /**
+   * Pubic room id set at room creation
+   * Human readable room id
+   * Same as id, for simple reference requirements
+   */
   public readonly roomId: string;
+  /**
+   * Human readable room name to be included as room metadata
+   */
   public roomName: string | null = null;
+  /**
+   * Event registry for handling events and subscriptions
+   */
+  private readonly eventRegistry = new EventRegistry();
+  /**
+   * Room options
+   */
   public visibility: RoomVisibility | null = null;
   public memberType: RoomMemberType | null = null;
+  /**
+   * Room extensions
+   */
   public presence!: Presence;
   public metrics!: Metrics;
   public history!: History;
