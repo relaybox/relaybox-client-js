@@ -687,8 +687,6 @@ export default class RelayBox extends EventEmitter {
         queryParams.size && `?${queryParams.toString()}`
       }`;
 
-      console.log(requestUrl);
-
       const response = await serviceRequest<PaginatedResponse<any>>(requestUrl, requestParams);
 
       return response;

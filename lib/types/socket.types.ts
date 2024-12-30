@@ -57,7 +57,7 @@ export type SocketEventTypes =
   | 'reauthenticating';
 
 export enum SocketState {
-  CCONNECTING = 'connecting',
+  CONNECTING = 'connecting',
   CONNECTED = 'connected',
   RECONNECTING = 'reconnecting',
   DISCONNECTED = 'disconnected'

@@ -49,8 +49,9 @@ interface MemberActions {
    */
   remove: (clientId: string) => Promise<void>;
   /**
-   * Remove member from private room. Private rooms only.
+   * Set member type for client id.
    * @param clientId The clientId of the member to delete
+   * @param memberType The member type to set for this user
    */
   setMemberType: (clientId: string, memberType: RoomMemberType) => Promise<void>;
 }
