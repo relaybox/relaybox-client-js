@@ -26,6 +26,7 @@ export interface RoomAttachOptions {
 
 export interface RoomJoinOptions {
   password?: string;
+  accessToken?: string;
 }
 
 export interface RoomJoinResponse {
