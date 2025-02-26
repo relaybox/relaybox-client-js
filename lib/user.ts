@@ -17,10 +17,11 @@ export class User extends SubscriptionManager<UserEvents> {
   public readonly clientId: string;
   public readonly username: string;
   public readonly createdAt: string;
-  public readonly updatedAt: string;
   public readonly orgId: string;
-  public readonly isOnline: boolean;
-  public readonly lastOnline: string;
+
+  public isOnline: boolean;
+  public lastOnline: string;
+  public updatedAt: string;
 
   protected get subscriptionId(): string {
     return this.clientId;
@@ -37,6 +38,10 @@ export class User extends SubscriptionManager<UserEvents> {
     this.orgId = user.orgId;
     this.isOnline = user.isOnline;
     this.lastOnline = user.lastOnline;
+  }
+
+  setIsOnline(isOnline: boolean): void {
+    this.isOnline = isOnline;
   }
 
   protected getSubscriptionName(event: string): string {

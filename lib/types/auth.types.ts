@@ -66,6 +66,7 @@ export interface AuthUserPublic {
   updatedAt: string;
   isOnline: boolean;
   lastOnline: string;
+  identities: AuthUserIdentity[];
 }
 
 export interface AuthUser {
