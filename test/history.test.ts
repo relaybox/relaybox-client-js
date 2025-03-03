@@ -6,6 +6,7 @@ import { http, HttpResponse } from 'msw';
 import { TokenError } from '../lib/errors';
 
 const mockHttpServiceUrl = process.env.HTTP_SERVICE_URL || '';
+const mockStateServiceUrl = process.env.STATE_SERVICE_URL || '';
 const mockRoomId = 'config';
 const mockUrl = `${mockHttpServiceUrl}/history/${mockRoomId}/messages`;
 
@@ -49,7 +50,12 @@ describe('History', () => {
     describe('get()', () => {
       describe('success', () => {
         it('should retieve history for a given room', async () => {
-          const history = new History(mockRoomId, mockHttpServiceUrl, () => `${Date.now()}`);
+          const history = new History(
+            mockRoomId,
+            mockHttpServiceUrl,
+            mockStateServiceUrl,
+            () => `${Date.now()}`
+          );
 
           await expect(history.get(defaultRequestOptions)).resolves.toBeDefined();
         });
@@ -57,13 +63,23 @@ describe('History', () => {
 
       describe('error', () => {
         it('should throw TokenError if response is 4xx', async () => {
-          const history = new History(mockRoomId, mockHttpServiceUrl, () => 'invalid token');
+          const history = new History(
+            mockRoomId,
+            mockHttpServiceUrl,
+            mockStateServiceUrl,
+            () => 'invalid token'
+          );
 
           await expect(history.get(defaultRequestOptions)).rejects.toThrow(Error);
         });
 
         it('should throw TokenError if no auth token is provided', async () => {
-          const history = new History(mockRoomId, mockHttpServiceUrl, () => null);
+          const history = new History(
+            mockRoomId,
+            mockHttpServiceUrl,
+            mockStateServiceUrl,
+            () => null
+          );
 
           await expect(history.get(defaultRequestOptions)).rejects.toThrow(TokenError);
         });
@@ -73,7 +89,12 @@ describe('History', () => {
     describe('next()', () => {
       describe('success', () => {
         it('should call next iterator following initial get request', async () => {
-          const history = new History(mockRoomId, mockHttpServiceUrl, () => `${Date.now()}`);
+          const history = new History(
+            mockRoomId,
+            mockHttpServiceUrl,
+            mockStateServiceUrl,
+            () => `${Date.now()}`
+          );
 
           const { next } = await history.get(defaultRequestOptions);
           expect(next).toBeInstanceOf(Function);
@@ -83,7 +104,12 @@ describe('History', () => {
 
       describe('error', () => {
         it('should throw an error if next() is called before get()', async () => {
-          const history = new History(mockRoomId, mockHttpServiceUrl, () => 'valid token');
+          const history = new History(
+            mockRoomId,
+            mockHttpServiceUrl,
+            mockStateServiceUrl,
+            () => 'valid token'
+          );
           await expect(history.next()).rejects.toThrow('Next messages unavailable');
         });
       });

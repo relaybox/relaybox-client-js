@@ -185,7 +185,9 @@ describe('Room', () => {
     expect(socketManager.emitWithAck).toHaveBeenCalledWith(ClientEvent.PUBLISH, {
       roomId: mockRoomId,
       event: mockEvent,
-      data
+      data,
+      opts: undefined,
+      uuid: null
     });
   });
 
