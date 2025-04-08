@@ -2,7 +2,7 @@ import EventEmitter from 'eventemitter3';
 import { TokenError, ValidationError } from './errors';
 import { logger } from './logger';
 import { serviceRequest } from './request';
-import { getItem, removeItem, setItem } from './storage';
+import { removeItem } from './storage';
 import {
   AuthCreateOptions,
   AuthEvent,
@@ -32,7 +32,6 @@ import {
   ServiceResponseData,
   TokenResponse
 } from './types';
-import { StorageType } from './types/storage.types';
 import { User } from './user';
 import { SocketManager } from './socket-manager';
 
@@ -201,14 +200,14 @@ export class Auth extends EventEmitter {
    * @param {number} [expiresAt] - The expiration timestamp of the refresh token (optional).
    * @param {StorageType} [storageType] - The storage type where the token should be saved.
    */
-  private setRefreshToken(value: string, expiresAt?: number, storageType?: StorageType): void {
-    const refreshTokenData = {
-      value,
-      expiresAt
-    };
+  // private setRefreshToken(value: string, expiresAt?: number, storageType?: StorageType): void {
+  //   const refreshTokenData = {
+  //     value,
+  //     expiresAt
+  //   };
 
-    setItem(REFRESH_TOKEN_KEY, JSON.stringify(refreshTokenData), storageType);
-  }
+  //   setItem(REFRESH_TOKEN_KEY, JSON.stringify(refreshTokenData), storageType);
+  // }
 
   /**
    * Retrieves the refresh token from storage. If no token is found in session storage,
@@ -216,26 +215,26 @@ export class Auth extends EventEmitter {
    *
    * @returns {string | null} The stored refresh token or null if no token is found.
    */
-  private getRefreshToken(): string | null {
-    let refreshTokenData = this.refreshToken;
+  // private getRefreshToken(): string | null {
+  //   let refreshTokenData = this.refreshToken;
 
-    if (!refreshTokenData) {
-      refreshTokenData = getItem(REFRESH_TOKEN_KEY, StorageType.SESSION);
-    }
+  //   if (!refreshTokenData) {
+  //     refreshTokenData = getItem(REFRESH_TOKEN_KEY, StorageType.SESSION);
+  //   }
 
-    if (!refreshTokenData) {
-      refreshTokenData = getItem(REFRESH_TOKEN_KEY, StorageType.PERSIST);
-    }
+  //   if (!refreshTokenData) {
+  //     refreshTokenData = getItem(REFRESH_TOKEN_KEY, StorageType.PERSIST);
+  //   }
 
-    return refreshTokenData;
-  }
+  //   return refreshTokenData;
+  // }
 
   /**
    * Removes the stored refresh token, effectively signing the user out and invalidating the session.
    */
-  private removeRefreshToken(): void {
-    removeItem(REFRESH_TOKEN_KEY, this.#authUserSession?.session?.authStorageType);
-  }
+  // private removeRefreshToken(): void {
+  //   removeItem(REFRESH_TOKEN_KEY, this.#authUserSession?.session?.authStorageType);
+  // }
 
   /**
    * Handles and processes the response from the authentication service that contains the user's session data.
@@ -245,18 +244,11 @@ export class Auth extends EventEmitter {
    * @param {boolean} [resetSession=false] - Whether to set the refresh token, essentially resetting the session.
    * @returns {AuthUserSession} The processed session data.
    */
-  private handleAuthUserSessionResponse(
-    authUserSessionData: AuthUserSession,
-    resetSession: boolean = false
-  ): AuthUserSession {
+  private handleAuthUserSessionResponse(authUserSessionData: AuthUserSession): AuthUserSession {
     if (authUserSessionData.session) {
-      const { refreshToken, destroyAt, authStorageType, expiresIn } = authUserSessionData.session;
+      const { expiresIn } = authUserSessionData.session;
 
       this.setTokenRefreshTimeout(expiresIn);
-
-      if (resetSession) {
-        this.setRefreshToken(refreshToken, destroyAt, authStorageType);
-      }
     }
 
     const { tmpToken, ...appUserSessionData } = authUserSessionData;
@@ -426,7 +418,7 @@ export class Auth extends EventEmitter {
         body: JSON.stringify(requestBody)
       });
 
-      const responseData = this.handleAuthUserSessionResponse(response, true);
+      const responseData = this.handleAuthUserSessionResponse(response);
 
       if (!response.session && response.user?.authMfaEnabled) {
         this.emit(AuthEvent.MFA_REQUIRED, response);
@@ -447,7 +439,6 @@ export class Auth extends EventEmitter {
    */
   public signOut(): void {
     clearTimeout(this.refreshTimeout as number);
-    this.removeRefreshToken();
     this.emit(AuthEvent.SIGN_OUT, this.user);
     this.#authUserSession = null;
     this.socketManager.disconnectSocket();
@@ -515,11 +506,11 @@ export class Auth extends EventEmitter {
     }
 
     try {
-      const currentRefreshToken = this.getRefreshToken();
+      // const currentRefreshToken = this.getRefreshToken();
 
-      if (!currentRefreshToken) {
-        return null;
-      }
+      // if (!currentRefreshToken) {
+      //   return null;
+      // }
 
       const response = await this.authServiceRequest<AuthUserSession>(AuthEndpoint.SESSION, {
         method: HttpMethod.GET,
@@ -654,7 +645,7 @@ export class Auth extends EventEmitter {
     }
 
     const { data: authUserSession } = event;
-    const authUserSessionData = this.handleAuthUserSessionResponse(authUserSession, true);
+    const authUserSessionData = this.handleAuthUserSessionResponse(authUserSession);
 
     if (!authUserSessionData.session && authUserSessionData.user?.authMfaEnabled) {
       this.emit(AuthEvent.MFA_REQUIRED, authUserSessionData);
@@ -783,7 +774,7 @@ export class Auth extends EventEmitter {
         }
       });
 
-      const responseData = this.handleAuthUserSessionResponse(response, true);
+      const responseData = this.handleAuthUserSessionResponse(response);
 
       this.emit(AuthEvent.SIGN_IN, response);
 
@@ -860,7 +851,7 @@ export class Auth extends EventEmitter {
         method: HttpMethod.POST
       });
 
-      const responseData = this.handleAuthUserSessionResponse(response, true);
+      const responseData = this.handleAuthUserSessionResponse(response);
 
       this.emit(AuthEvent.ANONYMOUS_USER_CREATED, response);
 
