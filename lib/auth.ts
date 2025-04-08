@@ -470,9 +470,7 @@ export class Auth extends EventEmitter {
     try {
       const response = await this.authServiceRequest<TokenResponse>(AuthEndpoint.TOKEN_REFRESH, {
         method: HttpMethod.GET,
-        headers: {
-          Authorization: `Bearer ${this.refreshToken}`
-        }
+        credentials: 'include'
       });
 
       const refreshedAuthSession = {
@@ -525,9 +523,7 @@ export class Auth extends EventEmitter {
 
       const response = await this.authServiceRequest<AuthUserSession>(AuthEndpoint.SESSION, {
         method: HttpMethod.GET,
-        headers: {
-          Authorization: `Bearer ${currentRefreshToken}`
-        }
+        credentials: 'include'
       });
 
       this.emit(AuthEvent.GET_SESSION, response);
