@@ -2,7 +2,6 @@ import EventEmitter from 'eventemitter3';
 import { TokenError, ValidationError } from './errors';
 import { logger } from './logger';
 import { serviceRequest } from './request';
-import { removeItem } from './storage';
 import {
   AuthCreateOptions,
   AuthEvent,
@@ -191,50 +190,6 @@ export class Auth extends EventEmitter {
 
     return response;
   }
-
-  /**
-   * Stores the refresh token in the specified storage type (e.g., session storage or persistent storage).
-   * Optionally, the token expiration time can be provided for session management.
-   *
-   * @param {string} value - The refresh token to be stored.
-   * @param {number} [expiresAt] - The expiration timestamp of the refresh token (optional).
-   * @param {StorageType} [storageType] - The storage type where the token should be saved.
-   */
-  // private setRefreshToken(value: string, expiresAt?: number, storageType?: StorageType): void {
-  //   const refreshTokenData = {
-  //     value,
-  //     expiresAt
-  //   };
-
-  //   setItem(REFRESH_TOKEN_KEY, JSON.stringify(refreshTokenData), storageType);
-  // }
-
-  /**
-   * Retrieves the refresh token from storage. If no token is found in session storage,
-   * it attempts to retrieve it from persistent storage.
-   *
-   * @returns {string | null} The stored refresh token or null if no token is found.
-   */
-  // private getRefreshToken(): string | null {
-  //   let refreshTokenData = this.refreshToken;
-
-  //   if (!refreshTokenData) {
-  //     refreshTokenData = getItem(REFRESH_TOKEN_KEY, StorageType.SESSION);
-  //   }
-
-  //   if (!refreshTokenData) {
-  //     refreshTokenData = getItem(REFRESH_TOKEN_KEY, StorageType.PERSIST);
-  //   }
-
-  //   return refreshTokenData;
-  // }
-
-  /**
-   * Removes the stored refresh token, effectively signing the user out and invalidating the session.
-   */
-  // private removeRefreshToken(): void {
-  //   removeItem(REFRESH_TOKEN_KEY, this.#authUserSession?.session?.authStorageType);
-  // }
 
   /**
    * Handles and processes the response from the authentication service that contains the user's session data.
@@ -506,12 +461,6 @@ export class Auth extends EventEmitter {
     }
 
     try {
-      // const currentRefreshToken = this.getRefreshToken();
-
-      // if (!currentRefreshToken) {
-      //   return null;
-      // }
-
       const response = await this.authServiceRequest<AuthUserSession>(AuthEndpoint.SESSION, {
         method: HttpMethod.GET,
         credentials: 'include'
