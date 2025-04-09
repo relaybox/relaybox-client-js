@@ -61,13 +61,10 @@ const AUTH_TOKEN_REFRESH_JITTER_RANGE_MS = 2000;
 /**
  * Offline defaults
  */
-const DEFAULT_OFFLINE_AUTH_HOST = 'http://localhost';
-const DEFAULT_OFFLINE_AUTH_PATH = 'auth';
 const DEFAULT_OFFLINE_HTTP_HOST = 'http://localhost';
-const DEFAULT_OFFLINE_HTTP_PATH = 'core';
-const DEFAULT_OFFLINE_STATE_HOST = 'http://localhost';
+const DEFAULT_OFFLINE_WS_HOST = 'ws://localhost';
+const DEFAULT_OFFLINE_AUTH_PATH = 'auth';
 const DEFAULT_OFFLINE_STATE_PATH = 'state';
-const DEFAULT_OFFLINE_CORE_HOST = 'ws://localhost';
 const DEFAULT_OFFLINE_CORE_PATH = 'core';
 const DEFAULT_OFFLINE_PORT = 9000;
 
@@ -213,13 +210,13 @@ export default class RelayBox extends EventEmitter {
 
       return {
         authServiceUrl:
-          authServiceUrl ?? `${DEFAULT_OFFLINE_AUTH_HOST}:${port}/${DEFAULT_OFFLINE_AUTH_PATH}`,
+          authServiceUrl ?? `${DEFAULT_OFFLINE_HTTP_HOST}:${port}/${DEFAULT_OFFLINE_AUTH_PATH}`,
         coreServiceUrl:
-          coreServiceUrl ?? `${DEFAULT_OFFLINE_CORE_HOST}:${port}/${DEFAULT_OFFLINE_CORE_PATH}`,
+          coreServiceUrl ?? `${DEFAULT_OFFLINE_WS_HOST}:${port}/${DEFAULT_OFFLINE_CORE_PATH}`,
         httpServiceUrl:
-          httpServiceUrl ?? `${DEFAULT_OFFLINE_HTTP_HOST}:${port}/${DEFAULT_OFFLINE_HTTP_PATH}`,
+          httpServiceUrl ?? `${DEFAULT_OFFLINE_HTTP_HOST}:${port}/${DEFAULT_OFFLINE_CORE_PATH}`,
         stateServiceUrl:
-          stateServiceUrl ?? `${DEFAULT_OFFLINE_STATE_HOST}:${port}/${DEFAULT_OFFLINE_STATE_PATH}`
+          stateServiceUrl ?? `${DEFAULT_OFFLINE_HTTP_HOST}:${port}/${DEFAULT_OFFLINE_STATE_PATH}`
       };
     }
 

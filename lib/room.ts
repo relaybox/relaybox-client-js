@@ -2,13 +2,7 @@ import { ClientEvent } from './types/event.types';
 import { SocketEventAndHandler, SocketEventHandler } from './types/socket.types';
 import { Presence } from './presence';
 import { logger } from './logger';
-import {
-  CloudStorageFactory,
-  HistoryFactory,
-  IntellectFactory,
-  MetricsFactory,
-  PresenceFactory
-} from './factory';
+import { HistoryFactory, MetricsFactory, PresenceFactory } from './factory';
 import { validateUserData } from './validation';
 import { Metrics } from './metrics';
 import { History } from './history';
