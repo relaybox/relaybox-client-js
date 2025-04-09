@@ -161,7 +161,6 @@ export class Auth extends EventEmitter {
       throw new Error('Public key is required for auth');
     }
 
-    // const requestUrl = `${this.authServiceUrl}${AUTH_SERVICE_PATHNAME}${endpoint}`;
     const requestUrl = `${this.authServiceUrl}${endpoint}`;
 
     const defaultHeaders = {
