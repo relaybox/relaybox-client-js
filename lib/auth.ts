@@ -34,7 +34,7 @@ import {
 import { User } from './user';
 import { SocketManager } from './socket-manager';
 
-const AUTH_SERVICE_PATHNAME = '/users';
+// const AUTH_SERVICE_PATHNAME = '';
 export const REFRESH_TOKEN_KEY = 'rb:token:refresh';
 const AUTH_POPUP_MESSAGE_EVENT = 'message';
 
@@ -43,9 +43,9 @@ const AUTH_TOKEN_REFRESH_RETRY_MS = 10000;
 const AUTH_TOKEN_REFRESH_JITTER_RANGE_MS = 2000;
 
 enum AuthEndpoint {
-  CREATE = `/create`,
+  SIGN_UP = `/sign-up`,
+  SIGN_IN = `/sign-in`,
   ANONYMOUS = `/anonymous`,
-  LOGIN = `/authenticate`,
   VERIFY = `/verify`,
   TOKEN_REFRESH = '/token/refresh',
   SESSION = '/session',
@@ -128,15 +128,6 @@ export class Auth extends EventEmitter {
   }
 
   /**
-   * Retrieves the current refresh token, allowing the user session to be refreshed.
-   *
-   * @returns {string | null} The refresh token or null if the session is not authenticated.
-   */
-  get refreshToken(): string | null {
-    return this.#authUserSession?.session?.refreshToken || null;
-  }
-
-  /**
    * Retrieves the authenticated user's information from the current session.
    *
    * @returns {AuthUser | null} The authenticated user object or null if not authenticated.
@@ -173,7 +164,8 @@ export class Auth extends EventEmitter {
       throw new Error('Public key is required for auth');
     }
 
-    const requestUrl = `${this.authServiceUrl}${AUTH_SERVICE_PATHNAME}${endpoint}`;
+    // const requestUrl = `${this.authServiceUrl}${AUTH_SERVICE_PATHNAME}${endpoint}`;
+    const requestUrl = `${this.authServiceUrl}${endpoint}`;
 
     const defaultHeaders = {
       Accept: 'application/json',
@@ -270,7 +262,7 @@ export class Auth extends EventEmitter {
         lastName
       };
 
-      const response = await this.authServiceRequest<ServiceResponseData>(AuthEndpoint.CREATE, {
+      const response = await this.authServiceRequest<ServiceResponseData>(AuthEndpoint.SIGN_UP, {
         method: HttpMethod.POST,
         body: JSON.stringify(requestBody)
       });
@@ -368,7 +360,7 @@ export class Auth extends EventEmitter {
         password
       };
 
-      const response = await this.authServiceRequest<AuthUserSession>(AuthEndpoint.LOGIN, {
+      const response = await this.authServiceRequest<AuthUserSession>(AuthEndpoint.SIGN_IN, {
         method: HttpMethod.POST,
         body: JSON.stringify(requestBody)
       });
@@ -574,7 +566,7 @@ export class Auth extends EventEmitter {
     const top = window.screen.height / 2 - height / 2;
 
     window.open(
-      `${this.authServiceUrl}/users/idp/${provider}/authorize?publicKey=${this.publicKey}`,
+      `${this.authServiceUrl}/idp/${provider}/authorize?publicKey=${this.publicKey}`,
       'popup',
       `width=${width},height=${height},left=${left},top=${top}`
     );
@@ -744,7 +736,7 @@ export class Auth extends EventEmitter {
    */
   async getUser({ clientId }: AuthGetUserOptions): Promise<User> {
     try {
-      const endpoint = `/${clientId}`;
+      const endpoint = `/users/${clientId}`;
 
       const user = await this.authServiceRequest<AuthUserPublic>(endpoint, {
         method: HttpMethod.GET,

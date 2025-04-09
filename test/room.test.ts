@@ -1,19 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Room } from '../lib/room';
 import { SocketManager } from '../lib/socket-manager';
-import {
-  CloudStorageFactory,
-  HistoryFactory,
-  IntellectFactory,
-  PresenceFactory
-} from '../lib/factory';
+import { HistoryFactory, PresenceFactory } from '../lib/factory';
 import { MetricsFactory } from '../lib/factory';
 import { ClientEvent } from '../lib/types/event.types';
 
 const mockCoreServiceUrl = process.env.CORE_SERVICE_URL || '';
 const mockHttpServiceUrl = process.env.HTTP_SERVICE_URL || '';
-const mockintellectServiceUrl = process.env.INTELLECT_SERVICE_URL || '';
-const mockStorageServiceUrl = process.env.STORAGE_SERVICE_URL || '';
+const mockStateServiceUrl = process.env.STATE_SERVICE_URL || '';
 const mockRoomId = 'roomId123';
 const mockEvent = 'mock:event';
 const mockAuthToken = 'eyJhbGc.eyJrZXlOYW1lIjoiRz:5hg9z5Gd4YI9jSw1Y66gz6q';
@@ -68,16 +62,12 @@ describe('Room', () => {
   let presenceFactory: PresenceFactory;
   let metricsFactory: MetricsFactory;
   let historyFactory: HistoryFactory;
-  let intellectFactory: IntellectFactory;
-  let cloudStorageFactory: CloudStorageFactory;
 
   beforeEach(async () => {
     socketManager = new SocketManager(mockCoreServiceUrl);
     presenceFactory = new PresenceFactory();
     metricsFactory = new MetricsFactory();
     historyFactory = new HistoryFactory();
-    intellectFactory = new IntellectFactory();
-    cloudStorageFactory = new CloudStorageFactory();
 
     const getAuthToken = () => mockAuthToken;
 
@@ -87,11 +77,8 @@ describe('Room', () => {
       presenceFactory,
       metricsFactory,
       historyFactory,
-      intellectFactory,
-      cloudStorageFactory,
       mockHttpServiceUrl,
-      mockintellectServiceUrl,
-      mockStorageServiceUrl,
+      mockStateServiceUrl,
       getAuthToken
     );
   });
@@ -115,8 +102,6 @@ describe('Room', () => {
     expect(presenceFactory.createInstance).toHaveBeenCalled();
     expect(metricsFactory.createInstance).toHaveBeenCalled();
     expect(historyFactory.createInstance).toHaveBeenCalled();
-    expect(intellectFactory.createInstance).toHaveBeenCalled();
-    expect(cloudStorageFactory.createInstance).toHaveBeenCalled();
   });
 
   it('should leave the room and perform necessary cleanup operations', async () => {
