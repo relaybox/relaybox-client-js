@@ -34,10 +34,7 @@ import {
 import { User } from './user';
 import { SocketManager } from './socket-manager';
 
-// const AUTH_SERVICE_PATHNAME = '';
-export const REFRESH_TOKEN_KEY = 'rb:token:refresh';
 const AUTH_POPUP_MESSAGE_EVENT = 'message';
-
 const AUTH_TOKEN_REFRESH_BUFFER_SECONDS = 20;
 const AUTH_TOKEN_REFRESH_RETRY_MS = 10000;
 const AUTH_TOKEN_REFRESH_JITTER_RANGE_MS = 2000;

@@ -1,4 +1,4 @@
-import { Auth, REFRESH_TOKEN_KEY } from '../lib/auth';
+import { Auth } from '../lib/auth';
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
 import { setupServer } from 'msw/node';
 import { HttpResponse, http } from 'msw';
