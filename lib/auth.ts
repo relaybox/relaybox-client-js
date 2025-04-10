@@ -40,19 +40,18 @@ const AUTH_TOKEN_REFRESH_RETRY_MS = 10000;
 const AUTH_TOKEN_REFRESH_JITTER_RANGE_MS = 2000;
 
 enum AuthEndpoint {
+  ANONYMOUS = `/anonymous`,
+  GENERATE_VERIFICATION_CODE = '/generate-verification-code',
+  MFA_CHALLENGE = '/mfa/challenge',
+  MFA_ENROLL = '/mfa/enroll',
+  MFA_VERIFY = '/mfa/verify',
+  PASSWORD_CONFIRM = '/password-confirm',
+  PASSWORD_RESET = '/password-reset',
   SIGN_UP = `/sign-up`,
   SIGN_IN = `/sign-in`,
-  ANONYMOUS = `/anonymous`,
-  VERIFY = `/verify`,
-  TOKEN_REFRESH = '/token/refresh',
   SESSION = '/session',
-  PASSWORD_RESET = '/password-reset',
-  PASSWORD_CONFIRM = '/password-confirm',
-  GENERATE_VERIFICATION_CODE = '/generate-verification-code',
-  MFA_ENROLL = '/mfa/enroll',
-  MFA_CHALLENGE = '/mfa/challenge',
-  MFA_VERIFY = '/mfa/verify',
-  USER = '/'
+  TOKEN_REFRESH = '/token/refresh',
+  VERIFY = `/verify`
 }
 
 /**
