@@ -183,7 +183,6 @@ export class Auth extends EventEmitter {
    * Stores the session, refresh token, and sets a timeout for token refresh based on expiration time.
    *
    * @param {AuthUserSession} authUserSessionData - The session data returned by the authentication service.
-   * @param {boolean} [resetSession=false] - Whether to set the refresh token, essentially resetting the session.
    * @returns {AuthUserSession} The processed session data.
    */
   private handleAuthUserSessionResponse(authUserSessionData: AuthUserSession): AuthUserSession {
