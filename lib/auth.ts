@@ -7,6 +7,7 @@ import {
   AuthEvent,
   AuthEventAllowedValues,
   AuthEventHandler,
+  AuthGenerateSignInCodeOptions,
   AuthGetUserOptions,
   AuthLoginOptions,
   AuthMfaApi,
@@ -42,6 +43,7 @@ const AUTH_TOKEN_REFRESH_JITTER_RANGE_MS = 2000;
 enum AuthEndpoint {
   ANONYMOUS = `/anonymous`,
   GENERATE_VERIFICATION_CODE = '/generate-verification-code',
+  GENERATE_SIGN_IN_CODE = '/generate-sign-in-code',
   MFA_CHALLENGE = '/mfa/challenge',
   MFA_ENROLL = '/mfa/enroll',
   MFA_VERIFY = '/mfa/verify',
@@ -338,6 +340,38 @@ export class Auth extends EventEmitter {
   }
 
   /**
+   * Generates a one-time sign-in code for the user to authenticate with.
+   *
+   * @param {AuthGenerateSignInCodeOptions} options - The sign-in code options, which include the user's email.
+   * @returns {Promise<ServiceResponseData>} The service response after generating the sign-in code.
+   * @throws Will throw an error if the sign-in code generation fails.
+   */
+  public async generateSignInCode({
+    email
+  }: AuthGenerateSignInCodeOptions): Promise<ServiceResponseData> {
+    logger.logInfo(`Generating sign-in code for email: ${email}`);
+
+    try {
+      const requestBody = {
+        email
+      };
+
+      const response = await this.authServiceRequest<ServiceResponseData>(
+        AuthEndpoint.GENERATE_SIGN_IN_CODE,
+        {
+          method: HttpMethod.POST,
+          body: JSON.stringify(requestBody)
+        }
+      );
+
+      return response;
+    } catch (err: any) {
+      logger.logError(err.message, err);
+      throw err;
+    }
+  }
+
+  /**
    * Authenticates a user by logging them in with their email and password.
    * Processes the session and emits events depending on the outcome (e.g., `SIGN_IN`, `MFA_REQUIRED`).
    *
@@ -345,13 +379,18 @@ export class Auth extends EventEmitter {
    * @returns {Promise<AuthUserSession>} The authenticated user's session data.
    * @throws Will throw an error if the login process fails.
    */
-  public async signIn({ email, password }: AuthLoginOptions): Promise<AuthUserSession> {
+  public async signIn({ email, password, code }: AuthLoginOptions): Promise<AuthUserSession> {
     logger.logInfo(`Logging in with email: ${email}`);
+
+    if (!password && !code) {
+      throw new Error('Password or one-time code is required');
+    }
 
     try {
       const requestBody = {
         email,
-        password
+        ...(password && { password }),
+        ...(code && { code })
       };
 
       const response = await this.authServiceRequest<AuthUserSession>(AuthEndpoint.SIGN_IN, {

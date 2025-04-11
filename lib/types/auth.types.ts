@@ -138,7 +138,8 @@ export interface AuthMfaApi {
 
 export interface AuthLoginOptions {
   email: string;
-  password: string;
+  password?: string;
+  code?: string;
 }
 
 export interface AuthCreateOptions {
@@ -159,6 +160,10 @@ export interface AuthPasswordResetOptions {
 }
 
 export interface AuthResendVerificationOptions {
+  email: string;
+}
+
+export interface AuthGenerateSignInCodeOptions {
   email: string;
 }
 
