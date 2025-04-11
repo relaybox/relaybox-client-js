@@ -2,13 +2,7 @@ import { ClientEvent } from './types/event.types';
 import { SocketEventAndHandler, SocketEventHandler } from './types/socket.types';
 import { Presence } from './presence';
 import { logger } from './logger';
-import {
-  CloudStorageFactory,
-  HistoryFactory,
-  IntellectFactory,
-  MetricsFactory,
-  PresenceFactory
-} from './factory';
+import { HistoryFactory, MetricsFactory, PresenceFactory } from './factory';
 import { validateUserData } from './validation';
 import { Metrics } from './metrics';
 import { History } from './history';
@@ -110,10 +104,7 @@ export class Room {
    * @param {PresenceFactory} presenceFactory - The factory for creating presence instances.
    * @param {MetricsFactory} metricsFactory - The factory for creating metrics instances.
    * @param {HistoryFactory} historyFactory - The factory for creating history instances.
-   * @param {IntellectFactory} intellectFactory - The factory for creating intellect instances.
-   * @param {CloudStorageFactory} cloudStorageFactory - The factory for creating cloud storage instances.
    * @param {string} httpServiceUrl - The url for interacting with the core HTTP service.
-   * @param {string} storageServiceUrl - The url for interacting with the "storage" service.
    * @param {string} stateServiceUrl - The url for interacting with the "storage" service.
    * @param {Function} getAuthToken - Function to retrieve the latest auth token.
    */
@@ -123,10 +114,7 @@ export class Room {
     private readonly presenceFactory: PresenceFactory,
     private readonly metricsFactory: MetricsFactory,
     private readonly historyFactory: HistoryFactory,
-    private readonly intellectFactory: IntellectFactory,
-    private readonly cloudStorageFactory: CloudStorageFactory,
     private readonly httpServiceUrl: string,
-    private readonly storageServiceUrl: string,
     private readonly stateServiceUrl: string,
     private getAuthToken: () => string | null
   ) {
@@ -169,31 +157,14 @@ export class Room {
    * TODO: Clean this up by passing room instance to each extension rather than named vars
    */
   private initRoomExtensions(): Room {
-    const {
-      nspRoomId,
-      socketManager,
-      roomId,
-      httpServiceUrl,
-      storageServiceUrl,
-      stateServiceUrl,
-      getAuthToken
-    } = this;
+    const { nspRoomId, socketManager, roomId, httpServiceUrl, stateServiceUrl, getAuthToken } =
+      this;
 
     this.presence = this.presenceFactory.createInstance(socketManager, roomId, nspRoomId!);
     this.metrics = this.metricsFactory.createInstance(socketManager, roomId);
-    this.storage = this.cloudStorageFactory.createInstance(roomId, storageServiceUrl, getAuthToken);
-
     this.history = this.historyFactory.createInstance(
       roomId,
       httpServiceUrl,
-      stateServiceUrl,
-      getAuthToken
-    );
-
-    this.intellect = this.intellectFactory.createInstance(
-      socketManager,
-      nspRoomId!,
-      roomId,
       stateServiceUrl,
       getAuthToken
     );

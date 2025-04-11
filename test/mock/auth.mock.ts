@@ -29,7 +29,6 @@ export const defaultMockUser = {
 
 export const defaultMockSession: AuthSession = {
   token: 'auth-token',
-  refreshToken: 'refresh-token',
   expiresIn: 30,
   expiresAt: 100,
   destroyAt: 100,
@@ -58,5 +57,6 @@ export const mockAuthUserPublic: AuthUserPublic = {
   createdAt: '2023-01-01T00:00:00.000Z',
   updatedAt: '2023-01-01T00:00:00.000Z',
   isOnline: true,
-  lastOnline: '2023-01-01T00:00:00.000Z'
+  lastOnline: '2023-01-01T00:00:00.000Z',
+  identities: []
 };

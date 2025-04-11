@@ -33,13 +33,7 @@ import {
   SocketManagerListener
 } from './types/socket.types';
 import { logger } from './logger';
-import {
-  PresenceFactory,
-  MetricsFactory,
-  HistoryFactory,
-  IntellectFactory,
-  CloudStorageFactory
-} from './factory';
+import { PresenceFactory, MetricsFactory, HistoryFactory } from './factory';
 import { ErrorName, SocketConnectionError, TokenError, ValidationError } from './errors';
 import { SocketManager } from './socket-manager';
 import { AuthKeyData, AuthRequestOptions } from './types/auth.types';
@@ -58,7 +52,6 @@ import { serviceRequest } from './request';
 const CORE_SERVICE_URL = process.env.CORE_SERVICE_URL || '';
 const HTTP_SERVICE_URL = process.env.HTTP_SERVICE_URL || '';
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || '';
-const STORAGE_SERVICE_URL = process.env.STORAGE_SERVICE_URL || '';
 const STATE_SERVICE_URL = process.env.STATE_SERVICE_URL || '';
 const SOCKET_CONNECTION_ACK_TIMEOUT_MS = 2000;
 const AUTH_TOKEN_REFRESH_BUFFER_SECONDS = 20;
@@ -68,17 +61,10 @@ const AUTH_TOKEN_REFRESH_JITTER_RANGE_MS = 2000;
 /**
  * Offline defaults
  */
-const DEFAULT_OFFLINE_AUTH_HOST = 'http://localhost';
-const DEFAULT_OFFLINE_AUTH_PATH = 'auth';
 const DEFAULT_OFFLINE_HTTP_HOST = 'http://localhost';
-const DEFAULT_OFFLINE_HTTP_PATH = 'core';
-const DEFAULT_OFFLINE_INTELLECT_HOST = 'http://localhost';
-const DEFAULT_OFFLINE_INTELLECT_PATH = 'intellect';
-const DEFAULT_OFFLINE_STORAGE_HOST = 'http://localhost';
-const DEFAULT_OFFLINE_STORAGE_PATH = 'storage';
-const DEFAULT_OFFLINE_STATE_HOST = 'http://localhost';
+const DEFAULT_OFFLINE_WS_HOST = 'ws://localhost';
+const DEFAULT_OFFLINE_AUTH_PATH = 'auth';
 const DEFAULT_OFFLINE_STATE_PATH = 'state';
-const DEFAULT_OFFLINE_CORE_HOST = 'ws://localhost';
 const DEFAULT_OFFLINE_CORE_PATH = 'core';
 const DEFAULT_OFFLINE_PORT = 9000;
 
@@ -119,8 +105,6 @@ export default class RelayBox extends EventEmitter {
   private readonly presenceFactory: PresenceFactory;
   private readonly metricsFactory: MetricsFactory;
   private readonly historyFactory: HistoryFactory;
-  private readonly intellectFactory: IntellectFactory;
-  private readonly cloudStorageFactory: CloudStorageFactory;
   private readonly authEndpoint?: string;
   private readonly authHeaders?: Record<string, unknown> | null;
   private readonly authParams?: Record<string, unknown> | null;
@@ -131,7 +115,6 @@ export default class RelayBox extends EventEmitter {
   private readonly authServiceUrl: string;
   private readonly coreServiceUrl: string;
   private readonly httpServiceUrl: string;
-  private readonly storageServiceUrl: string;
   private readonly stateServiceUrl: string;
   private socketManagerListeners: SocketManagerListener[] = [];
   private refreshTimeout: NodeJS.Timeout | number | null = null;
@@ -166,7 +149,7 @@ export default class RelayBox extends EventEmitter {
       );
     }
 
-    const { authServiceUrl, coreServiceUrl, httpServiceUrl, storageServiceUrl, stateServiceUrl } =
+    const { authServiceUrl, coreServiceUrl, httpServiceUrl, stateServiceUrl } =
       this.getOfflineServiceUrls(opts.offline);
 
     this.apiKey = opts.apiKey;
@@ -177,14 +160,11 @@ export default class RelayBox extends EventEmitter {
     this.authServiceUrl = authServiceUrl || AUTH_SERVICE_URL;
     this.coreServiceUrl = coreServiceUrl || CORE_SERVICE_URL;
     this.httpServiceUrl = httpServiceUrl || HTTP_SERVICE_URL;
-    this.storageServiceUrl = storageServiceUrl || STORAGE_SERVICE_URL;
     this.stateServiceUrl = stateServiceUrl || STATE_SERVICE_URL;
     this.socketManager = new SocketManager(this.coreServiceUrl);
     this.presenceFactory = new PresenceFactory();
     this.metricsFactory = new MetricsFactory();
     this.historyFactory = new HistoryFactory();
-    this.intellectFactory = new IntellectFactory();
-    this.cloudStorageFactory = new CloudStorageFactory();
     this.connection = new EventEmitter();
     this.authHeaders =
       typeof opts.authHeaders === 'function' ? opts.authHeaders() : opts.authHeaders;
@@ -218,15 +198,11 @@ export default class RelayBox extends EventEmitter {
     authServiceUrl = null,
     coreServiceUrl = null,
     httpServiceUrl = null,
-    intellectServiceUrl = null,
-    storageServiceUrl = null,
     stateServiceUrl = null
   }: OfflineOptions = {}): {
     authServiceUrl: string | null;
     httpServiceUrl: string | null;
     coreServiceUrl: string | null;
-    intellectServiceUrl: string | null;
-    storageServiceUrl: string | null;
     stateServiceUrl: string | null;
   } {
     if (enabled || port || authServiceUrl || coreServiceUrl) {
@@ -234,19 +210,13 @@ export default class RelayBox extends EventEmitter {
 
       return {
         authServiceUrl:
-          authServiceUrl ?? `${DEFAULT_OFFLINE_AUTH_HOST}:${port}/${DEFAULT_OFFLINE_AUTH_PATH}`,
+          authServiceUrl ?? `${DEFAULT_OFFLINE_HTTP_HOST}:${port}/${DEFAULT_OFFLINE_AUTH_PATH}`,
         coreServiceUrl:
-          coreServiceUrl ?? `${DEFAULT_OFFLINE_CORE_HOST}:${port}/${DEFAULT_OFFLINE_CORE_PATH}`,
+          coreServiceUrl ?? `${DEFAULT_OFFLINE_WS_HOST}:${port}/${DEFAULT_OFFLINE_CORE_PATH}`,
         httpServiceUrl:
-          httpServiceUrl ?? `${DEFAULT_OFFLINE_HTTP_HOST}:${port}/${DEFAULT_OFFLINE_HTTP_PATH}`,
-        intellectServiceUrl:
-          intellectServiceUrl ??
-          `${DEFAULT_OFFLINE_INTELLECT_HOST}:${port}/${DEFAULT_OFFLINE_INTELLECT_PATH}`,
-        storageServiceUrl:
-          storageServiceUrl ??
-          `${DEFAULT_OFFLINE_STORAGE_HOST}:${port}/${DEFAULT_OFFLINE_STORAGE_PATH}`,
+          httpServiceUrl ?? `${DEFAULT_OFFLINE_HTTP_HOST}:${port}/${DEFAULT_OFFLINE_CORE_PATH}`,
         stateServiceUrl:
-          stateServiceUrl ?? `${DEFAULT_OFFLINE_STATE_HOST}:${port}/${DEFAULT_OFFLINE_STATE_PATH}`
+          stateServiceUrl ?? `${DEFAULT_OFFLINE_HTTP_HOST}:${port}/${DEFAULT_OFFLINE_STATE_PATH}`
       };
     }
 
@@ -254,8 +224,6 @@ export default class RelayBox extends EventEmitter {
       authServiceUrl,
       coreServiceUrl,
       httpServiceUrl,
-      intellectServiceUrl,
-      storageServiceUrl,
       stateServiceUrl
     };
   }
@@ -642,10 +610,7 @@ export default class RelayBox extends EventEmitter {
       this.presenceFactory,
       this.metricsFactory,
       this.historyFactory,
-      this.intellectFactory,
-      this.cloudStorageFactory,
       this.httpServiceUrl,
-      this.storageServiceUrl,
       this.stateServiceUrl,
       getAuthToken
     );

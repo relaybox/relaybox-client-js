@@ -90,7 +90,6 @@ export interface AuthSession {
   expiresAt: number;
   expiresIn: number;
   destroyAt: number;
-  refreshToken: string;
   authStorageType: StorageType;
 }
 
