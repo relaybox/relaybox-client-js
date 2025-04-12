@@ -383,7 +383,7 @@ export class Auth extends EventEmitter {
     logger.logInfo(`Logging in with email: ${email}`);
 
     if (!password && !code) {
-      throw new Error('Password or one-time code is required');
+      throw new Error('Password or one-time pass code is required');
     }
 
     try {
