@@ -395,7 +395,8 @@ export class Auth extends EventEmitter {
 
       const response = await this.authServiceRequest<AuthUserSession>(AuthEndpoint.SIGN_IN, {
         method: HttpMethod.POST,
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
+        credentials: 'include'
       });
 
       const responseData = this.handleAuthUserSessionResponse(response);
