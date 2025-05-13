@@ -12,6 +12,8 @@ export interface ServiceResponseDataBase {
 export interface PaginatedRequestOptions {
   offset?: number;
   limit?: number;
+  orderBy?: string;
+  order?: 'asc' | 'desc';
 }
 
 export interface PaginatedResponse<T = any> {
