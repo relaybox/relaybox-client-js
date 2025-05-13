@@ -120,4 +120,8 @@ export interface RelayBoxOptions {
   //  * Specify the offline emulator options. This is useful for testing or when using relayBox platform emulator.
   //  */
   offline?: OfflineOptions;
+  /**
+   * Auth service redirect uri
+   */
+  redirectUri?: string;
 }

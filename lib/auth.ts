@@ -34,11 +34,24 @@ import {
 } from './types';
 import { User } from './user';
 import { SocketManager } from './socket-manager';
+import {
+  PKCE_REDIRECT_URI_KEY,
+  PKCE_STATE_KEY,
+  PKCE_VERIFIER_KEY,
+  generatePkcePair,
+  generateRandomString
+} from './pkce';
 
 const AUTH_POPUP_MESSAGE_EVENT = 'message';
 const AUTH_TOKEN_REFRESH_BUFFER_SECONDS = 20;
 const AUTH_TOKEN_REFRESH_RETRY_MS = 10000;
 const AUTH_TOKEN_REFRESH_JITTER_RANGE_MS = 2000;
+
+enum OAuthEndpoint {
+  AUTHORIZE = '/authorize',
+  TOKEN = '/token',
+  LOGOUT = '/logout'
+}
 
 enum AuthEndpoint {
   ANONYMOUS = `/anonymous`,
@@ -77,12 +90,15 @@ export class Auth extends EventEmitter {
    * @param {SocketManager} socketManager - An instance of `SocketManager` for handling socket connections.
    * @param {string | null} publicKey - The public key for authenticating API requests. Required for authorization.
    * @param {string} authServiceUrl - The base URL for the authentication service (e.g., API server).
+   * @param {string} redirectUri - PKCE redirect uri.
+   *
    */
 
   constructor(
     private readonly socketManager: SocketManager,
     private readonly publicKey: string | null,
-    private readonly authServiceUrl: string
+    private readonly authServiceUrl: string,
+    private readonly redirectUri: string
   ) {
     super();
 
@@ -231,6 +247,170 @@ export class Auth extends EventEmitter {
       }
     }, timeout);
   }
+
+  // ------------- START NEW PKCE FUNCTIONS ---------------------
+
+  /**
+   * Initiates the PKCE Authorization Code Flow.
+   * This method prepares PKCE parameters and redirects the browser to the
+   * auth server's /authorize endpoint.
+   * @param options Optional parameters for the authorization request.
+   * @param options.loginHint Optional hint to the auth server about the user's login identifier.
+   * @param options.prompt Optional: 'none', 'login', 'consent', 'select_account'.
+   * @param options.appState Optional: Any state your application wants to persist through the redirect and make available in the callback.
+   */
+  public async initiatePkceAuthFlow(options?: {
+    loginHint?: string;
+    prompt?: 'none' | 'login' | 'consent' | 'select_account';
+    appState?: any;
+  }): Promise<void> {
+    if (!this.enabled) {
+      throw new Error('Auth SDK not enabled (publicKey/clientId missing).');
+    }
+
+    logger.logInfo('Initiating PKCE Authorization Code Flow...');
+
+    const { verifier, challenge } = await generatePkcePair();
+
+    const state = generateRandomString(32);
+
+    // Store PKCE parameters and appState in localStorage
+    // The appState can be used to redirect the user back to their original location
+    // or pass any other context through the authentication flow.
+    const stateToStore: any = { state };
+
+    if (options?.appState) {
+      stateToStore.appState = options.appState;
+    }
+
+    localStorage.setItem(PKCE_STATE_KEY, JSON.stringify(stateToStore));
+    localStorage.setItem(PKCE_VERIFIER_KEY, verifier);
+    localStorage.setItem(PKCE_REDIRECT_URI_KEY, this.redirectUri);
+
+    const params = new URLSearchParams({
+      response_type: 'code',
+      client_id: this.publicKey ?? '',
+      redirect_uri: this.redirectUri,
+      // scope: this.scopes.join(' '),
+      code_challenge: challenge,
+      code_challenge_method: 'S256',
+      state
+    });
+
+    if (options?.loginHint) {
+      params.append('login_hint', options.loginHint);
+    }
+
+    if (options?.prompt) {
+      params.append('prompt', options.prompt);
+    }
+
+    const authorizeUrl = `${this.authServiceUrl}${OAuthEndpoint.AUTHORIZE}?${params.toString()}`;
+
+    logger.logInfo(`Redirecting to: ${authorizeUrl}`);
+
+    window.location.href = authorizeUrl;
+  }
+
+  /**
+   * Handles the redirect back from the auth server after user authentication.
+   * This method should be called on the page specified as the `redirect_uri`.
+   * It parses the authorization code and state, then exchanges the code for tokens.
+   * @param url The URL of the callback page, defaults to window.location.href.
+   * @returns A Promise that resolves with the AuthUserSession.
+   */
+  public async handleRedirectCallback(
+    url: string = window.location.href
+  ): Promise<AuthUserSession> {
+    if (!this.enabled) {
+      throw new Error('Auth SDK not enabled (publicKey/clientId missing).');
+    }
+
+    logger.logInfo(`Handling redirect callback from: ${url}`);
+
+    const params = new URLSearchParams(new URL(url).search);
+    const code = params.get('code');
+    const incomingStateString = params.get('state'); // This is the raw state string
+    const error = params.get('error');
+
+    // Clear the PKCE params from the URL in the browser history for cleanliness and security
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    if (error) {
+      const errorDescription = params.get('error_description') || 'Error during OAuth redirect.';
+      logger.logError(`OAuth error in callback: ${error} - ${errorDescription}`);
+      throw new TokenError(errorDescription, error);
+    }
+
+    const storedStateJSON = localStorage.getItem(PKCE_STATE_KEY);
+    const storedVerifier = localStorage.getItem(PKCE_VERIFIER_KEY);
+    const storedRedirectUri = localStorage.getItem(PKCE_REDIRECT_URI_KEY);
+
+    localStorage.removeItem(PKCE_STATE_KEY);
+    localStorage.removeItem(PKCE_VERIFIER_KEY);
+    localStorage.removeItem(PKCE_REDIRECT_URI_KEY);
+
+    if (!code) {
+      throw new TokenError('No authorization code found in callback URL.');
+    }
+
+    if (!storedStateJSON) {
+      throw new TokenError('No PKCE state found in storage. Possible tampering or timeout.');
+    }
+
+    if (!storedVerifier) {
+      throw new TokenError('No PKCE code verifier found in storage.');
+    }
+
+    if (!storedRedirectUri || storedRedirectUri !== this.redirectUri) {
+      throw new TokenError(
+        'Stored redirect URI does not match current configuration or is missing.'
+      );
+    }
+
+    const storedStateObject = JSON.parse(storedStateJSON);
+
+    if (storedStateObject.state !== incomingStateString) {
+      throw new TokenError('State mismatch after redirect. Possible CSRF attack.');
+    }
+
+    // Prepare to exchange the code for tokens
+    const tokenRequestParams = new URLSearchParams({
+      grant_type: 'authorization_code',
+      code: code,
+      redirect_uri: this.redirectUri,
+      client_id: this.publicKey ?? '',
+      code_verifier: storedVerifier
+    });
+
+    try {
+      logger.logInfo('Exchanging authorization code for tokens...');
+
+      await this.authServiceRequest(`${this.authServiceUrl}${OAuthEndpoint.TOKEN}`, {
+        method: HttpMethod.POST,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: tokenRequestParams
+      });
+
+      logger.logInfo('Successfully exchanged code for tokens.');
+
+      const authUserSession = await this.getSession({ verify: true }); // Pass appState if needed
+
+      if (!authUserSession) {
+        // This would be unexpected if /token succeeded and was supposed to establish a cookie session
+        throw new TokenError('Failed to retrieve session after successful PKCE token exchange.');
+      }
+
+      return authUserSession;
+    } catch (err: any) {
+      logger.logError('Unexpected error during token exchange:', err.message);
+      throw err;
+    }
+  }
+
+  //  ------------- END NEW PKCE FUNCTIONS ----------------------
 
   /**
    * Registers a new user by signing them up with an email and password.

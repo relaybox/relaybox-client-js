@@ -106,6 +106,7 @@ export default class RelayBox extends EventEmitter {
   private readonly metricsFactory: MetricsFactory;
   private readonly historyFactory: HistoryFactory;
   private readonly authEndpoint?: string;
+  private readonly redirectUri?: string;
   private readonly authHeaders?: Record<string, unknown> | null;
   private readonly authParams?: Record<string, unknown> | null;
   private readonly authRequestOptions?: AuthRequestOptions;
@@ -156,6 +157,7 @@ export default class RelayBox extends EventEmitter {
     this.publicKey = opts.publicKey;
     this.clientId = opts.clientId;
     this.authEndpoint = opts.authEndpoint;
+    this.redirectUri = opts.redirectUri;
     this.authAction = opts.authAction;
     this.authServiceUrl = authServiceUrl || AUTH_SERVICE_URL;
     this.coreServiceUrl = coreServiceUrl || CORE_SERVICE_URL;
@@ -175,7 +177,8 @@ export default class RelayBox extends EventEmitter {
     this.auth = this.createAuthInstance(
       this.socketManager,
       this.publicKey || null,
-      this.authServiceUrl
+      this.authServiceUrl,
+      this.redirectUri
     );
 
     this.registerSocketManagerListeners();
@@ -231,9 +234,14 @@ export default class RelayBox extends EventEmitter {
   private createAuthInstance(
     socketManager: SocketManager,
     publicKey: string | null,
-    authServiceUrl: string
+    authServiceUrl: string,
+    redirectUri?: string
   ): Auth {
-    return new Auth(socketManager, publicKey, authServiceUrl);
+    if (!redirectUri) {
+      throw new ValidationError('Redirect uri must be specified');
+    }
+
+    return new Auth(socketManager, publicKey, authServiceUrl, redirectUri);
   }
 
   /**
