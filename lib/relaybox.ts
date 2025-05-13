@@ -237,10 +237,6 @@ export default class RelayBox extends EventEmitter {
     authServiceUrl: string,
     redirectUri?: string
   ): Auth {
-    if (!redirectUri) {
-      throw new ValidationError('Redirect uri must be specified');
-    }
-
     return new Auth(socketManager, publicKey, authServiceUrl, redirectUri);
   }
 

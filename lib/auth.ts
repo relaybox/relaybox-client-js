@@ -98,7 +98,7 @@ export class Auth extends EventEmitter {
     private readonly socketManager: SocketManager,
     private readonly publicKey: string | null,
     private readonly authServiceUrl: string,
-    private readonly redirectUri: string
+    private readonly redirectUri?: string
   ) {
     super();
 
@@ -264,7 +264,7 @@ export class Auth extends EventEmitter {
     prompt?: 'none' | 'login' | 'consent' | 'select_account';
     appState?: any;
   }): Promise<void> {
-    if (!this.enabled) {
+    if (!this.redirectUri) {
       throw new Error('Auth SDK not enabled (publicKey/clientId missing).');
     }
 
@@ -559,7 +559,8 @@ export class Auth extends EventEmitter {
    * @returns {Promise<AuthUserSession>} The authenticated user's session data.
    * @throws Will throw an error if the login process fails.
    */
-  public async signIn({ email, password, code }: AuthLoginOptions): Promise<AuthUserSession> {
+  // public async signIn({ email, password, code }: AuthLoginOptions): Promise<AuthUserSession> {
+  public async signIn({ email, password, code }: AuthLoginOptions): Promise<void> {
     logger.logInfo(`Logging in with email: ${email}`);
 
     if (!password && !code) {
@@ -579,15 +580,20 @@ export class Auth extends EventEmitter {
         credentials: 'include'
       });
 
-      const responseData = this.handleAuthUserSessionResponse(response);
+      await this.initiatePkceAuthFlow({
+        loginHint: email,
+        prompt: 'none'
+      });
 
-      if (!response.session && response.user?.authMfaEnabled) {
-        this.emit(AuthEvent.MFA_REQUIRED, response);
-      } else {
-        this.emit(AuthEvent.SIGN_IN, response);
-      }
+      // const responseData = this.handleAuthUserSessionResponse(response);
 
-      return responseData;
+      // if (!response.session && response.user?.authMfaEnabled) {
+      //   this.emit(AuthEvent.MFA_REQUIRED, response);
+      // } else {
+      //   this.emit(AuthEvent.SIGN_IN, response);
+      // }
+
+      // return responseData;
     } catch (err: any) {
       logger.logError(err.message, err);
       throw err;
