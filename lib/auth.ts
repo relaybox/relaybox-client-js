@@ -47,14 +47,15 @@ const AUTH_TOKEN_REFRESH_BUFFER_SECONDS = 20;
 const AUTH_TOKEN_REFRESH_RETRY_MS = 10000;
 const AUTH_TOKEN_REFRESH_JITTER_RANGE_MS = 2000;
 
-enum OAuthEndpoint {
-  AUTHORIZE = '/authorize',
-  TOKEN = '/token',
-  LOGOUT = '/logout'
-}
+// enum OAuthEndpoint {
+//   AUTHORIZE = '/authorize',
+//   TOKEN = '/token',
+//   LOGOUT = '/logout'
+// }
 
 enum AuthEndpoint {
   ANONYMOUS = `/anonymous`,
+  AUTHORIZE = '/authorize',
   GENERATE_VERIFICATION_CODE = '/generate-verification-code',
   GENERATE_SIGN_IN_CODE = '/generate-sign-in-code',
   MFA_CHALLENGE = '/mfa/challenge',
@@ -65,6 +66,7 @@ enum AuthEndpoint {
   SIGN_UP = `/sign-up`,
   SIGN_IN = `/sign-in`,
   SESSION = '/session',
+  TOKEN = '/token',
   TOKEN_REFRESH = '/token/refresh',
   VERIFY = `/verify`
 }
@@ -259,7 +261,7 @@ export class Auth extends EventEmitter {
    * @param options.prompt Optional: 'none', 'login', 'consent', 'select_account'.
    * @param options.appState Optional: Any state your application wants to persist through the redirect and make available in the callback.
    */
-  public async initiatePkceAuthFlow(options?: {
+  public async authorize(options?: {
     loginHint?: string;
     prompt?: 'none' | 'login' | 'consent' | 'select_account';
     appState?: any;
@@ -305,7 +307,7 @@ export class Auth extends EventEmitter {
       params.append('prompt', options.prompt);
     }
 
-    const authorizeUrl = `${this.authServiceUrl}${OAuthEndpoint.AUTHORIZE}?${params.toString()}`;
+    const authorizeUrl = `${this.authServiceUrl}${AuthEndpoint.AUTHORIZE}?${params.toString()}`;
 
     logger.logInfo(`Redirecting to: ${authorizeUrl}`);
 
@@ -319,13 +321,7 @@ export class Auth extends EventEmitter {
    * @param url The URL of the callback page, defaults to window.location.href.
    * @returns A Promise that resolves with the AuthUserSession.
    */
-  public async handleRedirectCallback(
-    url: string = window.location.href
-  ): Promise<AuthUserSession> {
-    if (!this.enabled) {
-      throw new Error('Auth SDK not enabled (publicKey/clientId missing).');
-    }
-
+  public async authorizeCallback(url: string = window.location.href): Promise<AuthUserSession> {
     logger.logInfo(`Handling redirect callback from: ${url}`);
 
     const params = new URLSearchParams(new URL(url).search);
@@ -386,7 +382,7 @@ export class Auth extends EventEmitter {
     try {
       logger.logInfo('Exchanging authorization code for tokens...');
 
-      await this.authServiceRequest(`${this.authServiceUrl}${OAuthEndpoint.TOKEN}`, {
+      await this.authServiceRequest(`${this.authServiceUrl}${AuthEndpoint.TOKEN}`, {
         method: HttpMethod.POST,
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
@@ -396,7 +392,7 @@ export class Auth extends EventEmitter {
 
       logger.logInfo('Successfully exchanged code for tokens.');
 
-      const authUserSession = await this.getSession({ verify: true }); // Pass appState if needed
+      const authUserSession = await this.getSession({ verify: true });
 
       if (!authUserSession) {
         // This would be unexpected if /token succeeded and was supposed to establish a cookie session
@@ -559,8 +555,8 @@ export class Auth extends EventEmitter {
    * @returns {Promise<AuthUserSession>} The authenticated user's session data.
    * @throws Will throw an error if the login process fails.
    */
-  // public async signIn({ email, password, code }: AuthLoginOptions): Promise<AuthUserSession> {
-  public async signIn({ email, password, code }: AuthLoginOptions): Promise<void> {
+  public async signIn({ email, password, code }: AuthLoginOptions): Promise<AuthUserSession> {
+    // public async signIn({ email, password, code }: AuthLoginOptions): Promise<void> {
     logger.logInfo(`Logging in with email: ${email}`);
 
     if (!password && !code) {
@@ -580,20 +576,20 @@ export class Auth extends EventEmitter {
         credentials: 'include'
       });
 
-      await this.initiatePkceAuthFlow({
-        loginHint: email,
-        prompt: 'none'
-      });
+      // await this.initiatePkceAuthFlow({
+      //   loginHint: email,
+      //   prompt: 'none'
+      // });
 
-      // const responseData = this.handleAuthUserSessionResponse(response);
+      const responseData = this.handleAuthUserSessionResponse(response);
 
-      // if (!response.session && response.user?.authMfaEnabled) {
-      //   this.emit(AuthEvent.MFA_REQUIRED, response);
-      // } else {
-      //   this.emit(AuthEvent.SIGN_IN, response);
-      // }
+      if (!response.session && response.user?.authMfaEnabled) {
+        this.emit(AuthEvent.MFA_REQUIRED, response);
+      } else {
+        this.emit(AuthEvent.SIGN_IN, response);
+      }
 
-      // return responseData;
+      return responseData;
     } catch (err: any) {
       logger.logError(err.message, err);
       throw err;
